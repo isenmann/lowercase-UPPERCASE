@@ -441,6 +441,7 @@ namespace LowercaseUppercase.Editor
 
             Text(hud, "Title", title, 32f, 38f, 14f, mono, Muted, order + 1);
             TextMeshPro sentence = Text(hud, "Sentence", "", 500f, 40f, 22f, mono, Paper, order + 1);
+            TextMeshPro collectibles = Text(hud, "Collectibles", "", 800f, 38f, 14f, mono, Muted, order + 1);
             TextMeshPro score = Text(hud, "Score", "", 900f, 38f, 14f, mono, Muted, order + 1);
             TextMeshPro timer = Text(hud, "Timer", "", 1070f, 40f, 22f, monoBold, Paper, order + 1);
             Text(hud, "Restart", "R restart", 1160f, 38f, 14f, mono, Muted, order + 1);
@@ -461,6 +462,7 @@ namespace LowercaseUppercase.Editor
             flow.sentenceAfter = after;
             flow.timer = timer;
             flow.score = score;
+            flow.collectibles = collectibles;
             flow.timerColor = Paper;
             flow.lowTimeColor = Danger;
 

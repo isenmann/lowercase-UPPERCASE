@@ -58,7 +58,7 @@ namespace LowercaseUppercase.Editor
             WordBlock ground = Word(level, "mind your head", x, Ground, 72f);
             x = RightEdge(ground) + WordGap;
             BuildEnemy(level, ground, left + 300f);
-            Word(level, "shelf", left + 180f, LowPlatform, 72f);
+            HashesOn(level, Word(level, "shelf", left + 180f, LowPlatform, 72f), 3);
             return x;
         }
 
@@ -71,6 +71,7 @@ namespace LowercaseUppercase.Editor
             // The enemy patrols through the tunnel, where A can't go to stomp it, so it has to be shot or dodged.
             Note(level, left + 60f, 440f, "a fits. A does not.");
             Stacked(level, "lowlowlowlow", left + 420f, TunnelRows, TunnelBottom);
+            HashRow(level, left + 480f, OnGround, 4);
             BuildEnemy(level, ground, left + 200f);
             return x;
         }
@@ -95,6 +96,7 @@ namespace LowercaseUppercase.Editor
         static float CellarBridgeAndDoor(Transform level, float x)
         {
             Note(level, x, 440f, "A would snap this");
+            HashRow(level, x + 80f, OnGround, 4);
             x = RightEdge(Bridge(level, x, Ground)) + WordGap;
 
             Note(level, x, 440f, "A holds it open. a runs.");
@@ -115,6 +117,7 @@ namespace LowercaseUppercase.Editor
             x = RightEdge(ground) + WordGap;
             BuildEnemy(level, ground, left + 250f);
             BuildEnemy(level, ground, left + 700f);
+            HashArc(level, left + 380f, left + 600f, 3, OnGround, 110f);
 
             float wordLeft = x + 110f;
             Floor(level, "no more rooms", ref x);
@@ -168,10 +171,10 @@ namespace LowercaseUppercase.Editor
         static float SkylineSteps(Transform level, float x)
         {
             Cloud(level, x + 300f, 620f);
-            Platform(level, "one", 440f, ref x, 110f);
-            Platform(level, "more", 360f, ref x, 110f);
-            Platform(level, "step", 280f, ref x, 110f);
-            Platform(level, "up", 200f, ref x, 150f);
+            HashesOn(level, Platform(level, "one", 440f, ref x, 110f), 1);
+            HashesOn(level, Platform(level, "more", 360f, ref x, 110f), 1);
+            HashesOn(level, Platform(level, "step", 280f, ref x, 110f), 1);
+            HashesOn(level, Platform(level, "up", 200f, ref x, 150f), 2);
 
             float left = x;
             WordBlock landing = Platform(level, "then drop down", 400f, ref x, WordGap);
@@ -198,6 +201,7 @@ namespace LowercaseUppercase.Editor
             // Long enough to catch a letter that holds right all the way from the spring.
             WordBlock ice = Word(level, "ice ice ice ice", x, 170f, 72f, WordKind.Ice, Interactive, italic: true);
             ice.grip = 0.12f;
+            HashesOn(level, ice, 5);
             x = RightEdge(ice) + 170f;
 
             float left = x;
@@ -214,6 +218,7 @@ namespace LowercaseUppercase.Editor
             Note(level, x - 200f, 440f, "jump to a comma. jump again to let go.");
             Hook(level, "Hook 1", x + 170f, 270f);
             Hook(level, "Hook 2", x + 410f, 270f);
+            HashArc(level, x + 210f, x + 370f, 3, 300f, 50f); // Along the leap from one comma to the next.
             return x + 620f;
         }
 

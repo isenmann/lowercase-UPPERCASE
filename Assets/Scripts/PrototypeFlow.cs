@@ -32,6 +32,8 @@ namespace LowercaseUppercase
         [Header("Clock and score")]
         public TMP_Text timer;
         public TMP_Text score;
+        [Tooltip("How many # have been picked up out of how many the level has. Hidden in levels without any.")]
+        public TMP_Text collectibles;
         public Color timerColor = new Color32(0xF2, 0xF0, 0xEA, 0xFF);
         public Color lowTimeColor = new Color32(0xFF, 0x4D, 0x5E, 0xFF);
 
@@ -58,6 +60,7 @@ namespace LowercaseUppercase
         int scoreAtSlot;
         float bankProgress;
         float gameOverEnds;
+        int collectibleCount;
 
         public bool IsGameOver { get; private set; }
 
@@ -76,6 +79,8 @@ namespace LowercaseUppercase
             transition = GetComponent<LevelTransition>();
             SetSentence(false);
             if (checkpoint.ArmedWhenReached) shooter.Arm();
+            // Inactive ones too, because those taken before a death are hidden as the scene loads.
+            collectibleCount = FindObjectsByType<Collectible>(FindObjectsInactive.Include).Length;
         }
 
         void OnEnable()
@@ -193,6 +198,10 @@ namespace LowercaseUppercase
             timer.text = $"{Mathf.CeilToInt(timeShown)}s";
             timer.color = !letter.IsSlotted && timeShown <= LowTimeSeconds ? lowTimeColor : timerColor;
             score.text = $"score {scoreShown}";
+            if (collectibles != null)
+                collectibles.text = collectibleCount > 0
+                    ? $"<color={MissingLetterColor}>#</color> {LevelRun.CollectedThisLevel}/{collectibleCount}"
+                    : "";
         }
 
         void SetSentence(bool filled)

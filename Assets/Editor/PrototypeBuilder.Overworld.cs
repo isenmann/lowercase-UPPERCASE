@@ -65,7 +65,7 @@ namespace LowercaseUppercase.Editor
             x = RightEdge(ground) + WordGap;
             BuildEnemy(level, ground, left + 420f);
 
-            Word(level, "brick", left + 90f, LowPlatform, 72f);
+            HashesOn(level, Word(level, "brick", left + 90f, LowPlatform, 72f), 3);
             WordBlock high = Word(level, "mortar", left + 340f, HighPlatform, 72f);
             BuildEnemy(level, high, left + 460f);
             return x;
@@ -82,6 +82,7 @@ namespace LowercaseUppercase.Editor
 
             Tube(level, left + 110f, 3);
             BuildEnemy(level, ground, left + 340f);
+            HashArc(level, left + 250f, left + 470f, 3, OnGround, 110f);
             Tube(level, left + 500f, 5);
             return x;
         }
@@ -95,6 +96,7 @@ namespace LowercaseUppercase.Editor
             WordBlock ground = Word(level, "and ran", x, Ground, 72f);
             x = RightEdge(ground);
             PowerBlock(level, left + 90f, LowPlatform);
+            HashArc(level, x - 20f, x + 200f, 4);
             x += 180f;
 
             // The upper route skips the enemies on the ground, and a third power block hangs where it ends.
@@ -107,6 +109,7 @@ namespace LowercaseUppercase.Editor
 
             Word(level, "high", left + 40f, LowPlatform, 72f);
             WordBlock higher = Word(level, "higher", left + 300f, HighPlatform, 72f);
+            HashesOn(level, higher, 3);
             PowerBlock(level, RightEdge(higher) + 20f, LowPlatform - 60f);
             return x;
         }
@@ -142,6 +145,7 @@ namespace LowercaseUppercase.Editor
             WordBlock ground = Word(level, "up the stairs", x, Ground, 72f);
             x = RightEdge(ground);
             Stairs(level, x, ascending: true);
+            HashArc(level, x - 20f, x + 150f, 2, Ground - 5 * StairRowPx - 26f, 50f);
             x += 130f;
 
             ground = Word(level, "and down", x, Ground, 72f);

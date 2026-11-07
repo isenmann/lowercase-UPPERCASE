@@ -70,6 +70,7 @@ namespace LowercaseUppercase.Editor
             Floor(level, "can slip under low words", ref x);
             Note(level, left + 60f, 440f, "a fits here. A does not.");
             Stacked(level, ShortLowWord, left + 420f, CeilingTunnelRows, TunnelBottom);
+            HashRow(level, left + 470f, OnGround, 3);
             return x;
         }
 
@@ -87,8 +88,9 @@ namespace LowercaseUppercase.Editor
             float left = x;
             WordBlock ground = Word(level, "can land on ampersands", x, Ground, 72f);
             Note(level, left + 60f, 300f, "jump off the shelf and grow on the way down");
-            Word(level, "shelf", left + 180f, LowPlatform, 72f);
+            HashesOn(level, Word(level, "shelf", left + 180f, LowPlatform, 72f), 3);
             BuildEnemy(level, ground, left + 520f);
+            HashArc(level, RightEdge(ground) - 20f, RightEdge(ground) + WidePit + 20f, 3);
             return RightEdge(ground) + WidePit;
         }
 
@@ -96,7 +98,7 @@ namespace LowercaseUppercase.Editor
         static float CrackRest(Transform level, float x)
         {
             float left = x;
-            Note(level, left - 150f, 440f, "too wide for A");
+            Note(level, left - 150f, 380f, "too wide for A");
             Floor(level, "rest here", ref x);
             PlaceCheckpoint(level, left + 160f, Ground);
             return x;
@@ -108,6 +110,7 @@ namespace LowercaseUppercase.Editor
             WordBlock ground = Word(level, "ampersands hide in the low words", x, Ground, 72f);
             x = RightEdge(ground) + WordGap;
             Stacked(level, LongLowWord, left + 520f, CeilingTunnelRows, TunnelBottom);
+            HashRow(level, left + 620f, OnGround, 5);
             BuildEnemy(level, ground, left + 300f);
             BrickWall(level, left + 1150f, CeilingBrickLetters);
 
@@ -152,7 +155,7 @@ namespace LowercaseUppercase.Editor
         {
             float left = x;
             WordBlock ground = Word(level, "watch your head", x, Ground, 72f);
-            Word(level, "ledge", left + 100f, LowPlatform, 72f);
+            HashesOn(level, Word(level, "ledge", left + 100f, LowPlatform, 72f), 3);
             BuildEnemy(level, ground, left + 420f);
             return RightEdge(ground) + WidePit;
         }
@@ -202,8 +205,9 @@ namespace LowercaseUppercase.Editor
 
             left = x;
             WordBlock ground = Word(level, "who is there", x, Ground, 72f);
-            Word(level, "hello", left + 60f, LowPlatform, 72f);
+            HashesOn(level, Word(level, "hello", left + 60f, LowPlatform, 72f), 3);
             BuildEnemy(level, ground, left + 300f);
+            HashArc(level, RightEdge(ground) - 20f, RightEdge(ground) + WidePit + 20f, 3);
             return RightEdge(ground) + WidePit;
         }
 
@@ -225,6 +229,7 @@ namespace LowercaseUppercase.Editor
             WordBlock ground = Word(level, "the door is low", x, Ground, 72f);
             x = RightEdge(ground) + WordGap;
             Stacked(level, ShortLowWord, left + 240f, TunnelRows, TunnelBottom);
+            HashRow(level, left + 290f, OnGround, 3);
             BuildEnemy(level, ground, left + 60f);
             return x;
         }
@@ -250,6 +255,7 @@ namespace LowercaseUppercase.Editor
             WordBlock ground = Word(level, "up and over", x, Ground, 72f);
             x = RightEdge(ground);
             Stairs(level, x, ascending: true);
+            HashArc(level, x - 20f, x + WidePit + 20f, 3, Ground - 5 * StairRowPx - 26f, 50f);
             x += WidePit;
 
             Cloud(level, x + 100f, 150f);
@@ -264,6 +270,7 @@ namespace LowercaseUppercase.Editor
             WordBlock ground = Word(level, "the low road", x, Ground, 72f);
             BuildEnemy(level, ground, left + 20f);
             Stacked(level, ShortLowWord, left + 240f, TunnelRows, TunnelBottom);
+            HashRow(level, left + 290f, OnGround, 3);
             x = RightEdge(ground) + WordGap;
 
             left = x;

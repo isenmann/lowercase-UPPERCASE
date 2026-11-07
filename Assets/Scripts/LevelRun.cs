@@ -7,14 +7,17 @@ namespace LowercaseUppercase
     /// The clock and the score, which outlive the scene reload that follows a death. Time running out ends the run, so
     /// nothing refills the clock during a level. The score carries from level to level until the menu is reached.
     /// Enemies return when the level reloads, so each one pays only once per level, otherwise dying could earn points.
+    /// A # that was picked up stays gone through the reload.
     /// </summary>
     public static class LevelRun
     {
         public const float LevelSeconds = 60f;
         public const int PointsPerEnemy = 100;
         public const int PointsPerSecondLeft = 10;
+        public const int PointsPerCollectible = 50;
 
         static readonly HashSet<Vector2> paidEnemies = new HashSet<Vector2>();
+        static readonly HashSet<Vector2> collected = new HashSet<Vector2>();
 
         // Only set in the moment before a reload, so any other way into a level starts it afresh.
         static bool continuingAfterDeath;
@@ -34,7 +37,11 @@ namespace LowercaseUppercase
             Score = 0;
             TimeLeft = LevelSeconds;
             paidEnemies.Clear();
+            collected.Clear();
         }
+
+        /// <summary>How many # the letter has picked up in this level so far.</summary>
+        public static int CollectedThisLevel => collected.Count;
 
         /// <summary>Called by the flow as a level's scene loads.</summary>
         public static void EnterLevel()
@@ -48,6 +55,7 @@ namespace LowercaseUppercase
             TimeLeft = LevelSeconds;
             scoreAtLevelStart = Score;
             paidEnemies.Clear();
+            collected.Clear();
         }
 
         public static void Tick(float deltaTime) => TimeLeft = Mathf.Max(0f, TimeLeft - deltaTime);
@@ -62,6 +70,14 @@ namespace LowercaseUppercase
         {
             if (paidEnemies.Add(spawnPosition)) Score += PointsPerEnemy;
         }
+
+        /// <summary>Keyed by where the # was placed, like enemies, so it is only ever paid once per level.</summary>
+        public static void Collect(Vector2 position)
+        {
+            if (collected.Add(position)) Score += PointsPerCollectible;
+        }
+
+        public static bool IsCollected(Vector2 position) => collected.Contains(position);
 
         public static void BankTimeLeft()
         {
