@@ -25,8 +25,8 @@ namespace LowercaseUppercase.Editor
         const string VocabularyScene = SceneFolder + "/Vocabulary.unity";
         const string OverworldScene = SceneFolder + "/Overworld.unity";
         const float PixelsPerUnit = 72f;
-        const string ControlsText = "← →  move  ·  Space  jump  ·  Shift  grow  ·  F  shoot";
-        const float ControlsLeftPx = 775f;
+        const string ControlsText = "← →  move  ·  Space  jump  ·  Shift  grow  ·  F  shoot  ·  Esc  pause";
+        const float ControlsLeftPx = 670f;
 
         static readonly Color Background = new Color32(0x11, 0x13, 0x18, 0xFF);
         static readonly Color RuledLine = new Color32(0x1A, 0x1D, 0x24, 0xFF);
@@ -517,12 +517,62 @@ namespace LowercaseUppercase.Editor
             flow.gameOverScreen = gameOver;
             flow.gameOverScore = finalScore;
 
+            BuildPauseMenu(hud, flow, letter);
+
             flow.lowerChip = lowerChip;
             flow.upperChip = upperChip;
             flow.lowerChipLabel = lowerLabel;
             flow.upperChipLabel = upperLabel;
             flow.readout = readout;
             return flow;
+        }
+
+        /// <summary>A small box in the middle of the screen over a dimmed level: Resume, then Main menu.</summary>
+        static void BuildPauseMenu(Transform hud, PrototypeFlow flow, LetterController letter)
+        {
+            // Above the level's fade, below the game over screen.
+            const int order = 104;
+            const float boxLeft = 520f;
+            const float boxWidth = 240f;
+            const float boxHeight = 44f;
+
+            var popup = new GameObject("Pause");
+            popup.transform.SetParent(hud, false);
+            PixelRect(popup.transform, "Dim", -100f, -100f, 1480f, 920f, new Color(Background.r, Background.g, Background.b, 0.75f), order);
+            PixelRect(popup.transform, "Panel", 480f, 250f, 320f, 206f, Background, order + 1);
+            PixelRect(popup.transform, "Panel Top", 480f, 250f, 320f, 1f, BarLine, order + 2);
+            PixelRect(popup.transform, "Panel Bottom", 480f, 455f, 320f, 1f, BarLine, order + 2);
+            PixelRect(popup.transform, "Panel Left", 480f, 250f, 1f, 206f, BarLine, order + 2);
+            PixelRect(popup.transform, "Panel Right", 799f, 250f, 1f, 206f, BarLine, order + 2);
+
+            // Text boxes are 720px wide from their left edge, so 280 centres them on the 1280px screen.
+            Text(popup.transform, "Heading", "paused", 280f, 300f, 22f, monoBold, Muted, order + 3)
+                .alignment = TextAlignmentOptions.Baseline;
+
+            string[] options = { "Resume", "Main menu" };
+            var labels = new TMP_Text[options.Length];
+            var boxes = new SpriteRenderer[options.Length];
+            for (int i = 0; i < options.Length; i++)
+            {
+                float top = 330f + i * 60f;
+                boxes[i] = PixelRect(popup.transform, $"{options[i]} Box", boxLeft, top, boxWidth, boxHeight, RuledLine, order + 2);
+                TextMeshPro label = Text(popup.transform, options[i], options[i], 280f, top + 29f, 20f, monoBold, Paper, order + 3);
+                label.alignment = TextAlignmentOptions.Baseline;
+                labels[i] = label;
+            }
+            popup.SetActive(false);
+
+            var pause = flow.gameObject.AddComponent<PauseMenu>();
+            pause.popup = popup;
+            pause.letter = letter;
+            pause.letterInput = letter.GetComponent<LetterInput>();
+            pause.labels = labels;
+            pause.boxes = boxes;
+            pause.selectedBox = Player;
+            pause.idleBox = RuledLine;
+            pause.selectedLabel = Background;
+            pause.idleLabel = Paper;
+            flow.pauseMenu = pause;
         }
 
         // ---------------------------------------------------------------- assets

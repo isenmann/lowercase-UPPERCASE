@@ -37,6 +37,9 @@ namespace LowercaseUppercase
         public Color timerColor = new Color32(0xF2, 0xF0, 0xEA, 0xFF);
         public Color lowTimeColor = new Color32(0xFF, 0x4D, 0x5E, 0xFF);
 
+        [Header("Pause")]
+        public PauseMenu pauseMenu;
+
         [Header("Game over")]
         public GameObject gameOverScreen;
         public TMP_Text gameOverScore;
@@ -106,15 +109,29 @@ namespace LowercaseUppercase
                 return;
             }
 
+            // The popup reads its own keys, and the level waits underneath it.
+            if (pauseMenu != null && pauseMenu.IsOpen) return;
+
+            bool inTransition = transition != null && transition.IsPlaying;
+            bool pausePressed = (keyboard != null && keyboard.escapeKey.wasPressedThisFrame)
+                || (Gamepad.current != null && Gamepad.current.startButton.wasPressedThisFrame);
+            if (pausePressed)
+            {
+                if (pauseMenu == null) LoadScene(MenuBuildIndex);
+                else if (CanPause(inTransition))
+                {
+                    pauseMenu.Open();
+                    return;
+                }
+            }
+
             if (keyboard != null)
             {
-                bool inTransition = transition != null && transition.IsPlaying;
                 if (keyboard.rKey.wasPressedThisFrame && !inTransition && !RunIsLost)
                 {
                     LevelRun.AbandonLevel();
                     Restart();
                 }
-                if (keyboard.escapeKey.wasPressedThisFrame) LoadScene(MenuBuildIndex);
                 if (keyboard.digit1Key.wasPressedThisFrame) LoadScene(1);
                 if (keyboard.digit2Key.wasPressedThisFrame) LoadScene(2);
                 if (keyboard.digit3Key.wasPressedThisFrame) LoadScene(3);
@@ -147,6 +164,9 @@ namespace LowercaseUppercase
             string asterisks = shooter != null && !shooter.startsArmed && shooter.IsArmed ? "   * F to shoot" : "";
             readout.text = $"speed {Mathf.Abs(velocity.x):0.0}   fall {velocity.y:0.0}{caps}{asterisks}";
         }
+
+        // Not while the level animates in or out, and not during a death fall, which is already on its way to a reload.
+        bool CanPause(bool inTransition) => !inTransition && !letter.IsSlotted && !letter.IsFallingOff;
 
         bool HasLeftTheScreen()
         {
