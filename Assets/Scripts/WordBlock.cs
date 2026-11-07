@@ -5,7 +5,7 @@ using UnityEngine;
 namespace LowercaseUppercase
 {
     // New kinds go at the end: scenes store these as numbers.
-    public enum WordKind { Solid, Ice, Cracked, Spring, Hot, Sticky, Up, Comma, Hyphen, Period, Door }
+    public enum WordKind { Solid, Ice, Cracked, Spring, Hot, Sticky, Up, Comma, Hyphen, Period, Door, Power }
 
     /// <summary>
     /// A typed word that is also level geometry. A one-line word gets one flat collider from baseline
@@ -57,6 +57,12 @@ namespace LowercaseUppercase
         [Tooltip("Seconds until a broken word returns. Zero means it stays broken until a restart.")]
         public float respawnSeconds;
 
+        [Header("Power block")]
+        public string spentText = "[ ]";
+        public Color spentColor = new Color32(0x6B, 0x71, 0x80, 0xFF);
+        public Color powerColor = new Color32(0xFF, 0xD2, 0x3F, 0xFF);
+
+        public bool IsSpent { get; private set; }
         public Vector2 WorldCentre => transform.TransformPoint(box.offset);
 
         TextMeshPro text;
@@ -117,7 +123,8 @@ namespace LowercaseUppercase
         }
 
         bool IsPunctuation =>
-            kind == WordKind.Spring || kind == WordKind.Comma || kind == WordKind.Hyphen || kind == WordKind.Period;
+            kind == WordKind.Spring || kind == WordKind.Comma || kind == WordKind.Hyphen || kind == WordKind.Period
+            || kind == WordKind.Power;
 
         /// <summary>The tight box around the visible glyphs, unlike textBounds, which includes line height.</summary>
         void MeasureInk(out float left, out float right, out float bottom, out float top)
@@ -193,6 +200,36 @@ namespace LowercaseUppercase
         {
             box.enabled = !open;
             text.alpha = open ? OpenDoorAlpha : 1f;
+        }
+
+        /// <summary>Called by the letter when its head hits this word. A power block gives the letter its asterisks, once.</summary>
+        public void HitFromBelow(LetterController letter)
+        {
+            if (kind != WordKind.Power || IsSpent) return;
+            IsSpent = true;
+
+            var shooter = letter.GetComponent<LetterShooter>();
+            if (shooter != null) shooter.Arm();
+
+            text.text = spentText;
+            text.color = spentColor;
+            SpawnFlyingText("*", (Vector3)WorldCentre + Vector3.up * 0.3f, text.font, text.fontSize, powerColor,
+                Vector2.up * 6f, 360f);
+            StartCoroutine(BumpRoutine());
+        }
+
+        // Moves up and away from the head that hit it, so it never pushes into the letter.
+        IEnumerator BumpRoutine()
+        {
+            const float duration = 0.2f;
+            const float height = 0.2f;
+            Vector3 rest = transform.position;
+            for (float t = 0f; t < duration; t += Time.deltaTime)
+            {
+                transform.position = rest + Vector3.up * (Mathf.Sin(t / duration * Mathf.PI) * height);
+                yield return null;
+            }
+            transform.position = rest;
         }
 
         public void Bounce()

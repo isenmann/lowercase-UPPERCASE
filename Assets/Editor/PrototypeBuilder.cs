@@ -23,6 +23,7 @@ namespace LowercaseUppercase.Editor
         const string ChapterScene = SceneFolder + "/Chapter1.unity";
         const string PlaygroundScene = SceneFolder + "/Playground.unity";
         const string VocabularyScene = SceneFolder + "/Vocabulary.unity";
+        const string OverworldScene = SceneFolder + "/Overworld.unity";
         const float PixelsPerUnit = 72f;
         const string ControlsText = "← →  move  ·  Space  jump  ·  Shift  grow  ·  F  shoot";
         const float ControlsLeftPx = 775f;
@@ -50,6 +51,7 @@ namespace LowercaseUppercase.Editor
             BuildChapter1(lower, upper);
             BuildPlayground(lower, upper);
             BuildVocabulary(lower, upper);
+            BuildOverworld(lower, upper);
 
             SetBuildScenes();
             EditorSceneManager.OpenScene(ChapterScene);
@@ -72,7 +74,8 @@ namespace LowercaseUppercase.Editor
             {
                 new EditorBuildSettingsScene(ChapterScene, true),
                 new EditorBuildSettingsScene(PlaygroundScene, true),
-                new EditorBuildSettingsScene(VocabularyScene, true)
+                new EditorBuildSettingsScene(VocabularyScene, true),
+                new EditorBuildSettingsScene(OverworldScene, true)
             };
         }
 
@@ -283,9 +286,11 @@ namespace LowercaseUppercase.Editor
         }
 
         static void FinishScene(string path, Transform level, string title, FormSettings lower, FormSettings upper,
-            Vector2 startPx, string before, string missing, string after, float scrollEndPx = 0f)
+            Vector2 startPx, string before, string missing, string after, float scrollEndPx = 0f,
+            bool respawnAtLastSafe = true, bool startsArmed = true)
         {
             LetterController letter = BuildLetter(lower, upper, startPx);
+            letter.GetComponent<LetterShooter>().startsArmed = startsArmed;
 
             var feedback = Camera.main.gameObject.AddComponent<ScreenFeedback>();
             feedback.letter = letter;
@@ -298,7 +303,7 @@ namespace LowercaseUppercase.Editor
                 feedback.minX = 0f;
                 feedback.maxX = X(scrollEndPx - 640f);
                 feedback.hud = hud;
-                flow.respawnAtLastSafe = true;
+                flow.respawnAtLastSafe = respawnAtLastSafe;
             }
 
             EditorSceneManager.MarkSceneDirty(level.gameObject.scene);

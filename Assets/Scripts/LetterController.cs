@@ -168,6 +168,7 @@ namespace LowercaseUppercase
             Spring(ref velocity);
             Jump(ref velocity, dt);
             ApplyGravity(ref velocity, dt, lift);
+            BumpAbove(velocity, dt);
 
             rb.linearVelocity = velocity;
             previousVerticalSpeed = velocity.y;
@@ -370,6 +371,20 @@ namespace LowercaseUppercase
                 if (block == null || block.kind != WordKind.Cracked) continue;
                 block.Smash();
                 Smashed?.Invoke();
+            }
+        }
+
+        /// <summary>Looks ahead along the upward move, because the physics step will have stopped it by the next look.</summary>
+        void BumpAbove(Vector2 velocity, float dt)
+        {
+            if (velocity.y <= 0f) return;
+
+            int count = box.Cast(Vector2.up, solidFilter, hits, velocity.y * dt + GroundProbe);
+            for (int i = 0; i < count; i++)
+            {
+                if (hits[i].normal.y > -0.7f) continue;
+                WordBlock block = hits[i].collider.GetComponent<WordBlock>();
+                if (block != null) block.HitFromBelow(this);
             }
         }
 

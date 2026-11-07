@@ -36,9 +36,11 @@ namespace LowercaseUppercase
         public TMP_Text readout;
 
         Vector2 lastSafePosition;
+        LetterShooter shooter;
 
         void Start()
         {
+            shooter = letter.GetComponent<LetterShooter>();
             SetSentence(false);
             lastSafePosition = letter.transform.position;
         }
@@ -64,6 +66,7 @@ namespace LowercaseUppercase
                 if (keyboard.digit1Key.wasPressedThisFrame) LoadScene(0);
                 if (keyboard.digit2Key.wasPressedThisFrame) LoadScene(1);
                 if (keyboard.digit3Key.wasPressedThisFrame) LoadScene(2);
+                if (keyboard.digit4Key.wasPressedThisFrame) LoadScene(3);
             }
 
             if (letter.IsGrounded && letter.Surface != null && letter.Surface.kind == WordKind.Solid)
@@ -79,7 +82,8 @@ namespace LowercaseUppercase
 
             Vector2 velocity = letter.IsSlotted ? Vector2.zero : letter.Velocity;
             string caps = letter.IsCapsLocked ? "   CAPS LOCK" : "";
-            readout.text = $"speed {Mathf.Abs(velocity.x):0.0}   fall {velocity.y:0.0}{caps}";
+            string asterisks = shooter != null && !shooter.startsArmed && shooter.IsArmed ? "   * F to shoot" : "";
+            readout.text = $"speed {Mathf.Abs(velocity.x):0.0}   fall {velocity.y:0.0}{caps}{asterisks}";
         }
 
         void LoseLife()

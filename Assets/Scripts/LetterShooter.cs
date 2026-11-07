@@ -14,6 +14,10 @@ namespace LowercaseUppercase
         public float range = 12f;
         [Tooltip("Minimum seconds between shots.")]
         public float cooldown = 0.2f;
+        [Tooltip("Off means the letter can't shoot until it hits a power block.")]
+        public bool startsArmed = true;
+
+        public bool IsArmed { get; private set; }
 
         LetterController letter;
         LetterVisual visual;
@@ -23,11 +27,14 @@ namespace LowercaseUppercase
         {
             letter = GetComponent<LetterController>();
             visual = GetComponent<LetterVisual>();
+            IsArmed = startsArmed;
         }
+
+        public void Arm() => IsArmed = true;
 
         public void Fire()
         {
-            if (letter.IsSlotted || Time.time < nextShotTime) return;
+            if (!IsArmed || letter.IsSlotted || Time.time < nextShotTime) return;
             nextShotTime = Time.time + cooldown;
 
             bool lower = letter.Form == LetterForm.Lowercase;
