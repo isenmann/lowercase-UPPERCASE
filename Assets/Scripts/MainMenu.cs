@@ -36,6 +36,10 @@ namespace LowercaseUppercase
 
         public UnityEngine.UI.Image fade;
 
+        [Tooltip("Filled in with the version from Player Settings when the menu opens.")]
+        public TMP_Text version;
+        public string versionFormat = "v{0} by dev.play.repeat";
+
         GameObject openPanel;
         UnityEngine.UI.Button firstButton;
         bool loading;
@@ -45,6 +49,7 @@ namespace LowercaseUppercase
             Time.timeScale = 1f;
             LevelRun.NewGame();
             CreateEventSystem();
+            if (version != null) version.text = string.Format(versionFormat, Application.version);
 
             playButton.onClick.AddListener(() => Load(chapterScenes[0]));
             chaptersButton.onClick.AddListener(() => Open(chaptersPanel, chapterButtons[0]));

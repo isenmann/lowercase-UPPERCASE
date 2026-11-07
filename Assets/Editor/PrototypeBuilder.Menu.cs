@@ -116,6 +116,7 @@ namespace LowercaseUppercase.Editor
 
             BuildKeyHint(ui, keycap, shiftArrow, regular);
             BuildFormMark(ui);
+            TextMeshProUGUI version = BuildVersion(ui, regular);
 
             UnityEngine.UI.Image fade = UiImage(ui, "Fade", white, Color.black);
             fade.raycastTarget = false;
@@ -138,6 +139,7 @@ namespace LowercaseUppercase.Editor
             menu.fullscreenLabel = fullscreenLabel;
             menu.optionsBack = optionsBack;
             menu.fade = fade;
+            menu.version = version;
 
             EditorSceneManager.MarkSceneDirty(root.gameObject.scene);
             EditorSceneManager.SaveScene(root.gameObject.scene, MenuScene);
@@ -172,13 +174,26 @@ namespace LowercaseUppercase.Editor
             var bottomRight = new Vector2(1f, 0f);
 
             TextMeshProUGUI upperMark = UiText(ui, "MarkUpper", "A", black, 88f, Player, TextAlignmentOptions.BottomRight);
-            Place(upperMark.rectTransform, bottomRight, bottomRight, new Vector2(-64f, 12f), new Vector2(90f, 100f));
+            Place(upperMark.rectTransform, bottomRight, bottomRight, new Vector2(-64f, 34f), new Vector2(90f, 100f));
 
             TextMeshProUGUI arrow = UiText(ui, "MarkArrow", "→", mono, 22f, MenuDim, TextAlignmentOptions.BottomRight);
-            Place(arrow.rectTransform, bottomRight, bottomRight, new Vector2(-142f, 36f), new Vector2(30f, 30f));
+            Place(arrow.rectTransform, bottomRight, bottomRight, new Vector2(-142f, 58f), new Vector2(30f, 30f));
 
             TextMeshProUGUI lowerMark = UiText(ui, "MarkLower", "a", monoBold, 40f, Player, TextAlignmentOptions.BottomRight);
-            Place(lowerMark.rectTransform, bottomRight, bottomRight, new Vector2(-180f, 26f), new Vector2(30f, 50f));
+            Place(lowerMark.rectTransform, bottomRight, bottomRight, new Vector2(-180f, 48f), new Vector2(30f, 50f));
+        }
+
+        /// <summary>
+        /// The version and studio, small in the bottom right corner, lined up with the right edge of the A. The menu
+        /// fills in the version from Player Settings when it opens; the text here is only what the editor shows.
+        /// </summary>
+        static TextMeshProUGUI BuildVersion(Transform ui, TMP_FontAsset font)
+        {
+            var bottomRight = new Vector2(1f, 0f);
+            TextMeshProUGUI version = UiText(ui, "Version", $"v{PlayerSettings.bundleVersion} by dev.play.repeat", font, 13f,
+                Muted, TextAlignmentOptions.BottomRight);
+            Place(version.rectTransform, bottomRight, bottomRight, new Vector2(-64f, 14f), new Vector2(320f, 18f));
+            return version;
         }
 
         // ---------------------------------------------------------------- ui pieces
