@@ -104,7 +104,6 @@ namespace LowercaseUppercase.Editor
             Cloud(level, x + 700f, 130f);
             float left = x;
             Floor(level, "a word that shouts", ref x);
-            PowerBlock(level, left + 330f, LowPlatform);
             HashesOn(level, Word(level, "loud", left + 560f, LowPlatform, 72f), 2);
             return x;
         }
@@ -141,6 +140,7 @@ namespace LowercaseUppercase.Editor
             float left = x;
             Floor(level, "space", ref x);
             PlaceCheckpoint(level, left + 60f, Ground);
+            PowerBlock(level, left + 40f, LowPlatform);
 
             // Brick one hole past the last letter: a stops there and drops into the pit, A breaks it and walks on.
             Note(level, x, 440f, "A walks where a falls");
@@ -174,6 +174,7 @@ namespace LowercaseUppercase.Editor
             float left = x;
             Floor(level, "again", ref x);
             PlaceCheckpoint(level, left + 80f, Ground);
+            PowerBlock(level, left + 60f, LowPlatform);
             return KerningDown(level, x, "holes", "something lives down here", enemyBelow: true);
         }
 
@@ -239,7 +240,6 @@ namespace LowercaseUppercase.Editor
         {
             float left = x;
             Floor(level, "the floor is frozen", ref x);
-            PowerBlock(level, left + 330f, LowPlatform);
             HashesOn(level, Word(level, "cold", left + 560f, LowPlatform, 72f), 2);
             return x;
         }
@@ -251,6 +251,7 @@ namespace LowercaseUppercase.Editor
             x = RightEdge(ice);
             HashArc(level, x - 20f, x + WidePit + 20f, 3);
             x += WidePit;
+            PowerBlock(level, x + 100f, LowPlatform);
             Floor(level, "made it", ref x);
             return x;
         }
@@ -275,6 +276,7 @@ namespace LowercaseUppercase.Editor
             left = x;
             Floor(level, "grip", ref x);
             PlaceCheckpoint(level, left + 40f, Ground);
+            PowerBlock(level, left + 20f, LowPlatform);
             return x;
         }
 
@@ -305,6 +307,7 @@ namespace LowercaseUppercase.Editor
             float left = x;
             WordBlock stop = Word(level, "stop", x, Ground, 72f);
             PlaceCheckpoint(level, left + 60f, Ground);
+            PowerBlock(level, left + 20f, LowPlatform);
             x = RightEdge(stop) + 120f;
 
             left = x;
@@ -386,7 +389,6 @@ namespace LowercaseUppercase.Editor
             Cloud(level, x + 500f, 140f);
             float left = x;
             Floor(level, "a path", ref x);
-            PowerBlock(level, left + 120f, LowPlatform);
             return x + 60f;
         }
 
@@ -404,6 +406,7 @@ namespace LowercaseUppercase.Editor
             float left = x;
             WordBlock ground = Word(level, "down low", x, Ground, 72f);
             BuildEnemy(level, ground, left + 120f);
+            PowerBlock(level, left + 180f, LowPlatform);
             x = SpringAfter(level, RightEdge(ground));
 
             SpringWall(level, x);
@@ -418,6 +421,7 @@ namespace LowercaseUppercase.Editor
             float left = x;
             Floor(level, "under", ref x);
             PlaceCheckpoint(level, left + 50f, Ground);
+            PowerBlock(level, left + 40f, LowPlatform);
             return KerningDown(level, x, "ground", "the trail goes under the wall", enemyBelow: true);
         }
 

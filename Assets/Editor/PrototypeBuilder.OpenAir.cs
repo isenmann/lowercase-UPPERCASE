@@ -54,7 +54,6 @@ namespace LowercaseUppercase.Editor
         {
             float left = x;
             Floor(level, "a comma is a pause", ref x);
-            PowerBlock(level, left + 330f, LowPlatform);
             HashesOn(level, Word(level, "rest", left + 560f, LowPlatform, 72f), 2);
             return x;
         }
@@ -92,6 +91,7 @@ namespace LowercaseUppercase.Editor
             left = x;
             Floor(level, "hang on", ref x);
             PlaceCheckpoint(level, left + 80f, Ground);
+            PowerBlock(level, left + 160f, LowPlatform);
             return x;
         }
 
@@ -158,7 +158,6 @@ namespace LowercaseUppercase.Editor
             Cloud(level, x + 600f, 150f);
             float left = x;
             Floor(level, "the word says up", ref x);
-            PowerBlock(level, left + 300f, LowPlatform);
             return x;
         }
 
@@ -202,6 +201,7 @@ namespace LowercaseUppercase.Editor
             left = x;
             Floor(level, "rest", ref x);
             PlaceCheckpoint(level, left + 60f, Ground);
+            PowerBlock(level, left + 20f, LowPlatform);
             return x;
         }
 

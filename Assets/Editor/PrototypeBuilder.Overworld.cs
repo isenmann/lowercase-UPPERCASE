@@ -57,8 +57,6 @@ namespace LowercaseUppercase.Editor
 
             float left = x;
             Floor(level, "once upon a time", ref x);
-            Note(level, left + 270f, 270f, "jump and hit it from below");
-            PowerBlock(level, left + 370f, LowPlatform);
 
             left = x;
             WordBlock ground = Word(level, "a little letter", x, Ground, 72f);
@@ -95,6 +93,7 @@ namespace LowercaseUppercase.Editor
             float left = x;
             WordBlock ground = Word(level, "and ran", x, Ground, 72f);
             x = RightEdge(ground);
+            Note(level, left - 20f, 270f, "jump and hit it from below");
             PowerBlock(level, left + 90f, LowPlatform);
             HashArc(level, x - 20f, x + 200f, 4);
             x += 180f;
@@ -134,6 +133,7 @@ namespace LowercaseUppercase.Editor
 
             // Up on the platform, because the enemies patrol all of the ground below.
             PlaceCheckpoint(level, left + 265f, LowPlatform);
+            PowerBlock(level, left + 240f, LowPlatform - 145f); // Hit from the checkpoint's platform, above the enemies.
             return x;
         }
 

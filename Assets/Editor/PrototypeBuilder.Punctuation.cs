@@ -55,7 +55,6 @@ namespace LowercaseUppercase.Editor
 
             float left = x;
             Floor(level, "a dash between words", ref x);
-            PowerBlock(level, left + 330f, LowPlatform);
             HashesOn(level, Word(level, "dash", left + 560f, LowPlatform, 72f), 2);
             return x;
         }
@@ -65,6 +64,7 @@ namespace LowercaseUppercase.Editor
             Note(level, x, 440f, "a can walk this. A would snap it.");
             HashRow(level, x + 70f, OnGround, 4);
             x = RightEdge(Bridge(level, x, Ground)) + WordGap;
+            PowerBlock(level, x + 200f, LowPlatform);
             Floor(level, "makes a bridge", ref x);
             return x;
         }
@@ -102,6 +102,7 @@ namespace LowercaseUppercase.Editor
             float left = x;
             Floor(level, "rest", ref x);
             PlaceCheckpoint(level, left + 60f, Ground);
+            PowerBlock(level, left + 20f, LowPlatform);
 
             for (int i = 0; i < 3; i++)
             {
@@ -137,6 +138,7 @@ namespace LowercaseUppercase.Editor
             float left = x;
             Floor(level, "nearly over", ref x);
             PlaceCheckpoint(level, left + 100f, Ground);
+            PowerBlock(level, left + 250f, LowPlatform);
 
             x = RightEdge(Bridge(level, x, Ground)) + WordGap;
             left = x;
@@ -187,7 +189,6 @@ namespace LowercaseUppercase.Editor
         {
             float left = x;
             Floor(level, "behind every door", ref x);
-            PowerBlock(level, left + 330f, LowPlatform);
             HashesOn(level, Word(level, "hall", left + 560f, LowPlatform, 72f), 2);
             return x;
         }
@@ -223,6 +224,7 @@ namespace LowercaseUppercase.Editor
             float left = x;
             Floor(level, "wait here", ref x);
             PlaceCheckpoint(level, left + 120f, Ground);
+            PowerBlock(level, left + 220f, LowPlatform);
 
             float plate = x + 30f;
             x += 80f;

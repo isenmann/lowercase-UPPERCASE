@@ -70,7 +70,6 @@ namespace LowercaseUppercase.Editor
         {
             float left = x;
             Floor(level, "it is getting warm", ref x);
-            PowerBlock(level, left + 330f, LowPlatform);
             HashesOn(level, Word(level, "warm", left + 560f, LowPlatform, 72f), 2);
             return x;
         }
@@ -99,6 +98,7 @@ namespace LowercaseUppercase.Editor
             float left = x;
             Floor(level, "safe", ref x);
             PlaceCheckpoint(level, left + 50f, Ground);
+            PowerBlock(level, left + 20f, LowPlatform);
 
             // The low gap hangs over the hot word, so a can't hop here and has to keep running.
             left = x;
@@ -182,6 +182,7 @@ namespace LowercaseUppercase.Editor
             float left = x;
             Floor(level, "free", ref x);
             PlaceCheckpoint(level, left + 50f, Ground);
+            PowerBlock(level, left + 20f, LowPlatform);
 
             x = RightEdge(HotWord(level, "hot hot", x)) + WordGap;
             left = x;
@@ -219,7 +220,6 @@ namespace LowercaseUppercase.Editor
             Cloud(level, x + 500f, 150f);
             float left = x;
             Floor(level, "the road is black", ref x);
-            PowerBlock(level, left + 300f, LowPlatform);
             return x;
         }
 
@@ -263,6 +263,7 @@ namespace LowercaseUppercase.Editor
             x = RightEdge(dry);
             HashArc(level, x - 20f, x + WidePit + 20f, 3);
             x += WidePit;
+            PowerBlock(level, x + 200f, LowPlatform); // Enemies on tar are slow to dodge.
             Floor(level, "made it over", ref x);
             return x;
         }
@@ -298,6 +299,7 @@ namespace LowercaseUppercase.Editor
             left = x;
             Floor(level, "firm", ref x);
             PlaceCheckpoint(level, left + 40f, Ground);
+            PowerBlock(level, left + 20f, LowPlatform);
             return x;
         }
 
@@ -324,6 +326,7 @@ namespace LowercaseUppercase.Editor
             left = x;
             Floor(level, "unlocked", ref x);
             PlaceCheckpoint(level, left + 80f, Ground);
+            PowerBlock(level, left + 180f, LowPlatform);
             return x;
         }
 
@@ -368,7 +371,6 @@ namespace LowercaseUppercase.Editor
         {
             float left = x;
             Floor(level, "every word at once", ref x);
-            PowerBlock(level, left + 330f, LowPlatform);
             return x;
         }
 
@@ -396,6 +398,7 @@ namespace LowercaseUppercase.Editor
             left = x;
             Floor(level, "rest", ref x);
             PlaceCheckpoint(level, left + 40f, Ground);
+            PowerBlock(level, left + 20f, LowPlatform);
             return x;
         }
 

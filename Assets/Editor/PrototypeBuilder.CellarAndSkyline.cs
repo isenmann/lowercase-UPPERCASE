@@ -52,13 +52,13 @@ namespace LowercaseUppercase.Editor
         {
             float left = x;
             Floor(level, "down in the cellar", ref x);
-            PowerBlock(level, left + 370f, LowPlatform);
 
             left = x;
             WordBlock ground = Word(level, "mind your head", x, Ground, 72f);
             x = RightEdge(ground) + WordGap;
             BuildEnemy(level, ground, left + 300f);
             HashesOn(level, Word(level, "shelf", left + 180f, LowPlatform, 72f), 3);
+            PowerBlock(level, left + 440f, LowPlatform); // The enemy in the low gap ahead can't be jumped.
             return x;
         }
 
@@ -162,7 +162,6 @@ namespace LowercaseUppercase.Editor
 
             float left = x;
             Floor(level, "the sky starts here", ref x);
-            PowerBlock(level, left + 340f, LowPlatform);
             return x + 100f;
         }
 
@@ -176,6 +175,7 @@ namespace LowercaseUppercase.Editor
 
             float left = x;
             WordBlock landing = Platform(level, "then drop down", 400f, ref x, WordGap);
+            PowerBlock(level, left + 40f, 400f - 145f);
             BuildEnemy(level, landing, left + 300f);
             return x;
         }
@@ -186,6 +186,7 @@ namespace LowercaseUppercase.Editor
             x = RightEdge(Bridge(level, x, 400f)) + WordGap;
 
             PlaceCheckpoint(level, x + 150f, 400f);
+            PowerBlock(level, x + 230f, 400f - 145f);
             WordBlock landing = Platform(level, "stay small", 400f, ref x, 0f);
             Spring(level, RightEdge(landing) + 45f, 400f, padWidthPx: 80f);
             return RightEdge(landing) + 170f;

@@ -60,7 +60,6 @@ namespace LowercaseUppercase.Editor
         {
             float left = x;
             Floor(level, "a small letter", ref x);
-            PowerBlock(level, left + 340f, LowPlatform);
             return x;
         }
 
@@ -101,6 +100,7 @@ namespace LowercaseUppercase.Editor
             Note(level, left - 150f, 380f, "too wide for A");
             Floor(level, "rest here", ref x);
             PlaceCheckpoint(level, left + 160f, Ground);
+            PowerBlock(level, left + 230f, LowPlatform);
             return x;
         }
 
@@ -126,6 +126,7 @@ namespace LowercaseUppercase.Editor
             float left = x;
             Floor(level, "rest again", ref x);
             PlaceCheckpoint(level, left + 120f, Ground);
+            PowerBlock(level, left + 250f, LowPlatform);
             return x;
         }
 
@@ -201,7 +202,6 @@ namespace LowercaseUppercase.Editor
 
             float left = x;
             Floor(level, "knock knock", ref x);
-            PowerBlock(level, left + 200f, LowPlatform);
 
             left = x;
             WordBlock ground = Word(level, "who is there", x, Ground, 72f);
@@ -223,6 +223,7 @@ namespace LowercaseUppercase.Editor
         static float WallDoor(Transform level, float x)
         {
             Hill(level, x + 500f, 2);
+            PowerBlock(level, x + 200f, LowPlatform);
             Floor(level, "let it in", ref x);
 
             float left = x;
@@ -245,6 +246,7 @@ namespace LowercaseUppercase.Editor
 
             // Past the wall, which comes back on a reload and keeps this word's enemy on its far side.
             PlaceCheckpoint(level, left + 520f, Ground);
+            PowerBlock(level, left + 560f, LowPlatform);
             return RightEdge(ground) + WidePit;
         }
 
@@ -276,6 +278,7 @@ namespace LowercaseUppercase.Editor
             left = x;
             Floor(level, "almost there", ref x);
             PlaceCheckpoint(level, left + 160f, Ground);
+            PowerBlock(level, left + 280f, LowPlatform);
             return x;
         }
 
