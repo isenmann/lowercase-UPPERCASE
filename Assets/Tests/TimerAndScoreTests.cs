@@ -40,12 +40,19 @@ namespace LowercaseUppercase.Tests
         static Checkpoint FindCheckpoint() => UnityEngine.Object.FindAnyObjectByType<Checkpoint>();
         static Enemy FindEnemy() => UnityEngine.Object.FindAnyObjectByType<Enemy>();
 
+        static readonly string[] AllLevels =
+        {
+            "Chapter1", "Playground", "Vocabulary",
+            "Overworld", "Crack", "Wall", "Plank", "Gate", "Cellar", "Space", "Skate",
+            "Trail", "Chain", "Ladder", "Skyline", "Flames", "Tar", "Final"
+        };
+
         [SetUp]
         public void StartANewGame() => LevelRun.NewGame();
 
         [UnityTest]
         public IEnumerator EveryLevelStartsWithAFullClockThatCountsDown(
-            [Values("Chapter1", "Playground", "Vocabulary", "Overworld", "Crack", "Wall", "Cellar", "Skyline")] string scene)
+            [ValueSource(nameof(AllLevels))] string scene)
         {
             LevelRun.TimeLeft = 1f;
             yield return LoadWithoutIntro(scene);
@@ -81,7 +88,7 @@ namespace LowercaseUppercase.Tests
 
         [UnityTest]
         public IEnumerator RunningOutOfTimeEndsTheRun(
-            [Values("Chapter1", "Playground", "Vocabulary", "Overworld", "Crack", "Wall", "Cellar", "Skyline")] string scene)
+            [ValueSource(nameof(AllLevels))] string scene)
         {
             yield return LoadWithoutIntro(scene);
             LetterController letter = FindLetter();

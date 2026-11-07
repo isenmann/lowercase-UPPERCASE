@@ -50,7 +50,7 @@ namespace LowercaseUppercase.Editor
             x = CrackEnd(level, x);
             Ceiling(level, x + 400f);
 
-            FinishScene(CrackScene, level, "Crack · 7", lower, upper, new Vector2(110f, Ground),
+            FinishScene(CrackScene, level, "Crack · 2", lower, upper, new Vector2(110f, Ground),
                 "hide in a cr", "a", "ck", scrollEndPx: x + 200f, startsArmed: false,
                 nextScene: SceneName(WallScene));
             EditorSceneManager.OpenScene(CrackScene);
@@ -187,9 +187,9 @@ namespace LowercaseUppercase.Editor
             x = WallClosingRun(level, x);
             x = WallEnd(level, x);
 
-            FinishScene(WallScene, level, "Wall · 8", lower, upper, new Vector2(110f, Ground),
+            FinishScene(WallScene, level, "Wall · 3", lower, upper, new Vector2(110f, Ground),
                 "knock on the w", "a", "ll", scrollEndPx: x + 200f, startsArmed: false,
-                nextScene: SceneName(CellarScene));
+                nextScene: SceneName(PlankScene));
             EditorSceneManager.OpenScene(WallScene);
         }
 
@@ -323,9 +323,9 @@ namespace LowercaseUppercase.Editor
 
         // ---------------------------------------------------------------- pieces
 
-        static void BrickWall(Transform level, float leftPx, string letters = BrickLetters)
+        static void BrickWall(Transform level, float leftPx, string letters = BrickLetters, float bottomPx = Ground)
         {
-            WordBlock brick = Column(level, letters, leftPx, Ground, 46f, WordKind.Cracked, Breakable);
+            WordBlock brick = Column(level, letters, leftPx, bottomPx, 46f, WordKind.Cracked, Breakable);
             brick.gameObject.name = "Word brick";
         }
     }

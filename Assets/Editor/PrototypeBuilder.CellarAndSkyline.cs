@@ -38,12 +38,13 @@ namespace LowercaseUppercase.Editor
             x = CellarTunnel(level, x);
             x = CellarBrickWall(level, x);
             x = CellarBridgeAndDoor(level, x);
+            x = ShiftRun(level, x, true, "duck down", "break out", "duck again", "break free");
             x = CellarEnd(level, x);
             Ceiling(level, x + 400f);
 
-            FinishScene(CellarScene, level, "Cellar · 5", lower, upper, new Vector2(110f, Ground),
+            FinishScene(CellarScene, level, "Cellar · 6", lower, upper, new Vector2(110f, Ground),
                 "sleep in a c", "a", "ve", scrollEndPx: x + 200f, startsArmed: false,
-                nextScene: SceneName(SkylineScene));
+                nextScene: SceneName(SpaceScene));
             EditorSceneManager.OpenScene(CellarScene);
         }
 
@@ -51,7 +52,6 @@ namespace LowercaseUppercase.Editor
         {
             float left = x;
             Floor(level, "down in the cellar", ref x);
-            Note(level, left + 270f, 350f, "you will want this before the tunnel");
             PowerBlock(level, left + 370f, LowPlatform);
 
             left = x;
@@ -69,7 +69,6 @@ namespace LowercaseUppercase.Editor
             x = RightEdge(ground) + WordGap;
 
             // The enemy patrols through the tunnel, where A can't go to stomp it, so it has to be shot or dodged.
-            Note(level, left + 60f, 440f, "a fits. A does not.");
             Stacked(level, "lowlowlowlow", left + 420f, TunnelRows, TunnelBottom);
             HashRow(level, left + 480f, OnGround, 4);
             BuildEnemy(level, ground, left + 200f);
@@ -82,7 +81,6 @@ namespace LowercaseUppercase.Editor
             WordBlock ground = Word(level, "only capitals break through", x, Ground, 72f);
             x = RightEdge(ground) + WordGap;
 
-            Note(level, left + 300f, 440f, "hold Shift and run into it");
             WordBlock brick = Column(level, "b\nr\ni\nc\nk\nb\nr\ni\nc\nk", left + 640f, Ground, 46f, WordKind.Cracked, Breakable);
             brick.gameObject.name = "Word brick";
             BuildEnemy(level, ground, left + 120f);
@@ -95,11 +93,9 @@ namespace LowercaseUppercase.Editor
 
         static float CellarBridgeAndDoor(Transform level, float x)
         {
-            Note(level, x, 440f, "A would snap this");
             HashRow(level, x + 80f, OnGround, 4);
             x = RightEdge(Bridge(level, x, Ground)) + WordGap;
 
-            Note(level, x, 440f, "A holds it open. a runs.");
             WordBlock plate = Plate(level, x + 30f);
             x += 80f;
             Floor(level, "then run", ref x);
@@ -149,11 +145,13 @@ namespace LowercaseUppercase.Editor
             x = SkylineBridgeAndSpring(level, x);
             x = SkylineIce(level, x);
             x = SkylineHooks(level, x);
+            Floor(level, "land here", ref x);
+            x = ShiftRun(level, x, false, "slip in", "push out", "slip in", "push out", "slip in", "push out");
             x = SkylineLiftAndStar(level, x);
 
-            FinishScene(SkylineScene, level, "Skyline · 6", lower, upper, new Vector2(110f, Ground),
+            FinishScene(SkylineScene, level, "Skyline · 12", lower, upper, new Vector2(110f, Ground),
                 "reach for a st", "a", "r", scrollEndPx: x + 200f, startsArmed: false,
-                nextScene: SceneName(MenuScene));
+                nextScene: SceneName(FlamesScene));
             EditorSceneManager.OpenScene(SkylineScene);
         }
 
@@ -185,13 +183,11 @@ namespace LowercaseUppercase.Editor
         static float SkylineBridgeAndSpring(Transform level, float x)
         {
             Cloud(level, x + 100f, 180f);
-            Note(level, x, 320f, "A would snap this");
             x = RightEdge(Bridge(level, x, 400f)) + WordGap;
 
             PlaceCheckpoint(level, x + 150f, 400f);
             WordBlock landing = Platform(level, "stay small", 400f, ref x, 0f);
             Spring(level, RightEdge(landing) + 45f, 400f, padWidthPx: 80f);
-            Note(level, RightEdge(landing) - 40f, 320f, "a flies twice as high");
             return RightEdge(landing) + 170f;
         }
 
@@ -215,7 +211,6 @@ namespace LowercaseUppercase.Editor
         {
             Cloud(level, x + 300f, 500f);
             Floor(level, "hold on", ref x);
-            Note(level, x - 200f, 440f, "jump to a comma. jump again to let go.");
             Hook(level, "Hook 1", x + 170f, 270f);
             Hook(level, "Hook 2", x + 410f, 270f);
             HashArc(level, x + 210f, x + 370f, 3, 300f, 50f); // Along the leap from one comma to the next.
@@ -226,16 +221,10 @@ namespace LowercaseUppercase.Editor
         {
             Floor(level, "almost", ref x);
 
-            // The same lift as the literal words station in the Vocabulary level: rises to the next word.
-            WordBlock up = Word(level, "up", x + 20f, Ground, 72f, WordKind.Up, Interactive);
-            up.liftHeight = Size(350f);
-            up.FitCollider();
-            SetHeight(up, Y(585f));
-            for (float rowY = 500f; rowY > 240f; rowY -= 80f)
-                Text(level, "Lift Mark", "up", x + 20f, rowY, 72f, mono, new Color(Interactive.r, Interactive.g, Interactive.b, 0.18f));
-            x += 150f;
+            // The same lift as Ladder's.
+            x = Lift(level, x, LiftTop);
 
-            const float top = 300f;
+            const float top = LiftLanding;
             float wordLeft = x + 150f;
             Platform(level, "one more run", top, ref x, 0f);
             Text(level, "Word st", "st", wordLeft, top, 72f, mono, Paper);

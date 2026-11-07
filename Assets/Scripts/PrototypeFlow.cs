@@ -21,7 +21,7 @@ namespace LowercaseUppercase
 
         public LetterController letter;
         public float killY = -6f;
-        public Checkpoint checkpoint;
+        public Checkpoint[] checkpoints;
 
         [Header("Sentence")]
         public TMP_Text sentence;
@@ -61,6 +61,7 @@ namespace LowercaseUppercase
         float bankProgress;
         float gameOverEnds;
         int collectibleCount;
+        Checkpoint resumedAt;
 
         public bool IsGameOver { get; private set; }
 
@@ -70,7 +71,8 @@ namespace LowercaseUppercase
         void Awake()
         {
             LevelRun.EnterLevel();
-            if (checkpoint.TakeResume()) letter.transform.position = checkpoint.respawnFeet;
+            resumedAt = Checkpoint.TakeResume(checkpoints);
+            if (resumedAt != null) letter.transform.position = resumedAt.respawnFeet;
         }
 
         void Start()
@@ -78,7 +80,6 @@ namespace LowercaseUppercase
             shooter = letter.GetComponent<LetterShooter>();
             transition = GetComponent<LevelTransition>();
             SetSentence(false);
-            if (checkpoint.ArmedWhenReached) shooter.Arm();
             // Inactive ones too, because those taken before a death are hidden as the scene loads.
             collectibleCount = FindObjectsByType<Collectible>(FindObjectsInactive.Include).Length;
         }
@@ -162,7 +163,8 @@ namespace LowercaseUppercase
                 return;
             }
 
-            if (checkpoint.IsReached) checkpoint.ResumeAfterReload();
+            Checkpoint furthest = Checkpoint.Furthest(checkpoints);
+            if (furthest != null) furthest.ResumeAfterReload();
             LevelRun.ContinueAfterDeath();
             Restart();
         }

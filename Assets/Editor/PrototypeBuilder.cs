@@ -42,7 +42,7 @@ namespace LowercaseUppercase.Editor
         static TMP_FontAsset monoBold;
         static TMP_FontAsset black;
         static Sprite white;
-        static Checkpoint levelCheckpoint;
+        static readonly List<Checkpoint> levelCheckpoints = new List<Checkpoint>();
 
         [MenuItem("lowercase UPPERCASE/Rebuild Prototype Scenes")]
         public static void Rebuild()
@@ -58,6 +58,16 @@ namespace LowercaseUppercase.Editor
             BuildSkyline(lower, upper);
             BuildCrack(lower, upper);
             BuildWall(lower, upper);
+            BuildPlank(lower, upper);
+            BuildGate(lower, upper);
+            BuildSpace(lower, upper);
+            BuildSkate(lower, upper);
+            BuildTrail(lower, upper);
+            BuildChain(lower, upper);
+            BuildLadder(lower, upper);
+            BuildFlames(lower, upper);
+            BuildTar(lower, upper);
+            BuildFinal(lower, upper);
 
             SetBuildScenes();
             EditorSceneManager.OpenScene(MenuScene);
@@ -74,6 +84,17 @@ namespace LowercaseUppercase.Editor
             AssetDatabase.SaveAssets();
         }
 
+        /// <summary>The 15 levels in the order they are played, which is not their build order.</summary>
+        static readonly string[] PlayOrder =
+        {
+            OverworldScene, CrackScene, WallScene,
+            PlankScene, GateScene, CellarScene,
+            SpaceScene, SkateScene, TrailScene,
+            ChainScene, LadderScene, SkylineScene,
+            FlamesScene, TarScene, FinalScene
+        };
+
+        // New scenes are appended, so older build indices, the number keys and the tests that use them don't move.
         static void SetBuildScenes()
         {
             EditorBuildSettings.scenes = new[]
@@ -86,7 +107,17 @@ namespace LowercaseUppercase.Editor
                 new EditorBuildSettingsScene(CellarScene, true),
                 new EditorBuildSettingsScene(SkylineScene, true),
                 new EditorBuildSettingsScene(CrackScene, true),
-                new EditorBuildSettingsScene(WallScene, true)
+                new EditorBuildSettingsScene(WallScene, true),
+                new EditorBuildSettingsScene(PlankScene, true),
+                new EditorBuildSettingsScene(GateScene, true),
+                new EditorBuildSettingsScene(SpaceScene, true),
+                new EditorBuildSettingsScene(SkateScene, true),
+                new EditorBuildSettingsScene(TrailScene, true),
+                new EditorBuildSettingsScene(ChainScene, true),
+                new EditorBuildSettingsScene(LadderScene, true),
+                new EditorBuildSettingsScene(FlamesScene, true),
+                new EditorBuildSettingsScene(TarScene, true),
+                new EditorBuildSettingsScene(FinalScene, true)
             };
         }
 
@@ -256,7 +287,10 @@ namespace LowercaseUppercase.Editor
             blank.wantedForm = wantedForm;
         }
 
-        /// <summary>Stands the level's checkpoint on a surface. Choose a spot no enemy can walk to, because the letter returns there.</summary>
+        /// <summary>
+        /// Stands a checkpoint on a surface. Choose a spot no enemy can walk to, because the letter returns there.
+        /// Call in the order the letter meets them.
+        /// </summary>
         static void PlaceCheckpoint(Transform parent, float leftPx, float surfacePx)
         {
             const float fontPx = 72f;
@@ -270,10 +304,12 @@ namespace LowercaseUppercase.Editor
             trigger.size = new Vector2(Size(centrePx), stripHeight);
             trigger.offset = new Vector2(Size(centrePx), 0f);
 
-            levelCheckpoint = text.gameObject.AddComponent<Checkpoint>();
-            levelCheckpoint.glyph = text;
-            levelCheckpoint.reachedColor = Player;
-            levelCheckpoint.respawnFeet = new Vector2(X(leftPx + centrePx), Y(surfacePx) + 0.05f);
+            var checkpoint = text.gameObject.AddComponent<Checkpoint>();
+            checkpoint.glyph = text;
+            checkpoint.reachedColor = Player;
+            checkpoint.respawnFeet = new Vector2(X(leftPx + centrePx), Y(surfacePx) + 0.05f);
+            checkpoint.order = levelCheckpoints.Count;
+            levelCheckpoints.Add(checkpoint);
         }
 
         static SpriteRenderer Rect(Transform parent, string name, Vector2 localPosition, Vector2 size, Color color, int order)
@@ -300,6 +336,7 @@ namespace LowercaseUppercase.Editor
 
         static Transform BeginScene(string path, string levelName, bool ruledLines = true)
         {
+            levelCheckpoints.Clear(); // In case an earlier build stopped part way.
             AssetDatabase.DeleteAsset(path);
             AssetDatabase.CopyAsset(TemplateScene, path);
             EditorSceneManager.OpenScene(path);
@@ -327,7 +364,7 @@ namespace LowercaseUppercase.Editor
             Vector2 startPx, string before, string missing, string after, float scrollEndPx = 0f,
             bool startsArmed = true, string nextScene = null)
         {
-            if (levelCheckpoint == null)
+            if (levelCheckpoints.Count == 0)
                 throw new System.InvalidOperationException($"{path} needs a checkpoint: call PlaceCheckpoint while building it.");
 
             LetterController letter = BuildLetter(lower, upper, startPx);
@@ -337,8 +374,8 @@ namespace LowercaseUppercase.Editor
             feedback.letter = letter;
 
             PrototypeFlow flow = BuildHud(letter, title, before, missing, after, out Transform hud);
-            flow.checkpoint = levelCheckpoint;
-            levelCheckpoint = null;
+            flow.checkpoints = levelCheckpoints.ToArray();
+            levelCheckpoints.Clear();
 
             if (scrollEndPx > 0f)
             {

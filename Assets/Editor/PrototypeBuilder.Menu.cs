@@ -93,16 +93,15 @@ namespace LowercaseUppercase.Editor
             UnityEngine.UI.Button chapters = OutlineButton(mainPanel, "ChaptersButton", "Chapters", outline, medium, out _);
             UnityEngine.UI.Button options = OutlineButton(mainPanel, "OptionsButton", "Options", outline, medium, out _);
 
-            string[] scenes =
-            {
-                SceneName(OverworldScene), SceneName(CrackScene), SceneName(WallScene),
-                SceneName(CellarScene), SceneName(SkylineScene)
-            };
+            string[] scenes = System.Array.ConvertAll(PlayOrder, SceneName);
             RectTransform chaptersPanel = MenuPanel(ui, "ChaptersPanel");
-            UseChapterGrid(chaptersPanel);
+            RectTransform chapterGrid = ChapterGrid(chaptersPanel);
             var chapterButtons = new UnityEngine.UI.Button[scenes.Length];
             for (int i = 0; i < scenes.Length; i++)
-                chapterButtons[i] = OutlineButton(chaptersPanel, $"{scenes[i]}Button", scenes[i], outline, medium, out _);
+            {
+                chapterButtons[i] = OutlineButton(chapterGrid, $"{scenes[i]}Button", $"{i + 1} · {scenes[i]}", outline,
+                    medium, out _);
+            }
             UnityEngine.UI.Button chaptersBack = OutlineButton(chaptersPanel, "BackButton", "Back", outline, medium, out _);
             chaptersPanel.gameObject.SetActive(false);
 
@@ -201,22 +200,38 @@ namespace LowercaseUppercase.Editor
             return rect;
         }
 
-        /// <summary>A single column runs off the bottom of the screen after five buttons, and the game will have many more levels.</summary>
-        static void UseChapterGrid(RectTransform panel)
+        /// <summary>
+        /// One column per chapter, three levels down each, filled column by column so the levels read in play order.
+        /// The panel's own layout stacks the grid and the Back button under it.
+        /// </summary>
+        static RectTransform ChapterGrid(RectTransform panel)
         {
-            const int columns = 3;
-            const float spacing = 12f;
-            const float buttonHeight = 48f;
+            const int chapters = 5;
+            const int levelsPerChapter = 3;
+            const float spacing = 10f;
+            const float cellWidth = 200f;
+            const float cellHeight = 40f;
+            float width = chapters * cellWidth + (chapters - 1) * spacing;
+            float height = levelsPerChapter * cellHeight + (levelsPerChapter - 1) * spacing;
 
-            Object.DestroyImmediate(panel.GetComponent<UnityEngine.UI.VerticalLayoutGroup>());
-            PlaceFromTop(panel, MenuColumnTop, columns * MenuColumnWidth + (columns - 1) * spacing, 260f);
+            PlaceFromTop(panel, MenuColumnTop, width, 260f);
+            var stack = panel.GetComponent<UnityEngine.UI.VerticalLayoutGroup>();
+            stack.childControlWidth = false; // Keeps Back at its usual width instead of the grid's.
+            stack.spacing = 16f;
 
-            var grid = panel.gameObject.AddComponent<UnityEngine.UI.GridLayoutGroup>();
-            grid.cellSize = new Vector2(MenuColumnWidth, buttonHeight);
+            var go = new GameObject("ChapterGrid", typeof(RectTransform));
+            go.transform.SetParent(panel, false);
+            var rect = (RectTransform)go.transform;
+            rect.sizeDelta = new Vector2(width, height);
+
+            var grid = go.AddComponent<UnityEngine.UI.GridLayoutGroup>();
+            grid.cellSize = new Vector2(cellWidth, cellHeight);
             grid.spacing = new Vector2(spacing, spacing);
-            grid.constraint = UnityEngine.UI.GridLayoutGroup.Constraint.FixedColumnCount;
-            grid.constraintCount = columns;
+            grid.startAxis = UnityEngine.UI.GridLayoutGroup.Axis.Vertical;
+            grid.constraint = UnityEngine.UI.GridLayoutGroup.Constraint.FixedRowCount;
+            grid.constraintCount = levelsPerChapter;
             grid.childAlignment = TextAnchor.UpperCenter;
+            return rect;
         }
 
         static UnityEngine.UI.Button PrimaryButton(RectTransform panel, string name, string label, Sprite sprite, TMP_FontAsset font)

@@ -71,12 +71,17 @@ namespace LowercaseUppercase.Tests
             yield return WaitUntil(() => target.IsTaken);
         }
 
+        static readonly string[] PlayOrder =
+        {
+            "Overworld", "Crack", "Wall", "Plank", "Gate", "Cellar", "Space", "Skate", "Trail", "Chain", "Ladder", "Skyline", "Flames", "Tar", "Final"
+        };
+
         [SetUp]
         public void StartANewGame() => LevelRun.NewGame();
 
         [UnityTest]
         public IEnumerator EveryLevelInThePlayOrderHasSomeToCollect(
-            [Values("Overworld", "Crack", "Wall", "Cellar", "Skyline")] string scene)
+            [ValueSource(nameof(PlayOrder))] string scene)
         {
             yield return LoadWithoutIntro(scene);
             int count = AllCollectibles().Length;

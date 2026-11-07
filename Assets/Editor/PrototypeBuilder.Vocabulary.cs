@@ -243,12 +243,12 @@ namespace LowercaseUppercase.Editor
             ruleText.rectTransform.sizeDelta = new Vector2(Size(280f), 0f);
         }
 
-        static WordBlock Plate(Transform level, float centrePx)
+        static WordBlock Plate(Transform level, float centrePx, float surfacePx = Ground)
         {
-            TextMeshPro text = Text(level, "Word period", ".", centrePx - 96f * 0.306f, Ground, 96f, monoBold, Interactive);
+            TextMeshPro text = Text(level, "Word period", ".", centrePx - 96f * 0.306f, surfacePx, 96f, monoBold, Interactive);
             WordBlock block = AddBlock(text, WordKind.Period);
             block.padWidth = Size(70f);
-            MoveTopTo(block, Ground);
+            MoveTopTo(block, surfacePx);
             return block;
         }
 

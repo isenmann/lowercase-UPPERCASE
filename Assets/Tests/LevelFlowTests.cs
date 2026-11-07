@@ -58,9 +58,19 @@ namespace LowercaseUppercase.Tests
         {
             new[] { "Overworld", "Crack" },
             new[] { "Crack", "Wall" },
-            new[] { "Wall", "Cellar" },
-            new[] { "Cellar", "Skyline" },
-            new[] { "Skyline", "Menu" }
+            new[] { "Wall", "Plank" },
+            new[] { "Plank", "Gate" },
+            new[] { "Gate", "Cellar" },
+            new[] { "Cellar", "Space" },
+            new[] { "Space", "Skate" },
+            new[] { "Skate", "Trail" },
+            new[] { "Trail", "Chain" },
+            new[] { "Chain", "Ladder" },
+            new[] { "Ladder", "Skyline" },
+            new[] { "Skyline", "Flames" },
+            new[] { "Flames", "Tar" },
+            new[] { "Tar", "Final" },
+            new[] { "Final", "Menu" }
         };
 
         [UnityTest]
@@ -95,7 +105,12 @@ namespace LowercaseUppercase.Tests
             Assert.AreEqual(1f, Time.timeScale);
         }
 
-        static readonly string[] AllLevels = { "Chapter1", "Playground", "Vocabulary", "Overworld", "Crack", "Wall", "Cellar", "Skyline" };
+        static readonly string[] AllLevels =
+        {
+            "Chapter1", "Playground", "Vocabulary",
+            "Overworld", "Crack", "Wall", "Plank", "Gate", "Cellar", "Space", "Skate",
+            "Trail", "Chain", "Ladder", "Skyline", "Flames", "Tar", "Final"
+        };
 
         static Checkpoint FindCheckpoint() => UnityEngine.Object.FindAnyObjectByType<Checkpoint>();
 
@@ -148,7 +163,7 @@ namespace LowercaseUppercase.Tests
         }
 
         [UnityTest]
-        public IEnumerator ReturningKeepsTheAsterisksHeldWhenPassingTheCheckpoint([Values(false, true)] bool armed)
+        public IEnumerator ReturningToTheCheckpointCostsTheAsterisks([Values(false, true)] bool armed)
         {
             yield return LoadWithoutIntro("Overworld");
             LetterController before = FindLetter();
@@ -159,7 +174,7 @@ namespace LowercaseUppercase.Tests
             yield return WaitUntil(() => before == null);
             yield return null;
 
-            Assert.AreEqual(armed, FindLetter().GetComponent<LetterShooter>().IsArmed);
+            Assert.IsFalse(FindLetter().GetComponent<LetterShooter>().IsArmed);
         }
 
         [UnityTest]

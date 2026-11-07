@@ -41,7 +41,7 @@ namespace LowercaseUppercase.Editor
             x = StairStretch(level, x);
             x = CastleStretch(level, x);
 
-            FinishScene(OverworldScene, level, "Overworld · 4", lower, upper, new Vector2(110f, Ground),
+            FinishScene(OverworldScene, level, "Overworld · 1", lower, upper, new Vector2(110f, Ground),
                 "home is a c", "a", "stle", scrollEndPx: x + 200f, startsArmed: false,
                 nextScene: SceneName(CrackScene));
             EditorSceneManager.OpenScene(OverworldScene);
