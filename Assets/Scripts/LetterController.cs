@@ -18,6 +18,7 @@ namespace LowercaseUppercase
         const float StickToGroundSpeed = -1f;
         const float LiftAcceleration = 60f;
         const float StompTolerance = 0.05f;
+        const float DeathHopShare = 0.5f;
 
         public FormSettings lowercase;
         public FormSettings uppercase;
@@ -48,6 +49,7 @@ namespace LowercaseUppercase
         public bool IsSlotted { get; private set; }
         public bool IsCapsLocked { get; private set; }
         public bool IsClinging { get; private set; }
+        public bool IsFallingOff { get; private set; }
         public bool IsHanging => hook != null;
         public Vector2 HookAnchor => hook != null ? hook.WorldCentre : Vector2.zero;
         public WordBlock Surface => surface;
@@ -110,6 +112,8 @@ namespace LowercaseUppercase
         public void Respawn(Vector2 feetPosition)
         {
             hook = null;
+            IsFallingOff = false;
+            box.enabled = true;
             IsGrounded = false;
             surface = null;
             risingFromJump = false;
@@ -120,7 +124,23 @@ namespace LowercaseUppercase
             transform.position = feetPosition;
         }
 
-        public void Burn() => Burned?.Invoke();
+        public void Burn()
+        {
+            if (!IsFallingOff) Burned?.Invoke();
+        }
+
+        /// <summary>The death animation: a small hop, then straight down through the level with nothing to touch.</summary>
+        public void FallOffScreen()
+        {
+            if (IsSlotted || IsFallingOff) return;
+            IsFallingOff = true;
+            hook = null;
+            IsGrounded = false;
+            IsClinging = false;
+            surface = null;
+            box.enabled = false;
+            rb.linearVelocity = Vector2.up * (Current.JumpVelocity * DeathHopShare);
+        }
 
         void Awake()
         {
@@ -151,6 +171,12 @@ namespace LowercaseUppercase
             pendingLift = null;
             regrabTimer -= dt;
 
+            if (IsFallingOff)
+            {
+                rb.linearVelocity = Vector2.up * (velocity.y - Current.Gravity * dt);
+                return;
+            }
+
             if (hook != null)
             {
                 IsGrounded = false;
@@ -161,6 +187,7 @@ namespace LowercaseUppercase
 
             UpdateGround(velocity);
             if (IsGrounded && surface != null) surface.OnStood(this, dt);
+            if (IsFallingOff) return; // A hot word can burn the letter just above, and the hop must survive this step.
             ResolveForm(ref velocity);
             if (Form == LetterForm.Uppercase) SmashAhead(velocity, dt);
             Run(ref velocity, dt);

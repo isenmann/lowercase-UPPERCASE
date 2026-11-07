@@ -12,8 +12,8 @@ namespace LowercaseUppercase.Tests
     /// <summary>Fires asterisks in the real scenes.</summary>
     public class ShootingTests
     {
-        const int Chapter1 = 0;
-        const int Playground = 1;
+        const int Chapter1 = 1;
+        const int Playground = 2;
         const float Timeout = 5f;
 
         LetterController letter;

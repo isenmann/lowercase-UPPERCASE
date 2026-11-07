@@ -3,6 +3,7 @@
     "rootNamespace": "LowercaseUppercase",
     "references": [
         "Unity.TextMeshPro",
+        "UnityEngine.UI",
         "Unity.InputSystem"
     ],
     "autoReferenced": true

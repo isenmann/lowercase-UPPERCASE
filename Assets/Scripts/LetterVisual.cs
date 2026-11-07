@@ -31,10 +31,18 @@ namespace LowercaseUppercase
         public float deniedShake = 0.06f;
         public float deniedDuration = 0.18f;
 
+        [Header("Death")]
+        [Tooltip("Degrees per second while falling off the screen, tipping in the direction the letter faces.")]
+        public float deathSpinSpeed = 120f;
+
+        /// <summary>Keeps the letter out of sight until Appear is called.</summary>
+        public bool Hidden { get; set; }
+
         LetterController letter;
         Vector2 scale = Vector2.one;
         Vector2 scaleVelocity;
         float deniedTimer;
+        float deathAngle;
 
         void Awake()
         {
@@ -60,8 +68,21 @@ namespace LowercaseUppercase
             letter.Launched -= OnLaunched;
         }
 
+        /// <summary>Pops the letter into view on the squash spring.</summary>
+        public void Appear()
+        {
+            Hidden = false;
+            Kick(Vector2.zero);
+        }
+
         void Update()
         {
+            if (Hidden)
+            {
+                scaler.localScale = Vector3.zero;
+                return;
+            }
+
             float dt = Time.unscaledDeltaTime;
             StepSpring(ref scale, ref scaleVelocity, dt, stiffness, damping);
             scaler.localScale = new Vector3(scale.x, scale.y, 1f);
@@ -72,7 +93,11 @@ namespace LowercaseUppercase
             lowerGlyph.color = color;
             upperGlyph.color = color;
             float shake = denied > 0f ? Mathf.Sin(Time.unscaledTime * 90f) * deniedShake * denied : 0f;
-            scaler.localPosition = new Vector3(shake, 0f, 0f);
+            deathAngle = letter.IsFallingOff ? deathAngle - letter.Facing * deathSpinSpeed * Time.deltaTime : 0f;
+            Quaternion tilt = Quaternion.Euler(0f, 0f, deathAngle);
+            Vector3 centre = Vector3.up * (letter.Current.colliderSize.y * 0.5f);
+            scaler.localRotation = tilt;
+            scaler.localPosition = new Vector3(shake, 0f, 0f) + centre - tilt * centre;
 
             UpdateThread();
         }

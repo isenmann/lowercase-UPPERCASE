@@ -12,8 +12,8 @@ namespace LowercaseUppercase.Tests
     /// <summary>Plays the real scenes with scripted input instead of a keyboard.</summary>
     public class MovementTests
     {
-        const int Chapter1 = 0;
-        const int Playground = 1;
+        const int Chapter1 = 1;
+        const int Playground = 2;
         const float Timeout = 12f;
 
         LetterController letter;

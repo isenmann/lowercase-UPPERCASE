@@ -8,7 +8,7 @@ namespace LowercaseUppercase.Editor
     /// <summary>
     /// A long side-scrolling run over pits, tubes and stairs. The ground reads as one sentence, and the
     /// exit is the word the letter is missing from. The letter can't shoot until it hits a power block.
-    /// Dying restarts the level: respawning at the last solid word would put it back on the enemy.
+    /// Dying restarts the level, or returns to the checkpoint once the letter has passed it.
     /// </summary>
     public static partial class PrototypeBuilder
     {
@@ -42,7 +42,8 @@ namespace LowercaseUppercase.Editor
             x = CastleStretch(level, x);
 
             FinishScene(OverworldScene, level, "Overworld · 4", lower, upper, new Vector2(110f, Ground),
-                "home is a c", "a", "stle", scrollEndPx: x + 200f, respawnAtLastSafe: false, startsArmed: false);
+                "home is a c", "a", "stle", scrollEndPx: x + 200f, startsArmed: false,
+                nextScene: SceneName(CellarScene));
             EditorSceneManager.OpenScene(OverworldScene);
         }
 
@@ -127,6 +128,9 @@ namespace LowercaseUppercase.Editor
 
             Word(level, "over", left + 200f, LowPlatform, 72f);
             Word(level, "them", left + 900f, LowPlatform, 72f);
+
+            // Up on the platform, because the enemies patrol all of the ground below.
+            PlaceCheckpoint(level, left + 265f, LowPlatform);
             return x;
         }
 

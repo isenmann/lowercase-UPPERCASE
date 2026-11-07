@@ -26,9 +26,11 @@ namespace LowercaseUppercase
         Rigidbody2D rb;
         BoxCollider2D box;
         ContactFilter2D solidFilter;
+        Vector2 spawnPosition;
 
         void Awake()
         {
+            spawnPosition = transform.position;
             rb = GetComponent<Rigidbody2D>();
             box = GetComponent<BoxCollider2D>();
             rb.bodyType = RigidbodyType2D.Kinematic;
@@ -74,6 +76,7 @@ namespace LowercaseUppercase
         {
             if (!box.enabled) return;
             box.enabled = false;
+            LevelRun.EnemyKilled(spawnPosition);
             glyph.transform.SetParent(null, true);
             glyph.gameObject.AddComponent<FlyingText>().Launch(
                 new Vector2(Random.Range(-3f, 3f), Random.Range(3f, 6f)), Random.Range(-600f, 600f));

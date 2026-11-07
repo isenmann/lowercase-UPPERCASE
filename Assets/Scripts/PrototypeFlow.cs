@@ -5,22 +5,39 @@ using UnityEngine.SceneManagement;
 
 namespace LowercaseUppercase
 {
-    /// <summary>Restart keys, scene switching, falling out of the world, and the HUD.</summary>
+    /// <summary>
+    /// Restart keys, scene switching, falling out of the world, the level clock, and the HUD. It wakes first, so that the camera
+    /// already finds the letter at the checkpoint when it centres itself in its own Awake.
+    /// </summary>
+    [DefaultExecutionOrder(-100)]
     public class PrototypeFlow : MonoBehaviour
     {
         const string MissingLetterColor = "#FFD23F";
+        const int MenuBuildIndex = 0;
+        const float OffscreenMargin = 0.3f;
+        const float LowTimeSeconds = 10f;
+        const float BankSeconds = 1.2f;
+        const float GameOverSeconds = 2.5f;
 
         public LetterController letter;
         public float killY = -6f;
-
-        [Tooltip("Falling or burning returns the letter to the last solid word instead of restarting the level.")]
-        public bool respawnAtLastSafe;
+        public Checkpoint checkpoint;
 
         [Header("Sentence")]
         public TMP_Text sentence;
         public string sentenceBefore = "the c";
         public string missingLetter = "a";
         public string sentenceAfter = "t sat on the mat";
+
+        [Header("Clock and score")]
+        public TMP_Text timer;
+        public TMP_Text score;
+        public Color timerColor = new Color32(0xF2, 0xF0, 0xEA, 0xFF);
+        public Color lowTimeColor = new Color32(0xFF, 0x4D, 0x5E, 0xFF);
+
+        [Header("Game over")]
+        public GameObject gameOverScreen;
+        public TMP_Text gameOverScore;
 
         [Header("Form chips")]
         public SpriteRenderer lowerChip;
@@ -35,46 +52,81 @@ namespace LowercaseUppercase
         [Header("Tuning readout")]
         public TMP_Text readout;
 
-        Vector2 lastSafePosition;
         LetterShooter shooter;
+        LevelTransition transition;
+        float timeAtSlot;
+        int scoreAtSlot;
+        float bankProgress;
+        float gameOverEnds;
+
+        public bool IsGameOver { get; private set; }
+
+        // The clock also reads zero once the time left has been banked at the exit.
+        bool RunIsLost => LevelRun.TimeIsUp && !letter.IsSlotted;
+
+        void Awake()
+        {
+            LevelRun.EnterLevel();
+            if (checkpoint.TakeResume()) letter.transform.position = checkpoint.respawnFeet;
+        }
 
         void Start()
         {
             shooter = letter.GetComponent<LetterShooter>();
+            transition = GetComponent<LevelTransition>();
             SetSentence(false);
-            lastSafePosition = letter.transform.position;
+            if (checkpoint.ArmedWhenReached) shooter.Arm();
         }
 
         void OnEnable()
         {
             letter.Slotted += OnSlotted;
-            letter.Burned += LoseLife;
+            letter.Burned += letter.FallOffScreen;
         }
 
         void OnDisable()
         {
             letter.Slotted -= OnSlotted;
-            letter.Burned -= LoseLife;
+            letter.Burned -= letter.FallOffScreen;
         }
 
         void Update()
         {
             Keyboard keyboard = Keyboard.current;
-            if (keyboard != null)
+            if (IsGameOver)
             {
-                if (keyboard.rKey.wasPressedThisFrame) Restart();
-                if (keyboard.digit1Key.wasPressedThisFrame) LoadScene(0);
-                if (keyboard.digit2Key.wasPressedThisFrame) LoadScene(1);
-                if (keyboard.digit3Key.wasPressedThisFrame) LoadScene(2);
-                if (keyboard.digit4Key.wasPressedThisFrame) LoadScene(3);
-                if (keyboard.digit5Key.wasPressedThisFrame) LoadScene(4);
-                if (keyboard.digit6Key.wasPressedThisFrame) LoadScene(5);
+                bool skipped = keyboard != null && keyboard.escapeKey.wasPressedThisFrame;
+                if (skipped || Time.unscaledTime >= gameOverEnds) LoadScene(MenuBuildIndex);
+                return;
             }
 
-            if (letter.IsGrounded && letter.Surface != null && letter.Surface.kind == WordKind.Solid)
-                lastSafePosition = letter.transform.position;
+            if (keyboard != null)
+            {
+                bool inTransition = transition != null && transition.IsPlaying;
+                if (keyboard.rKey.wasPressedThisFrame && !inTransition && !RunIsLost)
+                {
+                    LevelRun.AbandonLevel();
+                    Restart();
+                }
+                if (keyboard.escapeKey.wasPressedThisFrame) LoadScene(MenuBuildIndex);
+                if (keyboard.digit1Key.wasPressedThisFrame) LoadScene(1);
+                if (keyboard.digit2Key.wasPressedThisFrame) LoadScene(2);
+                if (keyboard.digit3Key.wasPressedThisFrame) LoadScene(3);
+                if (keyboard.digit4Key.wasPressedThisFrame) LoadScene(4);
+                if (keyboard.digit5Key.wasPressedThisFrame) LoadScene(5);
+                if (keyboard.digit6Key.wasPressedThisFrame) LoadScene(6);
+            }
 
-            if (letter.transform.position.y < killY) LoseLife();
+            // Scaled time, so the intro doesn't use up the clock. It waits during a fall, so a death can't run it out.
+            if (!letter.IsSlotted && !letter.IsFallingOff)
+            {
+                LevelRun.Tick(Time.deltaTime);
+                if (LevelRun.TimeIsUp) letter.FallOffScreen();
+            }
+
+            if (letter.IsFallingOff ? HasLeftTheScreen() : letter.transform.position.y < killY) LoseLife();
+
+            ShowClockAndScore();
 
             bool lower = letter.Form == LetterForm.Lowercase;
             lowerChip.color = lower ? activeChip : idleChip;
@@ -88,13 +140,58 @@ namespace LowercaseUppercase
             readout.text = $"speed {Mathf.Abs(velocity.x):0.0}   fall {velocity.y:0.0}{caps}{asterisks}";
         }
 
-        void LoseLife()
+        bool HasLeftTheScreen()
         {
-            if (respawnAtLastSafe) letter.Respawn(lastSafePosition);
-            else Restart();
+            Camera view = Camera.main;
+            float top = letter.transform.position.y + letter.Current.colliderSize.y + OffscreenMargin;
+            return top < view.transform.position.y - view.orthographicSize;
         }
 
-        void OnSlotted() => SetSentence(true);
+        void LoseLife()
+        {
+            if (RunIsLost)
+            {
+                ShowGameOver();
+                return;
+            }
+
+            if (checkpoint.IsReached) checkpoint.ResumeAfterReload();
+            LevelRun.ContinueAfterDeath();
+            Restart();
+        }
+
+        void ShowGameOver()
+        {
+            IsGameOver = true;
+            gameOverEnds = Time.unscaledTime + GameOverSeconds;
+            gameOverScore.text = $"score {LevelRun.Score}";
+            gameOverScreen.SetActive(true);
+        }
+
+        void OnSlotted()
+        {
+            SetSentence(true);
+            timeAtSlot = LevelRun.TimeLeft;
+            scoreAtSlot = LevelRun.Score;
+            LevelRun.BankTimeLeft();
+        }
+
+        /// <summary>Once the letter has slotted, the time left visibly drains into the score. The points are already banked.</summary>
+        void ShowClockAndScore()
+        {
+            float timeShown = LevelRun.TimeLeft;
+            int scoreShown = LevelRun.Score;
+            if (letter.IsSlotted)
+            {
+                bankProgress = Mathf.MoveTowards(bankProgress, 1f, Time.unscaledDeltaTime / BankSeconds);
+                timeShown = Mathf.Lerp(timeAtSlot, 0f, bankProgress);
+                scoreShown = Mathf.RoundToInt(Mathf.Lerp(scoreAtSlot, LevelRun.Score, bankProgress));
+            }
+
+            timer.text = $"{Mathf.CeilToInt(timeShown)}s";
+            timer.color = !letter.IsSlotted && timeShown <= LowTimeSeconds ? lowTimeColor : timerColor;
+            score.text = $"score {scoreShown}";
+        }
 
         void SetSentence(bool filled)
         {
@@ -102,7 +199,11 @@ namespace LowercaseUppercase
             sentence.text = $"{sentenceBefore}<color={MissingLetterColor}>{blank}</color>{sentenceAfter}";
         }
 
-        static void Restart() => SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        void Restart()
+        {
+            if (transition != null) LevelTransition.SkipNextIntro = true;
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        }
 
         static void LoadScene(int index)
         {

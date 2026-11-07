@@ -119,6 +119,7 @@ namespace LowercaseUppercase.Editor
         static float LiteralStation(Transform level, float x)
         {
             Label(level, x, "Literal words", "Words act out their meaning: ice slides, hot burns, up lifts, sticky holds.", "both");
+            PlaceCheckpoint(level, x + 30f, Ground);
             WordBlock ice = Word(level, "ice ice", x, Ground, 72f, WordKind.Ice, Interactive, italic: true);
             ice.grip = 0.12f;
             x = RightEdge(ice) + WordGap;

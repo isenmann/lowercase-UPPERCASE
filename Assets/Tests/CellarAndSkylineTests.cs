@@ -10,14 +10,15 @@ namespace LowercaseUppercase.Tests
     /// <summary>Checks what the Cellar and Skyline scenes promise: no asterisks at the start, a block to get them, and an exit.</summary>
     public class CellarAndSkylineTests
     {
-        const int Cellar = 4;
-        const int Skyline = 5;
+        const int Cellar = 5;
+        const int Skyline = 6;
         const float Timeout = 5f;
 
         LetterController letter;
 
         IEnumerator Load(int buildIndex)
         {
+            LevelTransition.SkipNextIntro = true;
             yield return SceneManager.LoadSceneAsync(buildIndex);
             yield return null;
             var go = GameObject.Find("Letter");
@@ -63,6 +64,11 @@ namespace LowercaseUppercase.Tests
         public IEnumerator UppercaseCannotEnterTheCellarTunnel()
         {
             yield return Load(Cellar);
+
+            // The one patrolling this stretch would reach the waiting letter and restart the level.
+            foreach (Enemy enemy in UnityEngine.Object.FindObjectsByType<Enemy>())
+                UnityEngine.Object.Destroy(enemy.gameObject);
+
             var tunnel = GameObject.Find("Word lowlowlowlow").GetComponent<BoxCollider2D>().bounds;
             float groundY = tunnel.min.y - 55f / 72f;
 

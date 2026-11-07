@@ -34,7 +34,7 @@ namespace LowercaseUppercase
 
         public void Fire()
         {
-            if (!IsArmed || letter.IsSlotted || Time.time < nextShotTime) return;
+            if (!IsArmed || letter.IsSlotted || letter.IsFallingOff || Time.time < nextShotTime) return;
             nextShotTime = Time.time + cooldown;
 
             bool lower = letter.Form == LetterForm.Lowercase;

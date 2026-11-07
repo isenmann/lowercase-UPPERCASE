@@ -6,7 +6,7 @@ using UnityEngine;
 namespace LowercaseUppercase.Editor
 {
     /// <summary>
-    /// Two more runs built like the Overworld: the letter starts without asterisks and dying restarts.
+    /// Two more runs built like the Overworld: the letter starts without asterisks, and dying restarts or returns to the checkpoint.
     /// Cellar is about headroom under a ceiling, and Skyline is about crossing open air.
     /// </summary>
     public static partial class PrototypeBuilder
@@ -42,7 +42,8 @@ namespace LowercaseUppercase.Editor
             Ceiling(level, x + 400f);
 
             FinishScene(CellarScene, level, "Cellar · 5", lower, upper, new Vector2(110f, Ground),
-                "sleep in a c", "a", "ve", scrollEndPx: x + 200f, respawnAtLastSafe: false, startsArmed: false);
+                "sleep in a c", "a", "ve", scrollEndPx: x + 200f, startsArmed: false,
+                nextScene: SceneName(SkylineScene));
             EditorSceneManager.OpenScene(CellarScene);
         }
 
@@ -85,6 +86,9 @@ namespace LowercaseUppercase.Editor
             brick.gameObject.name = "Word brick";
             BuildEnemy(level, ground, left + 120f);
             PowerBlock(level, left + 900f, LowPlatform);
+
+            // Past the wall, which comes back on a reload and keeps this word's enemy on its far side.
+            PlaceCheckpoint(level, left + 760f, Ground);
             return x;
         }
 
@@ -145,7 +149,8 @@ namespace LowercaseUppercase.Editor
             x = SkylineLiftAndStar(level, x);
 
             FinishScene(SkylineScene, level, "Skyline · 6", lower, upper, new Vector2(110f, Ground),
-                "reach for a st", "a", "r", scrollEndPx: x + 200f, respawnAtLastSafe: false, startsArmed: false);
+                "reach for a st", "a", "r", scrollEndPx: x + 200f, startsArmed: false,
+                nextScene: SceneName(MenuScene));
             EditorSceneManager.OpenScene(SkylineScene);
         }
 
@@ -180,6 +185,7 @@ namespace LowercaseUppercase.Editor
             Note(level, x, 320f, "A would snap this");
             x = RightEdge(Bridge(level, x, 400f)) + WordGap;
 
+            PlaceCheckpoint(level, x + 150f, 400f);
             WordBlock landing = Platform(level, "stay small", 400f, ref x, 0f);
             Spring(level, RightEdge(landing) + 45f, 400f, padWidthPx: 80f);
             Note(level, RightEdge(landing) - 40f, 320f, "a flies twice as high");

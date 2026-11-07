@@ -10,7 +10,7 @@ namespace LowercaseUppercase.Tests
     /// <summary>Tries every station of the Vocabulary level with scripted input, in both forms where it matters.</summary>
     public class VocabularyTests
     {
-        const int Vocabulary = 2;
+        const int Vocabulary = 3;
         const float Timeout = 12f;
 
         LetterController letter;
@@ -356,19 +356,19 @@ namespace LowercaseUppercase.Tests
         }
 
         [UnityTest]
-        public IEnumerator FallingRespawnsOnTheLastSolidWordWithoutReloading()
+        public IEnumerator FallingBeforeTheCheckpointRestartsTheLevel()
         {
             yield return Load();
             yield return Steps(5);
-            Vector3 safe = letter.transform.position;
-            LetterController same = letter;
+            Vector3 start = letter.transform.position;
+            LetterController before = letter;
 
-            letter.Respawn(new Vector2(safe.x, -5.9f));
+            letter.Respawn(new Vector2(start.x, -5.9f));
             letter.SetInput(0f, false, false);
-            yield return new WaitForSeconds(0.5f);
+            yield return WaitUntil(() => before == null, 3f);
+            yield return null;
 
-            Assert.IsTrue(same != null, "The scene should not have reloaded.");
-            Assert.AreEqual(safe.y, FeetY, 0.3f);
+            Assert.AreEqual(start.x, GameObject.Find("Letter").transform.position.x, 0.5f);
         }
     }
 }

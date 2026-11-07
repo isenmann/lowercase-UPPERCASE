@@ -6,6 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/Scenes/Menu.unity
+    guid: 00000000000000000000000000000000
+  - enabled: 1
     path: Assets/Scenes/Chapter1.unity
     guid: 2ec1b146df2f2d37db68432a766f8304
   - enabled: 1
@@ -16,12 +19,12 @@ EditorBuildSettings:
     guid: 0c44d2b880a3f02f79c73c08e392ceb7
   - enabled: 1
     path: Assets/Scenes/Overworld.unity
-    guid: c9780358c7e4a9c49837cef60303c9fb
+    guid: bbd6179cad794b06e9fadb9a600432f1
   - enabled: 1
     path: Assets/Scenes/Cellar.unity
-    guid: 51b8f471dbc739d1fb2ff37cc5ec5bfd
+    guid: a208cf61526e0ab5088a87f486ac48d4
   - enabled: 1
     path: Assets/Scenes/Skyline.unity
-    guid: b04ebd79286f23754a2575cf5bd18ff6
+    guid: a568139525df1cd3ba1c30837cee7a44
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}

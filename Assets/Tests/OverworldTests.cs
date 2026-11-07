@@ -10,7 +10,7 @@ namespace LowercaseUppercase.Tests
     /// <summary>Plays the power blocks and the exit of the Overworld scene.</summary>
     public class OverworldTests
     {
-        const int Overworld = 3;
+        const int Overworld = 4;
         const float Timeout = 5f;
 
         LetterController letter;
@@ -19,6 +19,7 @@ namespace LowercaseUppercase.Tests
         [UnitySetUp]
         public IEnumerator Load()
         {
+            LevelTransition.SkipNextIntro = true;
             yield return SceneManager.LoadSceneAsync(Overworld);
             yield return null;
             var go = GameObject.Find("Letter");

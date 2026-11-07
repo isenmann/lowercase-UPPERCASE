@@ -10,8 +10,12 @@ namespace LowercaseUppercase.Tests
     /// <summary>Meets the enemy in the Playground scene, with the letter placed by hand.</summary>
     public class EnemyTests
     {
-        const int Playground = 1;
+        const int Playground = 2;
         const float Timeout = 8f;
+
+        // On the enemy's word, past the end of "one", with room for A between it and the bottom of "two".
+        const float ClearOverheadX = -5.4f;
+        const float DropHeight = 0.9f;
 
         LetterController letter;
         Enemy enemy;
@@ -50,6 +54,15 @@ namespace LowercaseUppercase.Tests
             letter.transform.position = feet;
         }
 
+        /// <summary>Stops the enemy where nothing overhead can catch a letter dropped onto it.</summary>
+        void HoldEnemyInTheOpen()
+        {
+            enemy.speed = 0f;
+            var spot = new Vector2(ClearOverheadX, enemy.transform.position.y);
+            enemy.GetComponent<Rigidbody2D>().position = spot;
+            enemy.transform.position = spot;
+        }
+
         IEnumerator GrowInPlace()
         {
             letter.SetInput(0f, false, true);
@@ -79,10 +92,10 @@ namespace LowercaseUppercase.Tests
         public IEnumerator LandingOnItAsUppercaseKillsItAndBouncesTheLetter()
         {
             yield return Load();
-            enemy.speed = 0f;
+            HoldEnemyInTheOpen();
             yield return GrowInPlace();
 
-            PlaceLetterAt((Vector2)enemy.transform.position + Vector2.up * 2f);
+            PlaceLetterAt((Vector2)enemy.transform.position + Vector2.up * DropHeight);
             yield return WaitUntil(() => enemy == null);
 
             Assert.IsTrue(letter != null, "The letter should survive the stomp.");
@@ -93,8 +106,8 @@ namespace LowercaseUppercase.Tests
         public IEnumerator LandingOnItAsLowercaseCostsALife()
         {
             yield return Load();
-            enemy.speed = 0f;
-            PlaceLetterAt((Vector2)enemy.transform.position + Vector2.up * 2f);
+            HoldEnemyInTheOpen();
+            PlaceLetterAt((Vector2)enemy.transform.position + Vector2.up * DropHeight);
             LetterController before = letter;
             yield return WaitUntil(() => before == null);
         }

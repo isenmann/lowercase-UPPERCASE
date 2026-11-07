@@ -42,12 +42,14 @@ namespace LowercaseUppercase.Editor
         static TMP_FontAsset monoBold;
         static TMP_FontAsset black;
         static Sprite white;
+        static Checkpoint levelCheckpoint;
 
         [MenuItem("lowercase UPPERCASE/Rebuild Prototype Scenes")]
         public static void Rebuild()
         {
             PrepareAssets(out FormSettings lower, out FormSettings upper);
 
+            BuildMenu();
             BuildChapter1(lower, upper);
             BuildPlayground(lower, upper);
             BuildVocabulary(lower, upper);
@@ -56,7 +58,7 @@ namespace LowercaseUppercase.Editor
             BuildSkyline(lower, upper);
 
             SetBuildScenes();
-            EditorSceneManager.OpenScene(ChapterScene);
+            EditorSceneManager.OpenScene(MenuScene);
         }
 
         static void PrepareAssets(out FormSettings lower, out FormSettings upper)
@@ -74,6 +76,7 @@ namespace LowercaseUppercase.Editor
         {
             EditorBuildSettings.scenes = new[]
             {
+                new EditorBuildSettingsScene(MenuScene, true),
                 new EditorBuildSettingsScene(ChapterScene, true),
                 new EditorBuildSettingsScene(PlaygroundScene, true),
                 new EditorBuildSettingsScene(VocabularyScene, true),
@@ -93,6 +96,7 @@ namespace LowercaseUppercase.Editor
             Word(level, "the", 56f, 547f, 72f);
             Word(level, "sat", 290f, 447f, 72f);
             Word(level, "ice", 520f, 587f, 72f, WordKind.Ice, Interactive, italic: true);
+            PlaceCheckpoint(level, 565f, 587f);
             Word(level, "on", 666f, 587f, 72f);
             Word(level, "the", 768f, 587f, 72f);
             Word(level, "mat", 914f, 587f, 72f);
@@ -127,6 +131,9 @@ namespace LowercaseUppercase.Editor
 
             // The gap under this word fits a but not A, so it tests headroom.
             Word(level, "ceiling", 540f, 526f, 48f);
+
+            // Between the ceiling and the brick. The enemy's word ends at the spring, so it can't walk here.
+            PlaceCheckpoint(level, 770f, floor);
 
             Cracked(level, "b\nr\ni\nc\nk", 830f, floor);
             Word(level, "ice ice ice", 950f, 470f, 48f, WordKind.Ice, Interactive, italic: true);
@@ -245,6 +252,26 @@ namespace LowercaseUppercase.Editor
             blank.wantedForm = wantedForm;
         }
 
+        /// <summary>Stands the level's checkpoint on a surface. Choose a spot no enemy can walk to, because the letter returns there.</summary>
+        static void PlaceCheckpoint(Transform parent, float leftPx, float surfacePx)
+        {
+            const float fontPx = 72f;
+            const float tailPx = 14f; // The semicolon's tail hangs below the baseline, so lift it to rest on the word.
+            const float stripHeight = 40f;
+            float centrePx = fontPx * 0.3f;
+
+            TextMeshPro text = Text(parent, "Checkpoint", ";", leftPx, surfacePx - tailPx, fontPx, monoBold, Muted, -1);
+            var trigger = text.gameObject.AddComponent<BoxCollider2D>();
+            trigger.isTrigger = true;
+            trigger.size = new Vector2(Size(centrePx), stripHeight);
+            trigger.offset = new Vector2(Size(centrePx), 0f);
+
+            levelCheckpoint = text.gameObject.AddComponent<Checkpoint>();
+            levelCheckpoint.glyph = text;
+            levelCheckpoint.reachedColor = Player;
+            levelCheckpoint.respawnFeet = new Vector2(X(leftPx + centrePx), Y(surfacePx) + 0.05f);
+        }
+
         static SpriteRenderer Rect(Transform parent, string name, Vector2 localPosition, Vector2 size, Color color, int order)
         {
             var go = new GameObject(name);
@@ -267,7 +294,7 @@ namespace LowercaseUppercase.Editor
 
         // ---------------------------------------------------------------- scene shell
 
-        static Transform BeginScene(string path, string levelName)
+        static Transform BeginScene(string path, string levelName, bool ruledLines = true)
         {
             AssetDatabase.DeleteAsset(path);
             AssetDatabase.CopyAsset(TemplateScene, path);
@@ -282,17 +309,23 @@ namespace LowercaseUppercase.Editor
             camera.allowMSAA = true;
 
             // Far wider than one screen, so they also cover levels where the camera scrolls.
-            Transform lines = new GameObject("Ruled Lines").transform;
-            for (float y = 89f; y < 720f; y += 90f)
-                PixelRect(lines, "Line", -2000f, y, 14000f, 1f, RuledLine, -10);
+            if (ruledLines)
+            {
+                Transform lines = new GameObject("Ruled Lines").transform;
+                for (float y = 89f; y < 720f; y += 90f)
+                    PixelRect(lines, "Line", -2000f, y, 14000f, 1f, RuledLine, -10);
+            }
 
             return new GameObject(levelName).transform;
         }
 
         static void FinishScene(string path, Transform level, string title, FormSettings lower, FormSettings upper,
             Vector2 startPx, string before, string missing, string after, float scrollEndPx = 0f,
-            bool respawnAtLastSafe = true, bool startsArmed = true)
+            bool startsArmed = true, string nextScene = null)
         {
+            if (levelCheckpoint == null)
+                throw new System.InvalidOperationException($"{path} needs a checkpoint: call PlaceCheckpoint while building it.");
+
             LetterController letter = BuildLetter(lower, upper, startPx);
             letter.GetComponent<LetterShooter>().startsArmed = startsArmed;
 
@@ -300,6 +333,8 @@ namespace LowercaseUppercase.Editor
             feedback.letter = letter;
 
             PrototypeFlow flow = BuildHud(letter, title, before, missing, after, out Transform hud);
+            flow.checkpoint = levelCheckpoint;
+            levelCheckpoint = null;
 
             if (scrollEndPx > 0f)
             {
@@ -307,7 +342,16 @@ namespace LowercaseUppercase.Editor
                 feedback.minX = 0f;
                 feedback.maxX = X(scrollEndPx - 640f);
                 feedback.hud = hud;
-                flow.respawnAtLastSafe = respawnAtLastSafe;
+            }
+
+            if (nextScene != null)
+            {
+                var transition = flow.gameObject.AddComponent<LevelTransition>();
+                transition.level = level;
+                transition.letter = letter;
+                transition.nextScene = nextScene;
+                // Larger than the screen, so camera shake can't show its edges.
+                transition.fade = PixelRect(hud, "Fade", -100f, -100f, 1480f, 920f, Color.black, 100);
             }
 
             EditorSceneManager.MarkSceneDirty(level.gameObject.scene);
@@ -393,6 +437,8 @@ namespace LowercaseUppercase.Editor
 
             Text(hud, "Title", title, 32f, 38f, 14f, mono, Muted, order + 1);
             TextMeshPro sentence = Text(hud, "Sentence", "", 500f, 40f, 22f, mono, Paper, order + 1);
+            TextMeshPro score = Text(hud, "Score", "", 900f, 38f, 14f, mono, Muted, order + 1);
+            TextMeshPro timer = Text(hud, "Timer", "", 1070f, 40f, 22f, monoBold, Paper, order + 1);
             Text(hud, "Restart", "R restart", 1160f, 38f, 14f, mono, Muted, order + 1);
 
             Text(hud, "Form", "Form", 32f, 690f, 14f, mono, Muted, order + 1);
@@ -409,6 +455,25 @@ namespace LowercaseUppercase.Editor
             flow.sentenceBefore = before;
             flow.missingLetter = missing;
             flow.sentenceAfter = after;
+            flow.timer = timer;
+            flow.score = score;
+            flow.timerColor = Paper;
+            flow.lowTimeColor = Danger;
+
+            // Above everything else in the HUD, including a level's fade.
+            const int gameOverOrder = 110;
+            var gameOver = new GameObject("Game Over");
+            gameOver.transform.SetParent(hud, false);
+            PixelRect(gameOver.transform, "Backdrop", -100f, -100f, 1480f, 920f, Background, gameOverOrder);
+            // Text boxes are 720px wide from their left edge, so 280 centres them on the 1280px screen.
+            Text(gameOver.transform, "Heading", "GAME OVER", 280f, 350f, 72f, black, Danger, gameOverOrder + 1)
+                .alignment = TextAlignmentOptions.Baseline;
+            TextMeshPro finalScore = Text(gameOver.transform, "Final Score", "", 280f, 410f, 22f, mono, Paper, gameOverOrder + 1);
+            finalScore.alignment = TextAlignmentOptions.Baseline;
+            gameOver.SetActive(false);
+            flow.gameOverScreen = gameOver;
+            flow.gameOverScore = finalScore;
+
             flow.lowerChip = lowerChip;
             flow.upperChip = upperChip;
             flow.lowerChipLabel = lowerLabel;
