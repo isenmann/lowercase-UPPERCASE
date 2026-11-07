@@ -8,13 +8,16 @@ namespace LowercaseUppercase
     public class LetterInput : MonoBehaviour
     {
         LetterController letter;
+        LetterShooter shooter;
         InputAction move;
         InputAction jump;
         InputAction shift;
+        InputAction shoot;
 
         void Awake()
         {
             letter = GetComponent<LetterController>();
+            shooter = GetComponent<LetterShooter>();
 
             move = new InputAction("Move", InputActionType.Value, expectedControlType: "Axis");
             move.AddCompositeBinding("1DAxis")
@@ -36,6 +39,11 @@ namespace LowercaseUppercase
             shift.AddBinding("<Keyboard>/rightShift");
             shift.AddBinding("<Gamepad>/rightTrigger");
             shift.AddBinding("<Gamepad>/leftTrigger");
+
+            // Not Ctrl: Ctrl+W, with W as jump, would close the browser tab in the Web build.
+            shoot = new InputAction("Shoot", InputActionType.Button);
+            shoot.AddBinding("<Keyboard>/f");
+            shoot.AddBinding("<Gamepad>/buttonWest");
         }
 
         void OnEnable()
@@ -43,6 +51,7 @@ namespace LowercaseUppercase
             move.Enable();
             jump.Enable();
             shift.Enable();
+            shoot.Enable();
         }
 
         void OnDisable()
@@ -50,6 +59,7 @@ namespace LowercaseUppercase
             move.Disable();
             jump.Disable();
             shift.Disable();
+            shoot.Disable();
         }
 
         void OnDestroy()
@@ -57,11 +67,13 @@ namespace LowercaseUppercase
             move.Dispose();
             jump.Dispose();
             shift.Dispose();
+            shoot.Dispose();
         }
 
         void Update()
         {
             if (jump.WasPressedThisFrame()) letter.PressJump();
+            if (shoot.WasPressedThisFrame() && shooter != null) shooter.Fire();
             letter.SetInput(move.ReadValue<float>(), jump.IsPressed(), shift.IsPressed());
         }
     }

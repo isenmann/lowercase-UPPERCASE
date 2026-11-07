@@ -46,6 +46,10 @@ namespace LowercaseUppercase
         [Tooltip("Height reached from an exclamation mark. The concept wants lowercase at twice UPPERCASE.")]
         public float springHeight = 6f;
 
+        [Header("Shooting")]
+        [Tooltip("Font size of the asterisks this form fires. It also sets their collision size.")]
+        public float asteriskSize = 5f;
+
         [Header("Entering this form in mid-air")]
         [Tooltip("Share of the downward speed converted into forward speed. This is what makes the glide.")]
         public float fallToForward = 0f;

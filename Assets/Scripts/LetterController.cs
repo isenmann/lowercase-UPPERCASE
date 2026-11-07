@@ -17,6 +17,7 @@ namespace LowercaseUppercase
         const float OverlapSkin = 0.02f;
         const float StickToGroundSpeed = -1f;
         const float LiftAcceleration = 60f;
+        const float StompTolerance = 0.05f;
 
         public FormSettings lowercase;
         public FormSettings uppercase;
@@ -52,6 +53,8 @@ namespace LowercaseUppercase
         public WordBlock Surface => surface;
         public Vector2 Velocity => rb.linearVelocity;
         public FormSettings Current => Form == LetterForm.Lowercase ? lowercase : uppercase;
+        public float Facing => facing;
+        public Vector2 BodyCentre => rb.position + Vector2.up * (Current.colliderSize.y * 0.5f);
 
         Rigidbody2D rb;
         BoxCollider2D box;
@@ -170,8 +173,22 @@ namespace LowercaseUppercase
             previousVerticalSpeed = velocity.y;
         }
 
+        // Stay first arrives one physics step after contact, too late to tell whether the letter came from above.
+        void OnTriggerEnter2D(Collider2D other)
+        {
+            var enemy = other.GetComponent<Enemy>();
+            if (enemy != null) TouchEnemy(enemy);
+        }
+
         void OnTriggerStay2D(Collider2D other)
         {
+            var enemy = other.GetComponent<Enemy>();
+            if (enemy != null)
+            {
+                TouchEnemy(enemy);
+                return;
+            }
+
             var zone = other.GetComponent<CapsLockZone>();
             if (zone != null)
             {
@@ -191,6 +208,47 @@ namespace LowercaseUppercase
                 if (Form == LetterForm.Uppercase) block.Smash();
                 else TryGrab(block);
             }
+        }
+
+        // ---------------------------------------------------------------- enemies
+
+        void TouchEnemy(Enemy enemy)
+        {
+            if (IsSlotted) return;
+
+            if (Form == LetterForm.Uppercase && CameFromAbove(enemy))
+            {
+                enemy.Kill();
+                BounceOffEnemy();
+                Smashed?.Invoke();
+            }
+            else
+            {
+                Burn();
+            }
+        }
+
+        /// <summary>
+        /// Compares the feet one physics step ago with the enemy's top, because a fast fall can already be
+        /// deep inside the enemy by the first contact. Walking into it or jumping up into it both fail this.
+        /// </summary>
+        bool CameFromAbove(Enemy enemy)
+        {
+            if (previousVerticalSpeed >= 0f) return false;
+            float feetLastStep = rb.position.y - previousVerticalSpeed * Time.fixedDeltaTime;
+            return feetLastStep >= enemy.TopY - StompTolerance;
+        }
+
+        void BounceOffEnemy()
+        {
+            Vector2 velocity = rb.linearVelocity;
+            velocity.y = Current.JumpVelocity;
+            rb.linearVelocity = velocity;
+            previousVerticalSpeed = velocity.y;
+            IsGrounded = false;
+            coyoteTimer = 0f;
+            risingFromJump = false;
+            Jumped?.Invoke();
         }
 
         // ---------------------------------------------------------------- ground and form

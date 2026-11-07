@@ -31,5 +31,6 @@ MonoBehaviour:
   coyoteTime: 0.09
   jumpBuffer: 0.12
   springHeight: 6
+  asteriskSize: 5
   fallToForward: 0.6
   fallKept: 0.35

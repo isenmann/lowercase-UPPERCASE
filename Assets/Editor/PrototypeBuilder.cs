@@ -24,6 +24,8 @@ namespace LowercaseUppercase.Editor
         const string PlaygroundScene = SceneFolder + "/Playground.unity";
         const string VocabularyScene = SceneFolder + "/Vocabulary.unity";
         const float PixelsPerUnit = 72f;
+        const string ControlsText = "← →  move  ·  Space  jump  ·  Shift  grow  ·  F  shoot";
+        const float ControlsLeftPx = 775f;
 
         static readonly Color Background = new Color32(0x11, 0x13, 0x18, 0xFF);
         static readonly Color RuledLine = new Color32(0x1A, 0x1D, 0x24, 0xFF);
@@ -32,6 +34,7 @@ namespace LowercaseUppercase.Editor
         static readonly Color Muted = new Color32(0x9A, 0xA0, 0xAE, 0xFF);
         static readonly Color Player = new Color32(0xFF, 0xD2, 0x3F, 0xFF);
         static readonly Color Interactive = new Color32(0x5C, 0xD3, 0xF5, 0xFF);
+        static readonly Color Danger = new Color32(0xFF, 0x4D, 0x5E, 0xFF);
         static readonly Color Breakable = new Color32(0x6B, 0x71, 0x80, 0xFF);
 
         static TMP_FontAsset mono;
@@ -102,7 +105,8 @@ namespace LowercaseUppercase.Editor
             Transform level = BeginScene(PlaygroundScene, "Playground");
             const float floor = 600f;
 
-            Word(level, "the quick brown", 8f, floor, 44f);
+            WordBlock enemyGround = Word(level, "the quick brown", 8f, floor, 44f);
+            BuildEnemy(level, enemyGround, 230f);
             Spring(level, 453f, floor, padWidthPx: 80f);
             Word(level, "fox jumps over the lazy dog", 493f, floor, 44f);
 
@@ -326,8 +330,29 @@ namespace LowercaseUppercase.Editor
             visual.hookThread = Rect(null, "Hook Thread", Vector2.zero, Vector2.one, Interactive, 9);
             visual.hookThread.enabled = false;
 
+            go.AddComponent<LetterShooter>();
             go.AddComponent<LetterInput>();
             return letter;
+        }
+
+        /// <summary>Stands an enemy on top of a word. Enemies have no gravity, so the height has to be exact.</summary>
+        static void BuildEnemy(Transform parent, WordBlock ground, float leftPx)
+        {
+            var groundBox = ground.GetComponent<BoxCollider2D>();
+            float surfaceY = ground.transform.TransformPoint(groundBox.offset).y + groundBox.size.y * 0.5f;
+
+            var go = new GameObject("Enemy &");
+            go.transform.SetParent(parent, false);
+            go.transform.position = new Vector3(X(leftPx), surfaceY, 0f);
+            go.layer = LayerMask.NameToLayer("Enemy");
+            go.AddComponent<Rigidbody2D>();
+            go.AddComponent<BoxCollider2D>();
+
+            var enemy = go.AddComponent<Enemy>();
+            enemy.levelMask = LayerMask.GetMask("Level");
+            enemy.glyph = Glyph(go.transform, "&", 48f, monoBold);
+            enemy.glyph.color = Danger;
+            ((TextMeshPro)enemy.glyph).sortingOrder = 8;
         }
 
         static TextMeshPro Glyph(Transform parent, string content, float fontPx, TMP_FontAsset font)
@@ -367,7 +392,7 @@ namespace LowercaseUppercase.Editor
             TextMeshPro lowerLabel = Text(hud, "Chip a Label", "a", 95f, 692f, 24f, monoBold, Background, order + 2);
             TextMeshPro upperLabel = Text(hud, "Chip A Label", "A", 149f, 692f, 22f, black, Breakable, order + 2);
             TextMeshPro readout = Text(hud, "Readout", "", 210f, 690f, 14f, mono, Muted, order + 1);
-            Text(hud, "Controls", "← →  move  ·  Space  jump  ·  Shift  grow", 790f, 690f, 14f, mono, Muted, order + 1);
+            Text(hud, "Controls", ControlsText, ControlsLeftPx, 690f, 14f, mono, Muted, order + 1);
 
             var flow = new GameObject("Prototype Flow").AddComponent<PrototypeFlow>();
             flow.letter = letter;
@@ -450,6 +475,7 @@ namespace LowercaseUppercase.Editor
                 s.apexHangThreshold = 1.2f;
                 s.apexHangGravityMultiplier = 0.55f;
                 s.springHeight = 6f;
+                s.asteriskSize = 5f;
                 s.fallToForward = 0.6f;
                 s.fallKept = 0.35f;
             });
@@ -476,6 +502,7 @@ namespace LowercaseUppercase.Editor
                 s.apexHangThreshold = 0f;
                 s.apexHangGravityMultiplier = 1f;
                 s.springHeight = 3f;
+                s.asteriskSize = 14f;
                 s.fallToForward = 0f;
                 s.fallKept = 1f;
             });
