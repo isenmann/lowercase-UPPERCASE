@@ -45,7 +45,7 @@ namespace LowercaseUppercase.Tests
 
         [UnityTest]
         public IEnumerator EveryLevelStartsWithAFullClockThatCountsDown(
-            [Values("Chapter1", "Playground", "Vocabulary", "Overworld", "Cellar", "Skyline")] string scene)
+            [Values("Chapter1", "Playground", "Vocabulary", "Overworld", "Crack", "Wall", "Cellar", "Skyline")] string scene)
         {
             LevelRun.TimeLeft = 1f;
             yield return LoadWithoutIntro(scene);
@@ -81,7 +81,7 @@ namespace LowercaseUppercase.Tests
 
         [UnityTest]
         public IEnumerator RunningOutOfTimeEndsTheRun(
-            [Values("Chapter1", "Playground", "Vocabulary", "Overworld", "Cellar", "Skyline")] string scene)
+            [Values("Chapter1", "Playground", "Vocabulary", "Overworld", "Crack", "Wall", "Cellar", "Skyline")] string scene)
         {
             yield return LoadWithoutIntro(scene);
             LetterController letter = FindLetter();
@@ -148,7 +148,7 @@ namespace LowercaseUppercase.Tests
 
             // The score carries into the next level, which gets a full clock.
             int banked = LevelRun.Score;
-            yield return WaitUntil(() => SceneManager.GetActiveScene().name == "Cellar");
+            yield return WaitUntil(() => SceneManager.GetActiveScene().name == "Crack");
             yield return null;
             Assert.AreEqual(banked, LevelRun.Score);
             Assert.That(LevelRun.TimeLeft, Is.GreaterThan(LevelRun.LevelSeconds - 1f));

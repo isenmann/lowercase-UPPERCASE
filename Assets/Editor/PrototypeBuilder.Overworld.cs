@@ -43,7 +43,7 @@ namespace LowercaseUppercase.Editor
 
             FinishScene(OverworldScene, level, "Overworld · 4", lower, upper, new Vector2(110f, Ground),
                 "home is a c", "a", "stle", scrollEndPx: x + 200f, startsArmed: false,
-                nextScene: SceneName(CellarScene));
+                nextScene: SceneName(CrackScene));
             EditorSceneManager.OpenScene(OverworldScene);
         }
 

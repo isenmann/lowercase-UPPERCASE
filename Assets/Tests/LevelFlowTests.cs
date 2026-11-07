@@ -56,7 +56,9 @@ namespace LowercaseUppercase.Tests
 
         static readonly string[][] LevelOrder =
         {
-            new[] { "Overworld", "Cellar" },
+            new[] { "Overworld", "Crack" },
+            new[] { "Crack", "Wall" },
+            new[] { "Wall", "Cellar" },
             new[] { "Cellar", "Skyline" },
             new[] { "Skyline", "Menu" }
         };
@@ -93,7 +95,7 @@ namespace LowercaseUppercase.Tests
             Assert.AreEqual(1f, Time.timeScale);
         }
 
-        static readonly string[] AllLevels = { "Chapter1", "Playground", "Vocabulary", "Overworld", "Cellar", "Skyline" };
+        static readonly string[] AllLevels = { "Chapter1", "Playground", "Vocabulary", "Overworld", "Crack", "Wall", "Cellar", "Skyline" };
 
         static Checkpoint FindCheckpoint() => UnityEngine.Object.FindAnyObjectByType<Checkpoint>();
 

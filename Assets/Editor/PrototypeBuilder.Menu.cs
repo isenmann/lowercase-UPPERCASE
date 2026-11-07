@@ -93,8 +93,13 @@ namespace LowercaseUppercase.Editor
             UnityEngine.UI.Button chapters = OutlineButton(mainPanel, "ChaptersButton", "Chapters", outline, medium, out _);
             UnityEngine.UI.Button options = OutlineButton(mainPanel, "OptionsButton", "Options", outline, medium, out _);
 
-            string[] scenes = { SceneName(OverworldScene), SceneName(CellarScene), SceneName(SkylineScene) };
+            string[] scenes =
+            {
+                SceneName(OverworldScene), SceneName(CrackScene), SceneName(WallScene),
+                SceneName(CellarScene), SceneName(SkylineScene)
+            };
             RectTransform chaptersPanel = MenuPanel(ui, "ChaptersPanel");
+            UseChapterGrid(chaptersPanel);
             var chapterButtons = new UnityEngine.UI.Button[scenes.Length];
             for (int i = 0; i < scenes.Length; i++)
                 chapterButtons[i] = OutlineButton(chaptersPanel, $"{scenes[i]}Button", scenes[i], outline, medium, out _);
@@ -194,6 +199,24 @@ namespace LowercaseUppercase.Editor
             layout.childForceExpandWidth = true;
             layout.childForceExpandHeight = false;
             return rect;
+        }
+
+        /// <summary>A single column runs off the bottom of the screen after five buttons, and the game will have many more levels.</summary>
+        static void UseChapterGrid(RectTransform panel)
+        {
+            const int columns = 3;
+            const float spacing = 12f;
+            const float buttonHeight = 48f;
+
+            Object.DestroyImmediate(panel.GetComponent<UnityEngine.UI.VerticalLayoutGroup>());
+            PlaceFromTop(panel, MenuColumnTop, columns * MenuColumnWidth + (columns - 1) * spacing, 260f);
+
+            var grid = panel.gameObject.AddComponent<UnityEngine.UI.GridLayoutGroup>();
+            grid.cellSize = new Vector2(MenuColumnWidth, buttonHeight);
+            grid.spacing = new Vector2(spacing, spacing);
+            grid.constraint = UnityEngine.UI.GridLayoutGroup.Constraint.FixedColumnCount;
+            grid.constraintCount = columns;
+            grid.childAlignment = TextAnchor.UpperCenter;
         }
 
         static UnityEngine.UI.Button PrimaryButton(RectTransform panel, string name, string label, Sprite sprite, TMP_FontAsset font)

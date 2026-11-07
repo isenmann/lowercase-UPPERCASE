@@ -115,6 +115,8 @@ namespace LowercaseUppercase
                 if (keyboard.digit4Key.wasPressedThisFrame) LoadScene(4);
                 if (keyboard.digit5Key.wasPressedThisFrame) LoadScene(5);
                 if (keyboard.digit6Key.wasPressedThisFrame) LoadScene(6);
+                if (keyboard.digit7Key.wasPressedThisFrame) LoadScene(7);
+                if (keyboard.digit8Key.wasPressedThisFrame) LoadScene(8);
             }
 
             // Scaled time, so the intro doesn't use up the clock. It waits during a fall, so a death can't run it out.
