@@ -16,6 +16,12 @@ EditorBuildSettings:
     guid: 0c44d2b880a3f02f79c73c08e392ceb7
   - enabled: 1
     path: Assets/Scenes/Overworld.unity
-    guid: b7131838d6a878bbca9c7b04762fe8ce
+    guid: c9780358c7e4a9c49837cef60303c9fb
+  - enabled: 1
+    path: Assets/Scenes/Cellar.unity
+    guid: 51b8f471dbc739d1fb2ff37cc5ec5bfd
+  - enabled: 1
+    path: Assets/Scenes/Skyline.unity
+    guid: b04ebd79286f23754a2575cf5bd18ff6
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}

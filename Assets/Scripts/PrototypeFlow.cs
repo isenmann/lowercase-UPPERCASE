@@ -67,6 +67,8 @@ namespace LowercaseUppercase
                 if (keyboard.digit2Key.wasPressedThisFrame) LoadScene(1);
                 if (keyboard.digit3Key.wasPressedThisFrame) LoadScene(2);
                 if (keyboard.digit4Key.wasPressedThisFrame) LoadScene(3);
+                if (keyboard.digit5Key.wasPressedThisFrame) LoadScene(4);
+                if (keyboard.digit6Key.wasPressedThisFrame) LoadScene(5);
             }
 
             if (letter.IsGrounded && letter.Surface != null && letter.Surface.kind == WordKind.Solid)

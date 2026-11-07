@@ -181,13 +181,19 @@ namespace LowercaseUppercase.Editor
         /// </summary>
         static void Tube(Transform level, float leftPx, int rows)
         {
-            string content = string.Join("\n", System.Linq.Enumerable.Repeat("tube", rows));
-            TextMeshPro text = Text(level, "Word tube", content, leftPx, Ground, TubeFontPx, mono, Muted);
+            Stacked(level, "tube", leftPx, rows, Ground);
+        }
+
+        /// <summary>The word repeated on several lines, as one word with one collider whose bottom is at bottomPx.</summary>
+        static void Stacked(Transform level, string word, float leftPx, int rows, float bottomPx)
+        {
+            string content = string.Join("\n", System.Linq.Enumerable.Repeat(word, rows));
+            TextMeshPro text = Text(level, $"Word {word}", content, leftPx, bottomPx, TubeFontPx, mono, Muted);
             text.lineSpacing = TubeLineSpacing;
             WordBlock block = AddBlock(text, WordKind.Solid);
             block.FitCollider();
             var box = block.GetComponent<BoxCollider2D>();
-            SetHeight(block, Y(Ground) - (box.offset.y - box.size.y * 0.5f));
+            SetHeight(block, Y(bottomPx) - (box.offset.y - box.size.y * 0.5f));
         }
 
         /// <summary>Stairs standing on the ground, either climbing up to edgePx or falling away from it.</summary>

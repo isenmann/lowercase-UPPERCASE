@@ -52,6 +52,8 @@ namespace LowercaseUppercase.Editor
             BuildPlayground(lower, upper);
             BuildVocabulary(lower, upper);
             BuildOverworld(lower, upper);
+            BuildCellar(lower, upper);
+            BuildSkyline(lower, upper);
 
             SetBuildScenes();
             EditorSceneManager.OpenScene(ChapterScene);
@@ -75,7 +77,9 @@ namespace LowercaseUppercase.Editor
                 new EditorBuildSettingsScene(ChapterScene, true),
                 new EditorBuildSettingsScene(PlaygroundScene, true),
                 new EditorBuildSettingsScene(VocabularyScene, true),
-                new EditorBuildSettingsScene(OverworldScene, true)
+                new EditorBuildSettingsScene(OverworldScene, true),
+                new EditorBuildSettingsScene(CellarScene, true),
+                new EditorBuildSettingsScene(SkylineScene, true)
             };
         }
 
