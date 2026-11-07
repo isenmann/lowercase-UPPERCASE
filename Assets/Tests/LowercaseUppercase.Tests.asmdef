@@ -1,0 +1,18 @@
+{
+    "name": "LowercaseUppercase.Tests",
+    "rootNamespace": "LowercaseUppercase.Tests",
+    "references": [
+        "LowercaseUppercase",
+        "Unity.InputSystem",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner"
+    ],
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ]
+}

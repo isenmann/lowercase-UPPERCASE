@@ -1,0 +1,9 @@
+{
+    "name": "LowercaseUppercase",
+    "rootNamespace": "LowercaseUppercase",
+    "references": [
+        "Unity.TextMeshPro",
+        "Unity.InputSystem"
+    ],
+    "autoReferenced": true
+}

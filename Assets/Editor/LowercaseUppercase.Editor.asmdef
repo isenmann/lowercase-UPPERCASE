@@ -1,0 +1,12 @@
+{
+    "name": "LowercaseUppercase.Editor",
+    "rootNamespace": "LowercaseUppercase.Editor",
+    "references": [
+        "LowercaseUppercase",
+        "Unity.TextMeshPro"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "autoReferenced": false
+}
