@@ -59,7 +59,7 @@ namespace LowercaseUppercase
         public Color activeLabel = new Color32(0x11, 0x13, 0x18, 0xFF);
         public Color idleLabel = new Color32(0x6B, 0x71, 0x80, 0xFF);
 
-        [Header("Tuning readout")]
+        [Header("Status readout: Caps Lock and asterisks")]
         public TMP_Text readout;
 
         LetterShooter shooter;
@@ -173,10 +173,9 @@ namespace LowercaseUppercase
             lowerChipLabel.color = lower ? activeLabel : idleLabel;
             upperChipLabel.color = lower ? idleLabel : activeLabel;
 
-            Vector2 velocity = letter.IsSlotted ? Vector2.zero : letter.Velocity;
-            string caps = letter.IsCapsLocked ? "   CAPS LOCK" : "";
-            string asterisks = shooter != null && !shooter.startsArmed && shooter.IsArmed ? "   * F to shoot" : "";
-            readout.text = $"speed {Mathf.Abs(velocity.x):0.0}   fall {velocity.y:0.0}{caps}{asterisks}";
+            string caps = letter.IsCapsLocked ? "CAPS LOCK" : "";
+            string asterisks = shooter != null && !shooter.startsArmed && shooter.IsArmed ? "* F to shoot" : "";
+            readout.text = caps.Length > 0 && asterisks.Length > 0 ? $"{caps}   {asterisks}" : caps + asterisks;
         }
 
         /// <summary>One tick a second through the last seconds of the clock.</summary>

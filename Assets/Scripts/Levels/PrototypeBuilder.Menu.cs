@@ -75,7 +75,7 @@ namespace LowercaseUppercase.Levels
             Place(lines.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(48f, -40f), new Vector2(1184f, 640f));
 
             // Tagline and title.
-            TextMeshProUGUI tagline = UiText(ui, "Tagline", "A ONE-KEY PLATFORMER · GAME OFF 2026", mono, 15f, Muted,
+            TextMeshProUGUI tagline = UiText(ui, "Tagline", "A ONE-LETTER PLATFORMER · GAME OFF 2026", mono, 15f, Muted,
                 TextAlignmentOptions.Center);
             tagline.characterSpacing = 20f;
             PlaceFromTop(tagline.rectTransform, 111f, 900f, 22f);
