@@ -1,9 +1,11 @@
 using TMPro;
+#if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.SceneManagement;
+#endif
 using UnityEngine;
 
-namespace LowercaseUppercase.Editor
+namespace LowercaseUppercase.Levels
 {
     /// <summary>
     /// Two more runs built like the Overworld: the letter starts without asterisks, and dying restarts or returns to the checkpoint.
@@ -17,6 +19,7 @@ namespace LowercaseUppercase.Editor
         const float TunnelBottom = 465f; // 55px above the ground: a fits, and A doesn't.
         const int TunnelRows = 14;       // Tall enough to reach above the screen, so it can't be jumped over.
 
+#if UNITY_EDITOR
         /// <summary>Builds only these two levels, so edits made to the other scenes are left alone.</summary>
         [MenuItem("lowercase UPPERCASE/Rebuild Cellar and Skyline Levels")]
         public static void RebuildCellarAndSkyline()
@@ -26,9 +29,11 @@ namespace LowercaseUppercase.Editor
             BuildSkyline(lower, upper);
             SetBuildScenes();
         }
+#endif
 
         // ---------------------------------------------------------------- cellar
 
+#if UNITY_EDITOR
         static void BuildCellar(FormSettings lower, FormSettings upper)
         {
             Transform level = BeginScene(CellarScene, "Cellar");
@@ -47,6 +52,7 @@ namespace LowercaseUppercase.Editor
                 nextScene: SceneName(SpaceScene));
             EditorSceneManager.OpenScene(CellarScene);
         }
+#endif
 
         static float CellarOpening(Transform level, float x)
         {
@@ -135,6 +141,7 @@ namespace LowercaseUppercase.Editor
 
         // ---------------------------------------------------------------- skyline
 
+#if UNITY_EDITOR
         static void BuildSkyline(FormSettings lower, FormSettings upper)
         {
             Transform level = BeginScene(SkylineScene, "Skyline");
@@ -154,6 +161,7 @@ namespace LowercaseUppercase.Editor
                 nextScene: SceneName(FlamesScene));
             EditorSceneManager.OpenScene(SkylineScene);
         }
+#endif
 
         static float SkylineOpening(Transform level, float x)
         {

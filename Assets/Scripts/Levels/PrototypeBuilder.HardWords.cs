@@ -1,8 +1,10 @@
+#if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.SceneManagement;
+#endif
 using UnityEngine;
 
-namespace LowercaseUppercase.Editor
+namespace LowercaseUppercase.Levels
 {
     /// <summary>
     /// Chapter 5, levels 13 to 15. Flames is hot words under a ceiling, which burn anyone who lingers: a runs across,
@@ -15,6 +17,7 @@ namespace LowercaseUppercase.Editor
         const string TarScene = SceneFolder + "/Tar.unity";
         const string FinalScene = SceneFolder + "/Final.unity";
 
+#if UNITY_EDITOR
         [MenuItem("lowercase UPPERCASE/Rebuild Chapter 5 Levels")]
         public static void RebuildChapter5()
         {
@@ -24,6 +27,7 @@ namespace LowercaseUppercase.Editor
             BuildFinal(lower, upper);
             SetBuildScenes();
         }
+#endif
 
         /// <summary>A word, then a hot word, then a word: the cursor moves past all three.</summary>
         static void HotBetween(Transform level, ref float x, string before, string hot, string after)
@@ -42,6 +46,7 @@ namespace LowercaseUppercase.Editor
 
         // ---------------------------------------------------------------- flames
 
+#if UNITY_EDITOR
         static void BuildFlames(FormSettings lower, FormSettings upper)
         {
             Transform level = BeginScene(FlamesScene, "Flames");
@@ -65,6 +70,7 @@ namespace LowercaseUppercase.Editor
                 nextScene: SceneName(TarScene));
             EditorSceneManager.OpenScene(FlamesScene);
         }
+#endif
 
         static float FlamesOpening(Transform level, float x)
         {
@@ -193,6 +199,7 @@ namespace LowercaseUppercase.Editor
 
         // ---------------------------------------------------------------- tar
 
+#if UNITY_EDITOR
         static void BuildTar(FormSettings lower, FormSettings upper)
         {
             Transform level = BeginScene(TarScene, "Tar");
@@ -213,6 +220,7 @@ namespace LowercaseUppercase.Editor
                 nextScene: SceneName(FinalScene));
             EditorSceneManager.OpenScene(TarScene);
         }
+#endif
 
         static float TarOpening(Transform level, float x)
         {
@@ -345,6 +353,7 @@ namespace LowercaseUppercase.Editor
 
         // ---------------------------------------------------------------- final
 
+#if UNITY_EDITOR
         static void BuildFinal(FormSettings lower, FormSettings upper)
         {
             Transform level = BeginScene(FinalScene, "Final");
@@ -366,6 +375,7 @@ namespace LowercaseUppercase.Editor
                 nextScene: SceneName(MenuScene));
             EditorSceneManager.OpenScene(FinalScene);
         }
+#endif
 
         static float FinalOpening(Transform level, float x)
         {

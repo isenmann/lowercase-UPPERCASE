@@ -1,10 +1,11 @@
+#if UNITY_EDITOR
 using System.IO;
 using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
-namespace LowercaseUppercase.Editor
+namespace LowercaseUppercase.Levels
 {
     /// <summary>
     /// Generates the title screen from the "Title screen" board of the design canvas. Positions are that
@@ -90,7 +91,10 @@ namespace LowercaseUppercase.Editor
             // Buttons.
             RectTransform mainPanel = MenuPanel(ui, "MainPanel");
             UnityEngine.UI.Button play = PrimaryButton(mainPanel, "PlayButton", "Play", filled, bold);
-            UnityEngine.UI.Button chapters = OutlineButton(mainPanel, "ChaptersButton", "Chapters", outline, medium, out _);
+            // Chapters and Random share a row, so the column keeps its height.
+            RectTransform chaptersRow = ButtonRow(mainPanel, "ChaptersRow");
+            UnityEngine.UI.Button chapters = OutlineButton(chaptersRow, "ChaptersButton", "Chapters", outline, medium, out _);
+            UnityEngine.UI.Button random = OutlineButton(chaptersRow, "RandomButton", "Random", outline, medium, out _);
             // Options and How to play share a row, so the column still ends above the bottom corners.
             RectTransform helpRow = ButtonRow(mainPanel, "OptionsRow");
             UnityEngine.UI.Button options = OutlineButton(helpRow, "OptionsButton", "Options", outline, medium, out _);
@@ -144,6 +148,8 @@ namespace LowercaseUppercase.Editor
             menu.optionsPanel = optionsPanel.gameObject;
             menu.playButton = play;
             menu.chaptersButton = chapters;
+            menu.randomButton = random;
+            menu.randomScene = SceneName(RandomScene);
             menu.optionsButton = options;
             menu.exitButton = exit;
             menu.chapterButtons = chapterButtons;
@@ -453,3 +459,4 @@ namespace LowercaseUppercase.Editor
         }
     }
 }
+#endif

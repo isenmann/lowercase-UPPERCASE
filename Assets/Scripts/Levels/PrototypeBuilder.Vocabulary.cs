@@ -1,9 +1,11 @@
 using TMPro;
+#if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.SceneManagement;
+#endif
 using UnityEngine;
 
-namespace LowercaseUppercase.Editor
+namespace LowercaseUppercase.Levels
 {
     /// <summary>
     /// A scrolling level with one labelled station for each tile of the "Level vocabulary" mockup.
@@ -17,6 +19,7 @@ namespace LowercaseUppercase.Editor
         const float BreakRespawnSeconds = 3f;
         static readonly Color Hot = new Color32(0xFF, 0x8A, 0x3D, 0xFF);
 
+#if UNITY_EDITOR
         /// <summary>Builds only this level, so edits made to the other scenes are left alone.</summary>
         [MenuItem("lowercase UPPERCASE/Rebuild Vocabulary Level")]
         public static void RebuildVocabulary()
@@ -25,7 +28,9 @@ namespace LowercaseUppercase.Editor
             BuildVocabulary(lower, upper);
             SetBuildScenes();
         }
+#endif
 
+#if UNITY_EDITOR
         static void BuildVocabulary(FormSettings lower, FormSettings upper)
         {
             Transform level = BeginScene(VocabularyScene, "Vocabulary");
@@ -47,6 +52,7 @@ namespace LowercaseUppercase.Editor
                 new Vector2(110f, Ground), "every word does what it ", "says", "", scrollEndPx: x + 200f);
             EditorSceneManager.OpenScene(VocabularyScene);
         }
+#endif
 
         // ---------------------------------------------------------------- stations
 

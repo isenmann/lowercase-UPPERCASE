@@ -28,6 +28,8 @@ namespace LowercaseUppercase
         public Color rowColor = new Color32(0xF2, 0xF0, 0xEA, 0xFF);
         public Color emptyRowColor = new Color32(0x6B, 0x71, 0x80, 0xFF);
         public Color newRowColor = new Color32(0xFF, 0xD2, 0x3F, 0xFF);
+        [Tooltip("Off for random levels: the score is shown, but the table is neither changed nor shown.")]
+        public bool recordsHighScores = true;
 
         public bool IsShowing { get; private set; }
         public bool IsEnteringName { get; private set; }
@@ -47,7 +49,7 @@ namespace LowercaseUppercase
             shownOnFrame = Time.frameCount;
             score.text = $"score {runScore}";
             typed.Clear();
-            Place = HighScores.Insert(runScore);
+            Place = recordsHighScores ? HighScores.Insert(runScore) : -1;
             IsEnteringName = Place >= 0;
             Sound ending = gameOver ? Sound.GameOver : Sound.GameFinished;
             Sfx.Play(ending);
@@ -132,6 +134,13 @@ namespace LowercaseUppercase
 
         void Refresh()
         {
+            if (!recordsHighScores)
+            {
+                foreach (TMP_Text row in rows) row.text = "";
+                hint.text = "random levels don't count for high scores  ·  Enter  continue";
+                return;
+            }
+
             var entries = HighScores.Load();
             for (int i = 0; i < rows.Length; i++)
             {

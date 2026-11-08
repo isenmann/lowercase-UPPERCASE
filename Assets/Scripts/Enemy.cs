@@ -30,6 +30,10 @@ namespace LowercaseUppercase
 
         void Awake()
         {
+            // A random level adds enemies while the game runs, so this wakes before their fields are set.
+            if (glyph == null) glyph = GetComponentInChildren<TMP_Text>();
+            if (levelMask == 0) levelMask = LayerMask.GetMask("Level");
+
             spawnPosition = transform.position;
             rb = GetComponent<Rigidbody2D>();
             box = GetComponent<BoxCollider2D>();

@@ -1,17 +1,21 @@
 using System.Collections.Generic;
 using System.IO;
 using TMPro;
+#if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.SceneManagement;
+#endif
 using UnityEngine;
 using UnityEngine.TextCore.LowLevel;
 
-namespace LowercaseUppercase.Editor
+namespace LowercaseUppercase.Levels
 {
     /// <summary>
     /// Generates the prototype scenes. Layout is written in the pixel coordinates of the 1280x720
     /// mockups, where a "surface" is the height a letter stands at. Form settings are only created
     /// when missing, so rebuilding never discards movement tuning.
+    /// The level pieces and sections are part of the game, because the random level is built from them as it loads;
+    /// everything that makes and saves scenes and assets is editor-only.
     /// </summary>
     public static partial class PrototypeBuilder
     {
@@ -44,6 +48,7 @@ namespace LowercaseUppercase.Editor
         static Sprite white;
         static readonly List<Checkpoint> levelCheckpoints = new List<Checkpoint>();
 
+#if UNITY_EDITOR
         [MenuItem("lowercase UPPERCASE/Rebuild Prototype Scenes")]
         public static void Rebuild()
         {
@@ -68,6 +73,7 @@ namespace LowercaseUppercase.Editor
             BuildFlames(lower, upper);
             BuildTar(lower, upper);
             BuildFinal(lower, upper);
+            BuildRandomScene(lower, upper);
 
             SetBuildScenes();
             EditorSceneManager.OpenScene(MenuScene);
@@ -117,7 +123,8 @@ namespace LowercaseUppercase.Editor
                 new EditorBuildSettingsScene(LadderScene, true),
                 new EditorBuildSettingsScene(FlamesScene, true),
                 new EditorBuildSettingsScene(TarScene, true),
-                new EditorBuildSettingsScene(FinalScene, true)
+                new EditorBuildSettingsScene(FinalScene, true),
+                new EditorBuildSettingsScene(RandomScene, true)
             };
         }
 
@@ -176,6 +183,8 @@ namespace LowercaseUppercase.Editor
             FinishScene(PlaygroundScene, level, "Playground · 1 chapter  2 playground", lower, upper,
                 new Vector2(905f, floor), "try every ", "move", " here");
         }
+
+#endif
 
         // ---------------------------------------------------------------- level pieces
 
@@ -332,6 +341,7 @@ namespace LowercaseUppercase.Editor
             return Rect(parent, name, position, new Vector2(Size(widthPx), Size(heightPx)), color, order);
         }
 
+#if UNITY_EDITOR
         // ---------------------------------------------------------------- scene shell
 
         static Transform BeginScene(string path, string levelName, bool ruledLines = true)
@@ -362,9 +372,10 @@ namespace LowercaseUppercase.Editor
 
         static void FinishScene(string path, Transform level, string title, FormSettings lower, FormSettings upper,
             Vector2 startPx, string before, string missing, string after, float scrollEndPx = 0f,
-            bool startsArmed = true, string nextScene = null)
+            bool startsArmed = true, string nextScene = null, System.Action<PrototypeFlow, Transform> configure = null)
         {
-            if (levelCheckpoints.Count == 0)
+            // The random level places its checkpoints as it loads.
+            if (levelCheckpoints.Count == 0 && configure == null)
                 throw new System.InvalidOperationException($"{path} needs a checkpoint: call PlaceCheckpoint while building it.");
 
             LetterController letter = BuildLetter(lower, upper, startPx);
@@ -397,6 +408,7 @@ namespace LowercaseUppercase.Editor
                 transition.fade = PixelRect(hud, "Fade", -100f, -100f, 1480f, 920f, Color.black, 100);
             }
 
+            configure?.Invoke(flow, hud);
             EditorSceneManager.MarkSceneDirty(level.gameObject.scene);
             EditorSceneManager.SaveScene(level.gameObject.scene, path);
         }
@@ -431,6 +443,8 @@ namespace LowercaseUppercase.Editor
             return letter;
         }
 
+#endif
+
         /// <summary>Stands an enemy on top of a word. Enemies have no gravity, so the height has to be exact.</summary>
         static void BuildEnemy(Transform parent, WordBlock ground, float leftPx)
         {
@@ -444,11 +458,13 @@ namespace LowercaseUppercase.Editor
             go.AddComponent<Rigidbody2D>();
             go.AddComponent<BoxCollider2D>();
 
+            // The glyph comes first, because in the game the enemy wakes the moment it is added.
+            TextMeshPro glyph = Glyph(go.transform, "&", 48f, monoBold);
+            glyph.color = Danger;
+            glyph.sortingOrder = 8;
             var enemy = go.AddComponent<Enemy>();
             enemy.levelMask = LayerMask.GetMask("Level");
-            enemy.glyph = Glyph(go.transform, "&", 48f, monoBold);
-            enemy.glyph.color = Danger;
-            ((TextMeshPro)enemy.glyph).sortingOrder = 8;
+            enemy.glyph = glyph;
         }
 
         static TextMeshPro Glyph(Transform parent, string content, float fontPx, TMP_FontAsset font)
@@ -467,6 +483,7 @@ namespace LowercaseUppercase.Editor
             return text;
         }
 
+#if UNITY_EDITOR
         static PrototypeFlow BuildHud(LetterController letter, string title, string before, string missing,
             string after, out Transform hud)
         {
@@ -713,5 +730,6 @@ namespace LowercaseUppercase.Editor
             AssetDatabase.CreateAsset(settings, path);
             return settings;
         }
+#endif
     }
 }

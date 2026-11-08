@@ -1,8 +1,10 @@
+#if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.SceneManagement;
+#endif
 using UnityEngine;
 
-namespace LowercaseUppercase.Editor
+namespace LowercaseUppercase.Levels
 {
     /// <summary>
     /// Chapter 4, levels 10 and 11. Chain is comma hooks over drops under a ceiling: a hangs and swings, A snaps them.
@@ -17,6 +19,7 @@ namespace LowercaseUppercase.Editor
         const float HighLiftTop = 110f; // A second lift from LiftLanding ends here, above HighLiftLanding.
         const float HighLiftLanding = 175f;
 
+#if UNITY_EDITOR
         [MenuItem("lowercase UPPERCASE/Rebuild Chapter 4 Levels")]
         public static void RebuildChapter4()
         {
@@ -26,9 +29,11 @@ namespace LowercaseUppercase.Editor
             BuildSkyline(lower, upper);
             SetBuildScenes();
         }
+#endif
 
         // ---------------------------------------------------------------- chain
 
+#if UNITY_EDITOR
         static void BuildChain(FormSettings lower, FormSettings upper)
         {
             Transform level = BeginScene(ChainScene, "Chain");
@@ -49,6 +54,7 @@ namespace LowercaseUppercase.Editor
                 nextScene: SceneName(LadderScene));
             EditorSceneManager.OpenScene(ChainScene);
         }
+#endif
 
         static float ChainOpening(Transform level, float x)
         {
@@ -133,6 +139,7 @@ namespace LowercaseUppercase.Editor
 
         // ---------------------------------------------------------------- ladder
 
+#if UNITY_EDITOR
         static void BuildLadder(FormSettings lower, FormSettings upper)
         {
             Transform level = BeginScene(LadderScene, "Ladder");
@@ -151,6 +158,7 @@ namespace LowercaseUppercase.Editor
                 nextScene: SceneName(SkylineScene));
             EditorSceneManager.OpenScene(LadderScene);
         }
+#endif
 
         static float LadderOpening(Transform level, float x)
         {

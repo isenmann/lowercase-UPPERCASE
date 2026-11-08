@@ -1,7 +1,8 @@
+#if UNITY_EDITOR
 using TMPro;
 using UnityEngine;
 
-namespace LowercaseUppercase.Editor
+namespace LowercaseUppercase.Levels
 {
     /// <summary>
     /// The menu's "How to play" popup: two pages taken from the design canvas's "The two forms" and "Level vocabulary"
@@ -314,3 +315,4 @@ namespace LowercaseUppercase.Editor
         }
     }
 }
+#endif

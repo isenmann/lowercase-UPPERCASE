@@ -1,7 +1,7 @@
 using TMPro;
 using UnityEngine;
 
-namespace LowercaseUppercase.Editor
+namespace LowercaseUppercase.Levels
 {
     /// <summary>
     /// Level pieces shared by the chapters: the vocabulary words placed as reusable shapes, the exits, and the

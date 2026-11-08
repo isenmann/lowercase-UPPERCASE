@@ -1,9 +1,11 @@
 using TMPro;
+#if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.SceneManagement;
+#endif
 using UnityEngine;
 
-namespace LowercaseUppercase.Editor
+namespace LowercaseUppercase.Levels
 {
     /// <summary>
     /// A long side-scrolling run over pits, tubes and stairs. The ground reads as one sentence, and the
@@ -20,6 +22,7 @@ namespace LowercaseUppercase.Editor
         const float StairRowPx = 45f;
         static readonly Color Scenery = new Color(0.95f, 0.94f, 0.92f, 0.1f);
 
+#if UNITY_EDITOR
         /// <summary>Builds only this level, so edits made to the other scenes are left alone.</summary>
         [MenuItem("lowercase UPPERCASE/Rebuild Overworld Level")]
         public static void RebuildOverworld()
@@ -28,7 +31,9 @@ namespace LowercaseUppercase.Editor
             BuildOverworld(lower, upper);
             SetBuildScenes();
         }
+#endif
 
+#if UNITY_EDITOR
         static void BuildOverworld(FormSettings lower, FormSettings upper)
         {
             Transform level = BeginScene(OverworldScene, "Overworld");
@@ -46,6 +51,7 @@ namespace LowercaseUppercase.Editor
                 nextScene: SceneName(CrackScene));
             EditorSceneManager.OpenScene(OverworldScene);
         }
+#endif
 
         // ---------------------------------------------------------------- stretches
 

@@ -1,8 +1,10 @@
+#if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.SceneManagement;
+#endif
 using UnityEngine;
 
-namespace LowercaseUppercase.Editor
+namespace LowercaseUppercase.Levels
 {
     /// <summary>
     /// The second and third levels. Crack teaches the contrast between the forms under a ceiling: a fits low gaps,
@@ -20,6 +22,7 @@ namespace LowercaseUppercase.Editor
         const int CeilingTunnelRows = 9;  // The same: just tall enough to meet the ceiling.
         const float WidePit = 170f; // Wider than A can jump, and well within what a can.
 
+#if UNITY_EDITOR
         /// <summary>Builds only these two levels, so edits made to the other scenes are left alone.</summary>
         [MenuItem("lowercase UPPERCASE/Rebuild Crack and Wall Levels")]
         public static void RebuildCrackAndWall()
@@ -29,9 +32,11 @@ namespace LowercaseUppercase.Editor
             BuildWall(lower, upper);
             SetBuildScenes();
         }
+#endif
 
         // ---------------------------------------------------------------- crack
 
+#if UNITY_EDITOR
         static void BuildCrack(FormSettings lower, FormSettings upper)
         {
             Transform level = BeginScene(CrackScene, "Crack");
@@ -55,6 +60,7 @@ namespace LowercaseUppercase.Editor
                 nextScene: SceneName(WallScene));
             EditorSceneManager.OpenScene(CrackScene);
         }
+#endif
 
         static float CrackOpening(Transform level, float x)
         {
@@ -173,6 +179,7 @@ namespace LowercaseUppercase.Editor
 
         // ---------------------------------------------------------------- wall
 
+#if UNITY_EDITOR
         static void BuildWall(FormSettings lower, FormSettings upper)
         {
             Transform level = BeginScene(WallScene, "Wall");
@@ -193,6 +200,7 @@ namespace LowercaseUppercase.Editor
                 nextScene: SceneName(PlankScene));
             EditorSceneManager.OpenScene(WallScene);
         }
+#endif
 
         static float WallOpening(Transform level, float x)
         {

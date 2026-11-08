@@ -9,7 +9,7 @@ using UnityEngine.SceneManagement;
 namespace LowercaseUppercase
 {
     /// <summary>
-    /// The title screen: Play starts the first level, Chapters picks a level, Options holds the settings, How to play
+    /// The title screen: Play starts the first level, Chapters picks a level, Random starts an endless run of random levels, Options holds the settings, How to play
     /// explains the two forms and the level pieces, and Exit quits. The web build hides Exit, since a page can't close itself, and the window mode and resolution, since the
     /// page's canvas sets the size there.
     /// </summary>
@@ -25,6 +25,9 @@ namespace LowercaseUppercase
         [Header("Main")]
         public UnityEngine.UI.Button playButton;
         public UnityEngine.UI.Button chaptersButton;
+        [Tooltip("Starts an endless run of random levels, which don't count for high scores.")]
+        public UnityEngine.UI.Button randomButton;
+        public string randomScene = "Random";
         public UnityEngine.UI.Button optionsButton;
         [Tooltip("Quits the game. Hidden in the web build.")]
         public UnityEngine.UI.Button exitButton;
@@ -81,6 +84,7 @@ namespace LowercaseUppercase
 
             playButton.onClick.AddListener(() => Load(chapterScenes[0]));
             chaptersButton.onClick.AddListener(() => Confirm(() => Open(chaptersPanel, chapterButtons[0])));
+            if (randomButton != null) randomButton.onClick.AddListener(StartRandomRun);
             UnityEngine.UI.Button firstOption = IsWeb ? soundButton : fullscreenButton;
             optionsButton.onClick.AddListener(() => Confirm(() => Open(optionsPanel, firstOption)));
             chaptersBack.onClick.AddListener(Back);
@@ -211,6 +215,13 @@ namespace LowercaseUppercase
                 guidePages[i].SetActive(i == index);
                 guideTabLabels[i].color = i == index ? currentTabColor : otherTabColor;
             }
+        }
+
+        void StartRandomRun()
+        {
+            if (loading) return;
+            RandomRun.Begin();
+            Load(randomScene);
         }
 
         void Load(string scene)

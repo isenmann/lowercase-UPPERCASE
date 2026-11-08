@@ -1,8 +1,10 @@
+#if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.SceneManagement;
+#endif
 using UnityEngine;
 
-namespace LowercaseUppercase.Editor
+namespace LowercaseUppercase.Levels
 {
     /// <summary>
     /// Chapter 2, levels 4 and 5. Plank teaches hyphen bridges in the open: they hold a and snap under A.
@@ -14,6 +16,7 @@ namespace LowercaseUppercase.Editor
         const string PlankScene = SceneFolder + "/Plank.unity";
         const string GateScene = SceneFolder + "/Gate.unity";
 
+#if UNITY_EDITOR
         [MenuItem("lowercase UPPERCASE/Rebuild Chapter 2 Levels")]
         public static void RebuildChapter2()
         {
@@ -23,9 +26,11 @@ namespace LowercaseUppercase.Editor
             BuildCellar(lower, upper);
             SetBuildScenes();
         }
+#endif
 
         // ---------------------------------------------------------------- plank
 
+#if UNITY_EDITOR
         static void BuildPlank(FormSettings lower, FormSettings upper)
         {
             Transform level = BeginScene(PlankScene, "Plank");
@@ -46,6 +51,7 @@ namespace LowercaseUppercase.Editor
                 nextScene: SceneName(GateScene));
             EditorSceneManager.OpenScene(PlankScene);
         }
+#endif
 
         static float PlankOpening(Transform level, float x)
         {
@@ -163,6 +169,7 @@ namespace LowercaseUppercase.Editor
 
         // ---------------------------------------------------------------- gate
 
+#if UNITY_EDITOR
         static void BuildGate(FormSettings lower, FormSettings upper)
         {
             Transform level = BeginScene(GateScene, "Gate");
@@ -184,6 +191,7 @@ namespace LowercaseUppercase.Editor
                 nextScene: SceneName(CellarScene));
             EditorSceneManager.OpenScene(GateScene);
         }
+#endif
 
         static float GateOpening(Transform level, float x)
         {

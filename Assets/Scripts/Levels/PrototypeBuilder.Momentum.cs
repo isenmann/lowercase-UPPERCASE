@@ -1,8 +1,10 @@
+#if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.SceneManagement;
+#endif
 using UnityEngine;
 
-namespace LowercaseUppercase.Editor
+namespace LowercaseUppercase.Levels
 {
     /// <summary>
     /// Chapter 3, levels 7 to 9. Space pairs springs, which throw a twice as high as A, with kerning gaps, which a
@@ -20,6 +22,7 @@ namespace LowercaseUppercase.Editor
         const float SpringWallWidthPx = 4 * TubeFontPx * 0.6f; // "wall" in the tube font.
         const float LowerFloorCharPx = 44f * 0.6f;
 
+#if UNITY_EDITOR
         [MenuItem("lowercase UPPERCASE/Rebuild Chapter 3 Levels")]
         public static void RebuildChapter3()
         {
@@ -29,6 +32,7 @@ namespace LowercaseUppercase.Editor
             BuildTrail(lower, upper);
             SetBuildScenes();
         }
+#endif
 
         // ---------------------------------------------------------------- pieces
 
@@ -78,6 +82,7 @@ namespace LowercaseUppercase.Editor
 
         // ---------------------------------------------------------------- space
 
+#if UNITY_EDITOR
         static void BuildSpace(FormSettings lower, FormSettings upper)
         {
             Transform level = BeginScene(SpaceScene, "Space");
@@ -97,6 +102,7 @@ namespace LowercaseUppercase.Editor
                 nextScene: SceneName(SkateScene));
             EditorSceneManager.OpenScene(SpaceScene);
         }
+#endif
 
         static float SpaceOpening(Transform level, float x)
         {
@@ -211,6 +217,7 @@ namespace LowercaseUppercase.Editor
 
         // ---------------------------------------------------------------- skate
 
+#if UNITY_EDITOR
         static void BuildSkate(FormSettings lower, FormSettings upper)
         {
             Transform level = BeginScene(SkateScene, "Skate");
@@ -235,6 +242,7 @@ namespace LowercaseUppercase.Editor
                 nextScene: SceneName(TrailScene));
             EditorSceneManager.OpenScene(SkateScene);
         }
+#endif
 
         static float SkateOpening(Transform level, float x)
         {
@@ -362,6 +370,7 @@ namespace LowercaseUppercase.Editor
 
         // ---------------------------------------------------------------- trail
 
+#if UNITY_EDITOR
         static void BuildTrail(FormSettings lower, FormSettings upper)
         {
             Transform level = BeginScene(TrailScene, "Trail");
@@ -382,6 +391,7 @@ namespace LowercaseUppercase.Editor
                 nextScene: SceneName(ChainScene));
             EditorSceneManager.OpenScene(TrailScene);
         }
+#endif
 
         static float TrailOpening(Transform level, float x)
         {

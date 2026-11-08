@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace LowercaseUppercase.Editor
+namespace LowercaseUppercase.Levels
 {
     /// <summary>
     /// The gold # to collect. Positions are the centre of each # in mockup pixels. They mark the lines worth taking:

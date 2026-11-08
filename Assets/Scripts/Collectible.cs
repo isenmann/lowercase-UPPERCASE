@@ -27,9 +27,16 @@ namespace LowercaseUppercase
 
         void Awake()
         {
+            // A random level adds these while the game runs, so this wakes before the glyph is assigned.
+            if (glyph == null) glyph = GetComponentInChildren<TextMeshPro>();
             home = transform.position;
             CentreOnInk();
-            // The flow wakes first, so a fresh attempt has already cleared what the last one took.
+        }
+
+        // In Start, after every Awake, because a random level is built before the flow wakes and clears what the last
+        // attempt took.
+        void Start()
+        {
             if (LevelRun.IsCollected(home)) gameObject.SetActive(false);
         }
 
