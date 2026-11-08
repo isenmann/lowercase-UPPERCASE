@@ -11,6 +11,7 @@ namespace LowercaseUppercase
         void OnTriggerEnter2D(Collider2D other)
         {
             if (other.GetComponent<LetterController>() == null) return;
+            Sfx.Play(Sound.CapsUnlock);
             zone.Unlock();
             gameObject.SetActive(false);
         }

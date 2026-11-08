@@ -72,6 +72,7 @@ namespace LowercaseUppercase
             if (letter == null) return;
 
             MarkReached();
+            Sfx.Play(Sound.Checkpoint);
             scale = Vector2.one * PopScale;
         }
 

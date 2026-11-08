@@ -50,6 +50,8 @@ namespace LowercaseUppercase
 
             if (Mouse.current != null) lastMouse = Mouse.current.position.ReadValue();
             popup.SetActive(true);
+            Sfx.Play(Sound.PauseOpen);
+            Selected = -1;
             Select(Resume);
         }
 
@@ -57,6 +59,7 @@ namespace LowercaseUppercase
         {
             if (!IsOpen) return;
             IsOpen = false;
+            Sfx.Play(Sound.PauseClose);
             Time.timeScale = timeScaleBefore;
             if (letterInput != null) letterInput.enabled = inputWasEnabled;
             popup.SetActive(false);
@@ -70,6 +73,7 @@ namespace LowercaseUppercase
                 return;
             }
 
+            Sfx.Play(Sound.MenuConfirm);
             Time.timeScale = 1f;
             SceneManager.LoadScene(MenuBuildIndex);
         }
@@ -138,6 +142,7 @@ namespace LowercaseUppercase
 
         void Select(int option)
         {
+            if (Selected >= 0 && option != Selected) Sfx.Play(Sound.MenuMove);
             Selected = option;
             for (int i = 0; i < labels.Length; i++)
             {

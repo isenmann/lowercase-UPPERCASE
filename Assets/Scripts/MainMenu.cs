@@ -32,6 +32,9 @@ namespace LowercaseUppercase
         [Header("Options")]
         public UnityEngine.UI.Button fullscreenButton;
         public TMP_Text fullscreenLabel;
+        [Tooltip("Switches between the Chip and Type sound sets.")]
+        public UnityEngine.UI.Button soundButton;
+        public TMP_Text soundLabel;
         public UnityEngine.UI.Button optionsBack;
 
         public UnityEngine.UI.Image fade;
@@ -42,6 +45,7 @@ namespace LowercaseUppercase
 
         GameObject openPanel;
         UnityEngine.UI.Button firstButton;
+        GameObject lastSelected;
         bool loading;
 
         void Awake()
@@ -52,11 +56,12 @@ namespace LowercaseUppercase
             if (version != null) version.text = string.Format(versionFormat, Application.version);
 
             playButton.onClick.AddListener(() => Load(chapterScenes[0]));
-            chaptersButton.onClick.AddListener(() => Open(chaptersPanel, chapterButtons[0]));
-            optionsButton.onClick.AddListener(() => Open(optionsPanel, fullscreenButton));
-            chaptersBack.onClick.AddListener(ShowMain);
-            optionsBack.onClick.AddListener(ShowMain);
-            fullscreenButton.onClick.AddListener(() => Screen.fullScreen = !Screen.fullScreen);
+            chaptersButton.onClick.AddListener(() => Confirm(() => Open(chaptersPanel, chapterButtons[0])));
+            optionsButton.onClick.AddListener(() => Confirm(() => Open(optionsPanel, fullscreenButton)));
+            chaptersBack.onClick.AddListener(Back);
+            optionsBack.onClick.AddListener(Back);
+            fullscreenButton.onClick.AddListener(() => Confirm(() => Screen.fullScreen = !Screen.fullScreen));
+            if (soundButton != null) soundButton.onClick.AddListener(SwitchSoundSet);
 
             for (int i = 0; i < chapterButtons.Length; i++)
             {
@@ -82,19 +87,49 @@ namespace LowercaseUppercase
         void Update()
         {
             fullscreenLabel.text = Screen.fullScreen ? "Fullscreen: on" : "Fullscreen: off";
+            if (soundLabel != null) soundLabel.text = $"Sounds: {Sfx.Set}";
 
             if (loading) return;
 
             // Clicking empty space clears the selection, and keys and gamepads can't move from nothing.
             EventSystem events = EventSystem.current;
             if (events != null && events.currentSelectedGameObject == null)
+            {
                 events.SetSelectedGameObject(firstButton.gameObject);
+                lastSelected = firstButton.gameObject;
+            }
+
+            GameObject selected = events != null ? events.currentSelectedGameObject : null;
+            if (selected != lastSelected)
+            {
+                if (selected != null && lastSelected != null) Sfx.Play(Sound.MenuMove);
+                lastSelected = selected;
+            }
 
             Keyboard keyboard = Keyboard.current;
-            if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame && openPanel != mainPanel) ShowMain();
+            if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame && openPanel != mainPanel) Back();
         }
 
         void ShowMain() => Open(mainPanel, playButton);
+
+        void Back()
+        {
+            Sfx.Play(Sound.MenuBack);
+            ShowMain();
+        }
+
+        static void Confirm(System.Action action)
+        {
+            Sfx.Play(Sound.MenuConfirm);
+            action();
+        }
+
+        // The confirm sound plays in the newly chosen set, so the switch can be heard.
+        void SwitchSoundSet()
+        {
+            Sfx.Set = Sfx.Set == SoundSet.Chip ? SoundSet.Type : SoundSet.Chip;
+            Sfx.Play(Sound.MenuConfirm);
+        }
 
         void Open(GameObject panel, UnityEngine.UI.Button first)
         {
@@ -103,6 +138,8 @@ namespace LowercaseUppercase
             optionsPanel.SetActive(panel == optionsPanel);
             openPanel = panel;
             firstButton = first;
+            // Opening a panel selects its first button; that isn't a move.
+            lastSelected = first.gameObject;
             if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(first.gameObject);
         }
 
@@ -110,6 +147,7 @@ namespace LowercaseUppercase
         {
             if (loading) return;
             loading = true;
+            Sfx.Play(Sound.MenuStart);
             StartCoroutine(FadeThenLoad(scene));
         }
 

@@ -76,6 +76,7 @@ namespace LowercaseUppercase
 
             if (Physics2D.CircleCast(transform.position, Radius, direction, enemyFilter, hits, reach) > 0)
             {
+                Sfx.Play(Sound.EnemyShot);
                 hits[0].collider.GetComponent<Enemy>().Kill();
                 transform.position = hits[0].centroid;
                 HasHit = true;
@@ -85,6 +86,7 @@ namespace LowercaseUppercase
             if (hitWord)
             {
                 transform.position = stopPoint;
+                Sfx.Play(Sound.AsteriskPop);
                 HasHit = true;
                 return;
             }
@@ -92,7 +94,11 @@ namespace LowercaseUppercase
             transform.position += (Vector3)(direction * step);
             transform.Rotate(0f, 0f, -Mathf.Sign(direction.x) * SpinDegreesPerSecond * Time.deltaTime);
             remainingRange -= step;
-            if (remainingRange <= 0f) HasHit = true;
+            if (remainingRange <= 0f)
+            {
+                Sfx.Play(Sound.AsteriskPop);
+                HasHit = true;
+            }
         }
 
         void Pop()

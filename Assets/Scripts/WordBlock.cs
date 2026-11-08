@@ -184,6 +184,7 @@ namespace LowercaseUppercase
                     if (standingTime >= burnDelay)
                     {
                         standingTime = 0f;
+                        if (!letter.IsFallingOff) Sfx.Play(Sound.Burn);
                         letter.Burn();
                     }
                     break;
@@ -198,6 +199,7 @@ namespace LowercaseUppercase
 
         void SetDoorOpen(bool open)
         {
+            if (open && box.enabled) Sfx.Play(Sound.DoorOpen);
             box.enabled = !open;
             text.alpha = open ? OpenDoorAlpha : 1f;
         }
@@ -207,6 +209,7 @@ namespace LowercaseUppercase
         {
             if (kind != WordKind.Power || IsSpent) return;
             IsSpent = true;
+            Sfx.Play(Sound.PowerBlock);
 
             var shooter = letter.GetComponent<LetterShooter>();
             if (shooter != null) shooter.Arm();
@@ -254,6 +257,7 @@ namespace LowercaseUppercase
         {
             if (!box.enabled) return;
             box.enabled = false;
+            Sfx.Play(Sound.Smash);
 
             text.ForceMeshUpdate();
             TMP_TextInfo info = text.textInfo;

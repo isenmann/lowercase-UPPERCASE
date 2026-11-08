@@ -17,6 +17,8 @@ namespace LowercaseUppercase
         const float OffscreenMargin = 0.3f;
         const float LowTimeSeconds = 10f;
         const float BankSeconds = 1.2f;
+        // Lets the life-lost sound finish before the respawn sound starts.
+        const float RespawnSoundDelay = 0.3f;
 
         public LetterController letter;
         public float killY = -6f;
@@ -67,6 +69,8 @@ namespace LowercaseUppercase
         float bankProgress;
         int collectibleCount;
         Checkpoint resumedAt;
+        int lastTickSecond = -1;
+        bool fallSoundPlayed;
 
         public bool IsGameOver { get; private set; }
 
@@ -75,7 +79,7 @@ namespace LowercaseUppercase
 
         void Awake()
         {
-            LevelRun.EnterLevel();
+            if (LevelRun.EnterLevel()) Sfx.Play(Sound.Respawn, RespawnSoundDelay);
             resumedAt = Checkpoint.TakeResume(checkpoints);
             if (resumedAt != null) letter.transform.position = resumedAt.respawnFeet;
         }
@@ -144,7 +148,19 @@ namespace LowercaseUppercase
             if (!letter.IsSlotted && !letter.IsFallingOff)
             {
                 LevelRun.Tick(Time.deltaTime);
-                if (LevelRun.TimeIsUp) letter.FallOffScreen();
+                TickLowTime();
+                if (LevelRun.TimeIsUp)
+                {
+                    Sfx.Play(Sound.TimeUp);
+                    letter.FallOffScreen();
+                }
+            }
+
+            // Falling into a pit, as opposed to the death fall, which has already made its sound.
+            if (!letter.IsFallingOff && !letter.IsSlotted && !fallSoundPlayed && HasLeftTheScreen())
+            {
+                fallSoundPlayed = true;
+                Sfx.Play(Sound.FallOff);
             }
 
             if (letter.IsFallingOff ? HasLeftTheScreen() : letter.transform.position.y < killY) LoseLife();
@@ -163,6 +179,15 @@ namespace LowercaseUppercase
             readout.text = $"speed {Mathf.Abs(velocity.x):0.0}   fall {velocity.y:0.0}{caps}{asterisks}";
         }
 
+        /// <summary>One tick a second through the last seconds of the clock.</summary>
+        void TickLowTime()
+        {
+            int second = Mathf.CeilToInt(LevelRun.TimeLeft);
+            if (second != lastTickSecond && second > 0 && second <= LowTimeSeconds && lastTickSecond != -1)
+                Sfx.Play(Sound.TimerTick);
+            lastTickSecond = second;
+        }
+
         // Not while the level animates in or out, and not during a death fall, which is already on its way to a reload.
         bool CanPause(bool inTransition) => !inTransition && !letter.IsSlotted && !letter.IsFallingOff;
 
@@ -175,12 +200,15 @@ namespace LowercaseUppercase
 
         void LoseLife()
         {
+            if (!letter.IsFallingOff && !fallSoundPlayed) Sfx.Play(Sound.FallOff);
             if (RunIsLost || !LevelRun.LoseLife())
             {
                 ShowLives();
                 ShowGameOver();
                 return;
             }
+
+            Sfx.Play(Sound.LifeLost);
 
             Checkpoint furthest = Checkpoint.Furthest(checkpoints);
             if (furthest != null) furthest.ResumeAfterReload();
@@ -200,6 +228,7 @@ namespace LowercaseUppercase
 
         void OnSlotted()
         {
+            Sfx.Play(Sound.LevelComplete);
             SetSentence(true);
             timeAtSlot = LevelRun.TimeLeft;
             scoreAtSlot = LevelRun.Score;

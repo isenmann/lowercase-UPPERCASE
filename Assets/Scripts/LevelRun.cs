@@ -52,13 +52,13 @@ namespace LowercaseUppercase
         /// <summary>How many # the letter has picked up in this level so far.</summary>
         public static int CollectedThisLevel => collected.Count;
 
-        /// <summary>Called by the flow as a level's scene loads.</summary>
-        public static void EnterLevel()
+        /// <summary>Called by the flow as a level's scene loads. True if the letter is coming back after a death.</summary>
+        public static bool EnterLevel()
         {
             if (continuingAfterDeath)
             {
                 continuingAfterDeath = false;
-                return;
+                return true;
             }
 
             TimeLeft = LevelSeconds;
@@ -66,6 +66,7 @@ namespace LowercaseUppercase
             armedAtLevelStart = HasAsterisks;
             paidEnemies.Clear();
             collected.Clear();
+            return false;
         }
 
         /// <summary>Takes one life, and the asterisks with it. True if any lives are left to carry on with.</summary>

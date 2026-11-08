@@ -40,6 +40,7 @@ namespace LowercaseUppercase
         {
             if (!IsArmed || letter.IsSlotted || letter.IsFallingOff || Time.time < nextShotTime) return;
             nextShotTime = Time.time + cooldown;
+            Sfx.Play(Sound.Shoot);
 
             bool lower = letter.Form == LetterForm.Lowercase;
             var shot = new GameObject("Asterisk").AddComponent<Asterisk>();

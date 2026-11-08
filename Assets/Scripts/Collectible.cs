@@ -46,6 +46,7 @@ namespace LowercaseUppercase
         {
             if (IsTaken || other.GetComponent<LetterController>() == null) return;
             IsTaken = true;
+            Sfx.Play(Sound.CollectHash);
             LevelRun.Collect(home);
         }
 

@@ -108,6 +108,8 @@ namespace LowercaseUppercase.Editor
             RectTransform optionsPanel = MenuPanel(ui, "OptionsPanel");
             UnityEngine.UI.Button fullscreen = OutlineButton(optionsPanel, "FullscreenButton", "Fullscreen: off", outline,
                 medium, out TextMeshProUGUI fullscreenLabel);
+            UnityEngine.UI.Button sound = OutlineButton(optionsPanel, "SoundButton", "Sounds: Chip", outline,
+                medium, out TextMeshProUGUI soundLabel);
             TextMeshProUGUI controls = UiText(optionsPanel, "Controls",
                 "← →  move\nSpace  jump\nShift  grow\nF  shoot", mono, 15f, Muted, TextAlignmentOptions.Center);
             controls.rectTransform.sizeDelta = new Vector2(MenuColumnWidth, 88f);
@@ -137,6 +139,8 @@ namespace LowercaseUppercase.Editor
             menu.chaptersBack = chaptersBack;
             menu.fullscreenButton = fullscreen;
             menu.fullscreenLabel = fullscreenLabel;
+            menu.soundButton = sound;
+            menu.soundLabel = soundLabel;
             menu.optionsBack = optionsBack;
             menu.fade = fade;
             menu.version = version;

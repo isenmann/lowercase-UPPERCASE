@@ -49,6 +49,11 @@ namespace LowercaseUppercase
             typed.Clear();
             Place = HighScores.Insert(runScore);
             IsEnteringName = Place >= 0;
+            Sound ending = gameOver ? Sound.GameOver : Sound.GameFinished;
+            Sfx.Play(ending);
+            // The high score jingle follows the ending instead of playing over it.
+            AudioClip endingClip = Sfx.Clip(ending);
+            if (IsEnteringName) Sfx.Play(Sound.HighScore, endingClip != null ? endingClip.length : 0f);
             if (IsEnteringName) Listen(Keyboard.current);
             else leavesAt = Time.unscaledTime + ShowSeconds;
             gameObject.SetActive(true);
@@ -62,6 +67,7 @@ namespace LowercaseUppercase
             IsEnteringName = false;
             Listen(null);
             HighScores.Rename(Place, TypedName);
+            Sfx.Play(Sound.NameSaved);
             leavesAt = Time.unscaledTime + AfterNameSeconds;
             Refresh();
         }
@@ -84,6 +90,7 @@ namespace LowercaseUppercase
             // A name doesn't start with a space.
             if (c == ' ' && typed.Length == 0) return;
             typed.Append(c);
+            Sfx.Play(Sound.TypeLetter);
         }
 
         void Update()
@@ -103,7 +110,10 @@ namespace LowercaseUppercase
             if (IsEnteringName)
             {
                 if (keyboard != null && keyboard.backspaceKey.wasPressedThisFrame && typed.Length > 0)
+                {
                     typed.Length--;
+                    Sfx.Play(Sound.TypeLetter);
+                }
                 if (enter || escape || button) ConfirmName();
             }
             else

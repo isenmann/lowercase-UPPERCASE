@@ -19,6 +19,9 @@ namespace LowercaseUppercase
         const float LiftAcceleration = 60f;
         const float StompTolerance = 0.05f;
         const float DeathHopShare = 0.5f;
+        // Landings slower than this (stepping off a low ledge, settling after a lift) make no sound.
+        const float QuietLandingSpeed = 3f;
+        const float BumpSoundGap = 0.2f;
 
         public FormSettings lowercase;
         public FormSettings uppercase;
@@ -73,6 +76,7 @@ namespace LowercaseUppercase
         bool growWasDenied;
         float facing = 1f;
         float previousVerticalSpeed;
+        float lastBumpSound = float.NegativeInfinity;
         WordBlock surface;
 
         WordBlock hook;
@@ -246,12 +250,14 @@ namespace LowercaseUppercase
 
             if (Form == LetterForm.Uppercase && CameFromAbove(enemy))
             {
+                Sfx.Play(Sound.EnemyStomp);
                 enemy.Kill();
                 BounceOffEnemy();
                 Smashed?.Invoke();
             }
             else
             {
+                if (!IsFallingOff) Sfx.Play(Sound.DeathEnemy);
                 Burn();
             }
         }
@@ -299,7 +305,11 @@ namespace LowercaseUppercase
                 }
             }
 
-            if (IsGrounded && !wasGrounded) Landed?.Invoke(-previousVerticalSpeed);
+            if (IsGrounded && !wasGrounded)
+            {
+                if (-previousVerticalSpeed > QuietLandingSpeed) Sfx.Play(Sound.Land);
+                Landed?.Invoke(-previousVerticalSpeed);
+            }
         }
 
         void ResolveForm(ref Vector2 velocity)
@@ -365,6 +375,7 @@ namespace LowercaseUppercase
                 velocity.y *= settings.fallKept;
             }
 
+            Sfx.Play(form == LetterForm.Uppercase ? Sound.ToUpper : Sound.ToLower);
             FormChanged?.Invoke(form);
         }
 
@@ -411,7 +422,11 @@ namespace LowercaseUppercase
             {
                 if (hits[i].normal.y > -0.7f) continue;
                 WordBlock block = hits[i].collider.GetComponent<WordBlock>();
+                bool power = block != null && block.kind == WordKind.Power && !block.IsSpent;
                 if (block != null) block.HitFromBelow(this);
+                // A power block plays its own sound.
+                if (!power && Time.time - lastBumpSound > BumpSoundGap) Sfx.Play(Sound.BumpBlock);
+                lastBumpSound = Time.time;
             }
         }
 
@@ -450,6 +465,7 @@ namespace LowercaseUppercase
         /// <summary>Pressing into the side of a sticky word holds the letter there, and it can jump from there.</summary>
         void Cling(ref Vector2 velocity)
         {
+            bool wasClinging = IsClinging;
             IsClinging = false;
             if (IsGrounded || Mathf.Abs(moveInput) < 0.01f) return;
 
@@ -460,6 +476,7 @@ namespace LowercaseUppercase
                 if (block == null || block.kind != WordKind.Sticky) continue;
                 IsClinging = true;
                 velocity.x = 0f;
+                if (!wasClinging) Sfx.Play(Sound.WallCling);
                 return;
             }
         }
@@ -473,6 +490,7 @@ namespace LowercaseUppercase
             coyoteTimer = 0f;
             risingFromJump = false;
             surface.Bounce();
+            Sfx.Play(Sound.Bounce);
             Launched?.Invoke();
         }
 
@@ -490,6 +508,7 @@ namespace LowercaseUppercase
                 IsGrounded = false;
                 IsClinging = false;
                 risingFromJump = true;
+                Sfx.Play(Sound.Jump);
                 Jumped?.Invoke();
             }
 
@@ -550,6 +569,7 @@ namespace LowercaseUppercase
                 -maxEntrySwingSpeed, maxEntrySwingSpeed);
             jumpBufferTimer = 0f;
             risingFromJump = false;
+            Sfx.Play(Sound.HookGrab);
         }
 
         void StepHanging(float dt)
@@ -590,6 +610,7 @@ namespace LowercaseUppercase
 
         void ReleaseHook(float upwardBoost)
         {
+            Sfx.Play(Sound.HookRelease);
             Vector2 velocity = SwingTangent() * (swingSpeed * hookRadius);
             velocity.y += Current.JumpVelocity * upwardBoost;
             rb.linearVelocity = velocity;
