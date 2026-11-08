@@ -92,6 +92,7 @@ namespace LowercaseUppercase.Editor
             UnityEngine.UI.Button play = PrimaryButton(mainPanel, "PlayButton", "Play", filled, bold);
             UnityEngine.UI.Button chapters = OutlineButton(mainPanel, "ChaptersButton", "Chapters", outline, medium, out _);
             UnityEngine.UI.Button options = OutlineButton(mainPanel, "OptionsButton", "Options", outline, medium, out _);
+            UnityEngine.UI.Button exit = OutlineButton(mainPanel, "ExitButton", "Exit", outline, medium, out _);
 
             string[] scenes = System.Array.ConvertAll(PlayOrder, SceneName);
             RectTransform chaptersPanel = MenuPanel(ui, "ChaptersPanel");
@@ -138,6 +139,7 @@ namespace LowercaseUppercase.Editor
             menu.playButton = play;
             menu.chaptersButton = chapters;
             menu.optionsButton = options;
+            menu.exitButton = exit;
             menu.chapterButtons = chapterButtons;
             menu.chapterScenes = scenes;
             menu.chaptersBack = chaptersBack;

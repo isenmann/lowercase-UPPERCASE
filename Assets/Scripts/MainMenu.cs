@@ -8,7 +8,11 @@ using UnityEngine.SceneManagement;
 
 namespace LowercaseUppercase
 {
-    /// <summary>The title screen: Play starts the first level, Chapters picks a level, and Options holds the settings.</summary>
+    /// <summary>
+    /// The title screen: Play starts the first level, Chapters picks a level, Options holds the settings, and Exit
+    /// quits. The web build hides Exit, since a page can't close itself, and the window mode and resolution, since the
+    /// page's canvas sets the size there.
+    /// </summary>
     public class MainMenu : MonoBehaviour
     {
         const float FadeSeconds = 0.35f;
@@ -22,6 +26,8 @@ namespace LowercaseUppercase
         public UnityEngine.UI.Button playButton;
         public UnityEngine.UI.Button chaptersButton;
         public UnityEngine.UI.Button optionsButton;
+        [Tooltip("Quits the game. Hidden in the web build.")]
+        public UnityEngine.UI.Button exitButton;
 
         [Header("Chapters")]
         public UnityEngine.UI.Button[] chapterButtons;
@@ -47,6 +53,8 @@ namespace LowercaseUppercase
         public TMP_Text version;
         public string versionFormat = "v{0} by dev.play.repeat";
 
+        static bool IsWeb => Application.platform == RuntimePlatform.WebGLPlayer;
+
         GameObject openPanel;
         UnityEngine.UI.Button firstButton;
         GameObject lastSelected;
@@ -61,12 +69,26 @@ namespace LowercaseUppercase
 
             playButton.onClick.AddListener(() => Load(chapterScenes[0]));
             chaptersButton.onClick.AddListener(() => Confirm(() => Open(chaptersPanel, chapterButtons[0])));
-            optionsButton.onClick.AddListener(() => Confirm(() => Open(optionsPanel, fullscreenButton)));
+            UnityEngine.UI.Button firstOption = IsWeb ? soundButton : fullscreenButton;
+            optionsButton.onClick.AddListener(() => Confirm(() => Open(optionsPanel, firstOption)));
             chaptersBack.onClick.AddListener(Back);
             optionsBack.onClick.AddListener(Back);
-            fullscreenButton.onClick.AddListener(() => Confirm(DisplaySettings.ToggleFullscreen));
-            if (resolutionButton != null) resolutionButton.onClick.AddListener(() => Confirm(DisplaySettings.NextResolution));
+            if (IsWeb)
+            {
+                // Both display buttons share a row; hiding the row lets the panel close the gap.
+                fullscreenButton.transform.parent.gameObject.SetActive(false);
+            }
+            else
+            {
+                fullscreenButton.onClick.AddListener(() => Confirm(DisplaySettings.ToggleFullscreen));
+                if (resolutionButton != null) resolutionButton.onClick.AddListener(() => Confirm(DisplaySettings.NextResolution));
+            }
             if (soundButton != null) soundButton.onClick.AddListener(SwitchSoundSet);
+            if (exitButton != null)
+            {
+                if (IsWeb) exitButton.gameObject.SetActive(false);
+                else exitButton.onClick.AddListener(Exit);
+            }
 
             for (int i = 0; i < chapterButtons.Length; i++)
             {
@@ -155,6 +177,24 @@ namespace LowercaseUppercase
             loading = true;
             Sfx.Play(Sound.MenuStart);
             StartCoroutine(FadeThenLoad(scene));
+        }
+
+        void Exit()
+        {
+            if (loading) return;
+            loading = true;
+            Sfx.Play(Sound.MenuBack);
+            StartCoroutine(FadeThenQuit());
+        }
+
+        IEnumerator FadeThenQuit()
+        {
+            yield return Fade(0f, 1f);
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+#else
+            Application.Quit();
+#endif
         }
 
         IEnumerator FadeThenLoad(string scene)
