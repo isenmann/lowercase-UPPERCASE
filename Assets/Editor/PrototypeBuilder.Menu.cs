@@ -91,7 +91,10 @@ namespace LowercaseUppercase.Editor
             RectTransform mainPanel = MenuPanel(ui, "MainPanel");
             UnityEngine.UI.Button play = PrimaryButton(mainPanel, "PlayButton", "Play", filled, bold);
             UnityEngine.UI.Button chapters = OutlineButton(mainPanel, "ChaptersButton", "Chapters", outline, medium, out _);
-            UnityEngine.UI.Button options = OutlineButton(mainPanel, "OptionsButton", "Options", outline, medium, out _);
+            // Options and How to play share a row, so the column still ends above the bottom corners.
+            RectTransform helpRow = ButtonRow(mainPanel, "OptionsRow");
+            UnityEngine.UI.Button options = OutlineButton(helpRow, "OptionsButton", "Options", outline, medium, out _);
+            UnityEngine.UI.Button guide = OutlineButton(helpRow, "GuideButton", "How to play", outline, medium, out _);
             UnityEngine.UI.Button exit = OutlineButton(mainPanel, "ExitButton", "Exit", outline, medium, out _);
 
             string[] scenes = System.Array.ConvertAll(PlayOrder, SceneName);
@@ -124,6 +127,9 @@ namespace LowercaseUppercase.Editor
             BuildKeyHint(ui, keycap, shiftArrow, regular);
             BuildFormMark(ui);
             TextMeshProUGUI version = BuildVersion(ui, regular);
+            RectTransform guidePanel = BuildGuide(ui, filled, outline, keycap, shiftArrow, regular, medium, bold,
+                out UnityEngine.UI.Button[] guideTabs, out TextMeshProUGUI[] guideTabLabels, out GameObject[] guidePages,
+                out UnityEngine.UI.Button guideBack);
 
             UnityEngine.UI.Image fade = UiImage(ui, "Fade", white, Color.black);
             fade.raycastTarget = false;
@@ -150,6 +156,12 @@ namespace LowercaseUppercase.Editor
             menu.soundButton = sound;
             menu.soundLabel = soundLabel;
             menu.optionsBack = optionsBack;
+            menu.guideButton = guide;
+            menu.guidePanel = guidePanel.gameObject;
+            menu.guideTabs = guideTabs;
+            menu.guideTabLabels = guideTabLabels;
+            menu.guidePages = guidePages;
+            menu.guideBack = guideBack;
             menu.fade = fade;
             menu.version = version;
 

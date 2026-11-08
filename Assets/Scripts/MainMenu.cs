@@ -9,8 +9,8 @@ using UnityEngine.SceneManagement;
 namespace LowercaseUppercase
 {
     /// <summary>
-    /// The title screen: Play starts the first level, Chapters picks a level, Options holds the settings, and Exit
-    /// quits. The web build hides Exit, since a page can't close itself, and the window mode and resolution, since the
+    /// The title screen: Play starts the first level, Chapters picks a level, Options holds the settings, How to play
+    /// explains the two forms and the level pieces, and Exit quits. The web build hides Exit, since a page can't close itself, and the window mode and resolution, since the
     /// page's canvas sets the size there.
     /// </summary>
     public class MainMenu : MonoBehaviour
@@ -47,6 +47,18 @@ namespace LowercaseUppercase
         public TMP_Text soundLabel;
         public UnityEngine.UI.Button optionsBack;
 
+        [Header("How to play")]
+        public UnityEngine.UI.Button guideButton;
+        [Tooltip("Covers the whole menu while open.")]
+        public GameObject guidePanel;
+        [Tooltip("One per page. Selecting a tab shows its page.")]
+        public UnityEngine.UI.Button[] guideTabs;
+        public TMP_Text[] guideTabLabels;
+        public GameObject[] guidePages;
+        public UnityEngine.UI.Button guideBack;
+        public Color currentTabColor = new Color32(0xFF, 0xD2, 0x3F, 0xFF);
+        public Color otherTabColor = new Color32(0xF2, 0xF0, 0xEA, 0xFF);
+
         public UnityEngine.UI.Image fade;
 
         [Tooltip("Filled in with the version from Player Settings when the menu opens.")]
@@ -73,6 +85,11 @@ namespace LowercaseUppercase
             optionsButton.onClick.AddListener(() => Confirm(() => Open(optionsPanel, firstOption)));
             chaptersBack.onClick.AddListener(Back);
             optionsBack.onClick.AddListener(Back);
+            if (guidePanel != null)
+            {
+                guideButton.onClick.AddListener(() => Confirm(OpenGuide));
+                guideBack.onClick.AddListener(Back);
+            }
             if (IsWeb)
             {
                 // Both display buttons share a row; hiding the row lets the panel close the gap.
@@ -134,6 +151,8 @@ namespace LowercaseUppercase
                 lastSelected = selected;
             }
 
+            if (openPanel == guidePanel) FollowGuideTabs(selected);
+
             Keyboard keyboard = Keyboard.current;
             if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame && openPanel != mainPanel) Back();
         }
@@ -164,11 +183,34 @@ namespace LowercaseUppercase
             mainPanel.SetActive(panel == mainPanel);
             chaptersPanel.SetActive(panel == chaptersPanel);
             optionsPanel.SetActive(panel == optionsPanel);
+            if (guidePanel != null) guidePanel.SetActive(panel == guidePanel);
             openPanel = panel;
             firstButton = first;
             // Opening a panel selects its first button; that isn't a move.
             lastSelected = first.gameObject;
             if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(first.gameObject);
+        }
+
+        void OpenGuide()
+        {
+            ShowGuidePage(0);
+            Open(guidePanel, guideTabs[0]);
+        }
+
+        // Moving onto a tab turns the page, so arrow keys, the d-pad and clicks all work the same way.
+        void FollowGuideTabs(GameObject selected)
+        {
+            for (int i = 0; i < guideTabs.Length; i++)
+                if (selected == guideTabs[i].gameObject) ShowGuidePage(i);
+        }
+
+        void ShowGuidePage(int index)
+        {
+            for (int i = 0; i < guidePages.Length; i++)
+            {
+                guidePages[i].SetActive(i == index);
+                guideTabLabels[i].color = i == index ? currentTabColor : otherTabColor;
+            }
         }
 
         void Load(string scene)
