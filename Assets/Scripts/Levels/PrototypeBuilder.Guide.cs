@@ -51,7 +51,7 @@ namespace LowercaseUppercase.Levels
             new GuideTile(";", Muted, "both", "Checkpoint",
                 "Pass it, and dying brings you back here instead of to the start."),
             new GuideTile("[<color=#FFD23F>*</color>]", Interactive, "both", "Power block",
-                "Hit it from below to get asterisks, then F shoots them. Dying loses them."),
+                "Hit it from below to get asterisks, then Ctrl shoots them. Dying loses them."),
             new GuideTile("&", Danger, "both", "Enemy",
                 "Touching one costs a life. Shoot it, or land on it as UPPERCASE."),
             new GuideTile("#", Player, "both", "Hash",

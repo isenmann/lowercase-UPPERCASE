@@ -120,10 +120,14 @@ namespace LowercaseUppercase.Levels
                 medium, out TextMeshProUGUI fullscreenLabel);
             UnityEngine.UI.Button resolution = OutlineButton(displayRow, "ResolutionButton", "1920×1080", outline,
                 medium, out TextMeshProUGUI resolutionLabel);
-            UnityEngine.UI.Button sound = OutlineButton(optionsPanel, "SoundButton", "Sounds: Chip", outline,
+            // Sounds and Reset progress share a row, so the panel keeps its height.
+            RectTransform soundRow = ButtonRow(optionsPanel, "SoundRow");
+            UnityEngine.UI.Button sound = OutlineButton(soundRow, "SoundButton", "Sounds: Type", outline,
                 medium, out TextMeshProUGUI soundLabel);
+            UnityEngine.UI.Button resetProgress = OutlineButton(soundRow, "ResetProgressButton", "Reset progress", outline,
+                medium, out TextMeshProUGUI resetProgressLabel);
             TextMeshProUGUI controls = UiText(optionsPanel, "Controls",
-                "← →  move\nSpace  jump\nShift  grow\nF  shoot", mono, 15f, Muted, TextAlignmentOptions.Center);
+                "← →  move\nSpace  jump\nShift  grow\nCtrl  shoot", mono, 15f, Muted, TextAlignmentOptions.Center);
             controls.rectTransform.sizeDelta = new Vector2(MenuColumnWidth, 88f);
             UnityEngine.UI.Button optionsBack = OutlineButton(optionsPanel, "BackButton", "Back", outline, medium, out _);
             optionsPanel.gameObject.SetActive(false);
@@ -161,6 +165,8 @@ namespace LowercaseUppercase.Levels
             menu.resolutionLabel = resolutionLabel;
             menu.soundButton = sound;
             menu.soundLabel = soundLabel;
+            menu.resetProgressButton = resetProgress;
+            menu.resetProgressLabel = resetProgressLabel;
             menu.optionsBack = optionsBack;
             menu.guideButton = guide;
             menu.guidePanel = guidePanel.gameObject;

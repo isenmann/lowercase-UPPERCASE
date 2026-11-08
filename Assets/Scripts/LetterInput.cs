@@ -40,9 +40,13 @@ namespace LowercaseUppercase
             shift.AddBinding("<Gamepad>/rightTrigger");
             shift.AddBinding("<Gamepad>/leftTrigger");
 
-            // Not Ctrl: Ctrl+W, with W as jump, would close the browser tab in the Web build.
             shoot = new InputAction("Shoot", InputActionType.Button);
+            shoot.AddBinding("<Keyboard>/leftCtrl");
+            shoot.AddBinding("<Keyboard>/rightCtrl");
+#if UNITY_WEBGL && !UNITY_EDITOR
+            // In a browser, Ctrl+W (W is also jump) closes the tab and the page can't stop it, so F shoots there too.
             shoot.AddBinding("<Keyboard>/f");
+#endif
             shoot.AddBinding("<Gamepad>/buttonWest");
         }
 

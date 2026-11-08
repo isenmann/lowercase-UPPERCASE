@@ -142,6 +142,8 @@ namespace LowercaseUppercase
         {
             yield return new WaitForSecondsRealtime(SlotBeatSeconds);
             Time.timeScale = 0f;
+            // Saved now, so quitting during the collapse still keeps the next level open in the Chapters menu.
+            LevelProgress.Unlock(nextScene);
 
             GoalBlank goal = level.GetComponentInChildren<GoalBlank>();
             Vector3 goalRest = goal != null ? goal.transform.position : Vector3.zero;

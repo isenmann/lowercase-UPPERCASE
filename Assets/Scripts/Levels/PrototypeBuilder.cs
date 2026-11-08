@@ -29,8 +29,8 @@ namespace LowercaseUppercase.Levels
         const string VocabularyScene = SceneFolder + "/Vocabulary.unity";
         const string OverworldScene = SceneFolder + "/Overworld.unity";
         const float PixelsPerUnit = 72f;
-        const string ControlsText = "← →  move  ·  Space  jump  ·  Shift  grow  ·  F  shoot  ·  Esc  pause";
-        const float ControlsLeftPx = 670f;
+        const string ControlsText = "← →  move  ·  Space  jump  ·  Shift  grow  ·  Ctrl  shoot  ·  Esc  pause";
+        const float ControlsLeftPx = 645f;
 
         static readonly Color Background = new Color32(0x11, 0x13, 0x18, 0xFF);
         static readonly Color RuledLine = new Color32(0x1A, 0x1D, 0x24, 0xFF);
@@ -100,7 +100,7 @@ namespace LowercaseUppercase.Levels
             FlamesScene, TarScene, FinalScene
         };
 
-        // New scenes are appended, so older build indices, the number keys and the tests that use them don't move.
+        // New scenes are appended, so older build indices and the tests that use them don't move.
         static void SetBuildScenes()
         {
             EditorBuildSettings.scenes = new[]

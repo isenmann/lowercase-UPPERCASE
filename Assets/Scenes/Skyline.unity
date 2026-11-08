@@ -14113,7 +14113,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0.41666666, y: -4.5833335}
+  m_AnchoredPosition: {x: 0.069444444, y: -4.5833335}
   m_SizeDelta: {x: 10, y: 0}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!114 &1180151894
@@ -14136,7 +14136,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\u2190 \u2192  move  \xB7  Space  jump  \xB7  Shift  grow  \xB7  F  shoot  \xB7  Esc  pause"
+  m_text: "\u2190 \u2192  move  \xB7  Space  jump  \xB7  Shift  grow  \xB7  Ctrl  shoot  \xB7  Esc  pause"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 04b7f46f83206645db2dcb1d96b41781, type: 2}
   m_sharedMaterial: {fileID: 360340980854795288, guid: 04b7f46f83206645db2dcb1d96b41781, type: 2}

@@ -9,7 +9,7 @@ using UnityEngine.SceneManagement;
 namespace LowercaseUppercase
 {
     /// <summary>
-    /// The title screen: Play starts the first level, Chapters picks a level, Random starts an endless run of random levels, Options holds the settings, How to play
+    /// The title screen: Play starts the first level, Chapters picks a level already reached (see LevelProgress), Random starts an endless run of random levels, Options holds the settings and resets progress, How to play
     /// explains the two forms and the level pieces, and Exit quits. The web build hides Exit, since a page can't close itself, and the window mode and resolution, since the
     /// page's canvas sets the size there.
     /// </summary>
@@ -37,6 +37,8 @@ namespace LowercaseUppercase
         [Tooltip("The scene each chapter button loads. Play loads the first.")]
         public string[] chapterScenes;
         public UnityEngine.UI.Button chaptersBack;
+        [Tooltip("Label color of levels not reached yet. Only the first level is open at the start; finishing one opens the next.")]
+        public Color lockedLabelColor = new Color32(0xF2, 0xF0, 0xEA, 0x40);
 
         [Header("Options")]
         [Tooltip("Switches between borderless fullscreen and a window.")]
@@ -48,6 +50,12 @@ namespace LowercaseUppercase
         [Tooltip("Switches between the Chip and Type sound sets.")]
         public UnityEngine.UI.Button soundButton;
         public TMP_Text soundLabel;
+        [Tooltip("Locks every level but the first again. Asks for a second press first.")]
+        public UnityEngine.UI.Button resetProgressButton;
+        public TMP_Text resetProgressLabel;
+        public string resetProgressText = "Reset progress";
+        public string resetConfirmText = "Really reset?";
+        public string resetDoneText = "Progress reset";
         public UnityEngine.UI.Button optionsBack;
 
         [Header("How to play")]
@@ -74,6 +82,7 @@ namespace LowercaseUppercase
         UnityEngine.UI.Button firstButton;
         GameObject lastSelected;
         bool loading;
+        bool resetArmed;
 
         void Awake()
         {
@@ -81,6 +90,7 @@ namespace LowercaseUppercase
             LevelRun.NewGame();
             CreateEventSystem();
             if (version != null) version.text = string.Format(versionFormat, Application.version);
+            ShootKey.RewriteHints();
 
             playButton.onClick.AddListener(() => Load(chapterScenes[0]));
             chaptersButton.onClick.AddListener(() => Confirm(() => Open(chaptersPanel, chapterButtons[0])));
@@ -105,6 +115,7 @@ namespace LowercaseUppercase
                 if (resolutionButton != null) resolutionButton.onClick.AddListener(() => Confirm(DisplaySettings.NextResolution));
             }
             if (soundButton != null) soundButton.onClick.AddListener(SwitchSoundSet);
+            if (resetProgressButton != null) resetProgressButton.onClick.AddListener(ResetProgress);
             if (exitButton != null)
             {
                 if (IsWeb) exitButton.gameObject.SetActive(false);
@@ -116,6 +127,40 @@ namespace LowercaseUppercase
                 string scene = chapterScenes[i];
                 chapterButtons[i].onClick.AddListener(() => Load(scene));
             }
+            UpdateChapterLocks();
+        }
+
+        // A locked level can't be clicked or reached with keys or the d-pad; its label is dimmed along with the outline.
+        void UpdateChapterLocks()
+        {
+            for (int i = 0; i < chapterButtons.Length; i++)
+            {
+                UnityEngine.UI.Button button = chapterButtons[i];
+                TMP_Text label = button.GetComponentInChildren<TMP_Text>();
+                if (label != null && button.interactable) unlockedLabelColor = label.color;
+                bool open = i == 0 || LevelProgress.IsUnlocked(chapterScenes[i]);
+                button.interactable = open;
+                if (label != null) label.color = open ? unlockedLabelColor : lockedLabelColor;
+            }
+        }
+
+        Color unlockedLabelColor = Color.white;
+
+        // The first press only asks, so a stray click or key can't wipe the player's progress.
+        void ResetProgress()
+        {
+            if (!resetArmed)
+            {
+                resetArmed = true;
+                Sfx.Play(Sound.MenuConfirm);
+                resetProgressLabel.text = resetConfirmText;
+                return;
+            }
+            resetArmed = false;
+            LevelProgress.Clear();
+            UpdateChapterLocks();
+            Sfx.Play(Sound.MenuBack);
+            resetProgressLabel.text = resetDoneText;
         }
 
         // Created here because the default UI actions are made in memory and wouldn't survive being saved in a scene.
@@ -156,6 +201,14 @@ namespace LowercaseUppercase
             }
 
             if (openPanel == guidePanel) FollowGuideTabs(selected);
+
+            // Moving off the button or leaving Options takes the question back.
+            if (resetProgressButton != null && selected != resetProgressButton.gameObject
+                && resetProgressLabel.text != resetProgressText)
+            {
+                resetArmed = false;
+                resetProgressLabel.text = resetProgressText;
+            }
 
             Keyboard keyboard = Keyboard.current;
             if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame && openPanel != mainPanel) Back();

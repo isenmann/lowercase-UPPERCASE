@@ -63,6 +63,7 @@ namespace LowercaseUppercase
         public TMP_Text readout;
 
         LetterShooter shooter;
+        string shootHint = "";
         LevelTransition transition;
         float timeAtSlot;
         int scoreAtSlot;
@@ -88,6 +89,8 @@ namespace LowercaseUppercase
         {
             shooter = letter.GetComponent<LetterShooter>();
             transition = GetComponent<LevelTransition>();
+            ShootKey.RewriteHints();
+            shootHint = $"* {ShootKey.Name} to shoot";
             SetSentence(false);
             // Inactive ones too, because those taken before a death are hidden as the scene loads.
             collectibleCount = FindObjectsByType<Collectible>(FindObjectsInactive.Include).Length;
@@ -134,14 +137,6 @@ namespace LowercaseUppercase
                     LevelRun.AbandonLevel();
                     Restart();
                 }
-                if (keyboard.digit1Key.wasPressedThisFrame) LoadScene(1);
-                if (keyboard.digit2Key.wasPressedThisFrame) LoadScene(2);
-                if (keyboard.digit3Key.wasPressedThisFrame) LoadScene(3);
-                if (keyboard.digit4Key.wasPressedThisFrame) LoadScene(4);
-                if (keyboard.digit5Key.wasPressedThisFrame) LoadScene(5);
-                if (keyboard.digit6Key.wasPressedThisFrame) LoadScene(6);
-                if (keyboard.digit7Key.wasPressedThisFrame) LoadScene(7);
-                if (keyboard.digit8Key.wasPressedThisFrame) LoadScene(8);
             }
 
             // Scaled time, so the intro doesn't use up the clock. It waits during a fall, so a death can't run it out.
@@ -174,7 +169,7 @@ namespace LowercaseUppercase
             upperChipLabel.color = lower ? idleLabel : activeLabel;
 
             string caps = letter.IsCapsLocked ? "CAPS LOCK" : "";
-            string asterisks = shooter != null && !shooter.startsArmed && shooter.IsArmed ? "* F to shoot" : "";
+            string asterisks = shooter != null && !shooter.startsArmed && shooter.IsArmed ? shootHint : "";
             readout.text = caps.Length > 0 && asterisks.Length > 0 ? $"{caps}   {asterisks}" : caps + asterisks;
         }
 

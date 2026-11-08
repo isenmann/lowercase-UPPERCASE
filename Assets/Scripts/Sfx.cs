@@ -19,7 +19,7 @@ namespace LowercaseUppercase
 
     /// <summary>
     /// Plays the game's sound effects from the chosen set. The clips are made by Tools/Sfx/make_sfx.py.
-    /// The chosen set is kept in PlayerPrefs.
+    /// The chosen set is kept in PlayerPrefs; Type until the player picks one.
     /// </summary>
     public static class Sfx
     {
@@ -34,7 +34,7 @@ namespace LowercaseUppercase
         {
             get
             {
-                if (set == null) set = PlayerPrefs.GetInt(SetKey, 0) == 1 ? SoundSet.Type : SoundSet.Chip;
+                if (set == null) set = PlayerPrefs.GetInt(SetKey, 1) == 1 ? SoundSet.Type : SoundSet.Chip;
                 return set.Value;
             }
             set
