@@ -209,6 +209,57 @@ namespace LowercaseUppercase.Tests
         }
 
         [UnityTest]
+        public IEnumerator EachDeathCostsALifeAndTheHudShowsIt()
+        {
+            yield return LoadWithoutIntro("Skyline");
+            PrototypeFlow flow = UnityEngine.Object.FindAnyObjectByType<PrototypeFlow>();
+            Assert.AreEqual(LevelRun.StartingLives, LevelRun.Lives);
+            Assert.AreEqual(LevelRun.StartingLives, CountLetters(flow.lives.text, "a"));
+
+            yield return DieAndReload(FindLetter());
+            Assert.AreEqual(LevelRun.StartingLives - 1, LevelRun.Lives);
+            flow = UnityEngine.Object.FindAnyObjectByType<PrototypeFlow>();
+            Assert.IsFalse(flow.IsGameOver);
+            yield return null;
+            string lost = ColorUtility.ToHtmlStringRGBA(flow.lostLifeColor);
+            Assert.AreEqual(1, CountLetters(flow.lives.text, lost), "One of the three letters should be dimmed.");
+        }
+
+        [UnityTest]
+        public IEnumerator LosingTheLastLifeEndsTheRun()
+        {
+            yield return LoadWithoutIntro("Skyline");
+            for (int i = 1; i < LevelRun.StartingLives; i++)
+            {
+                yield return DieAndReload(FindLetter());
+                Assert.IsFalse(UnityEngine.Object.FindAnyObjectByType<PrototypeFlow>().IsGameOver);
+            }
+            Assert.AreEqual(1, LevelRun.Lives);
+
+            PrototypeFlow flow = UnityEngine.Object.FindAnyObjectByType<PrototypeFlow>();
+            LevelRun.EnemyKilled(Vector2.zero);
+            FindLetter().Burn();
+            yield return WaitUntil(() => flow.IsGameOver);
+            Assert.AreEqual(0, LevelRun.Lives);
+            Assert.AreEqual("Skyline", SceneManager.GetActiveScene().name, "The last death should not reload the level.");
+            Assert.IsTrue(flow.gameOver.gameObject.activeSelf);
+            Assert.IsTrue(flow.gameOver.heading.activeSelf);
+            Assert.AreEqual($"score {LevelRun.PointsPerEnemy}", flow.gameOver.score.text);
+            flow.gameOver.ConfirmName();
+
+            yield return WaitUntil(() => SceneManager.GetActiveScene().name == "Menu");
+            yield return null;
+            Assert.AreEqual(LevelRun.StartingLives, LevelRun.Lives, "The menu should start the next run with all lives.");
+        }
+
+        static int CountLetters(string text, string part)
+        {
+            int count = 0;
+            for (int i = text.IndexOf(part); i >= 0; i = text.IndexOf(part, i + part.Length)) count++;
+            return count;
+        }
+
+        [UnityTest]
         public IEnumerator KillingAnEnemyGivesPointsOnlyOncePerLevel()
         {
             yield return LoadWithoutIntro("Playground");

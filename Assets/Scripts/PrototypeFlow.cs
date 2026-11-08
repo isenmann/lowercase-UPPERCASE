@@ -33,6 +33,11 @@ namespace LowercaseUppercase
         public TMP_Text score;
         [Tooltip("How many # have been picked up out of how many the level has. Hidden in levels without any.")]
         public TMP_Text collectibles;
+        [Tooltip("The run's lives, one letter each; lost ones stay in place, dimmed.")]
+        public TMP_Text lives;
+        public string lifeGlyph = "a";
+        public Color lifeColor = new Color32(0xFF, 0xD2, 0x3F, 0xFF);
+        public Color lostLifeColor = new Color32(0x6B, 0x71, 0x80, 0xFF);
         public Color timerColor = new Color32(0xF2, 0xF0, 0xEA, 0xFF);
         public Color lowTimeColor = new Color32(0xFF, 0x4D, 0x5E, 0xFF);
 
@@ -170,8 +175,9 @@ namespace LowercaseUppercase
 
         void LoseLife()
         {
-            if (RunIsLost)
+            if (RunIsLost || !LevelRun.LoseLife())
             {
+                ShowLives();
                 ShowGameOver();
                 return;
             }
@@ -215,10 +221,25 @@ namespace LowercaseUppercase
             timer.text = $"{Mathf.CeilToInt(timeShown)}s";
             timer.color = !letter.IsSlotted && timeShown <= LowTimeSeconds ? lowTimeColor : timerColor;
             score.text = $"score {scoreShown}";
+            ShowLives();
             if (collectibles != null)
                 collectibles.text = collectibleCount > 0
                     ? $"<color={MissingLetterColor}>#</color> {LevelRun.CollectedThisLevel}/{collectibleCount}"
                     : "";
+        }
+
+        void ShowLives()
+        {
+            if (lives == null) return;
+            string on = ColorUtility.ToHtmlStringRGBA(lifeColor);
+            string off = ColorUtility.ToHtmlStringRGBA(lostLifeColor);
+            var text = new System.Text.StringBuilder();
+            for (int i = 0; i < LevelRun.StartingLives; i++)
+            {
+                if (i > 0) text.Append(' ');
+                text.Append($"<color=#{(i < LevelRun.Lives ? on : off)}>{lifeGlyph}</color>");
+            }
+            lives.text = text.ToString();
         }
 
         void SetSentence(bool filled)

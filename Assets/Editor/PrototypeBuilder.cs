@@ -479,6 +479,7 @@ namespace LowercaseUppercase.Editor
             PixelRect(hud, "Bottom Line", 0f, 648f, 1280f, 1f, BarLine, order);
 
             Text(hud, "Title", title, 32f, 38f, 14f, mono, Muted, order + 1);
+            TextMeshPro lives = Text(hud, "Lives", "", 380f, 40f, 22f, monoBold, Player, order + 1);
             TextMeshPro sentence = Text(hud, "Sentence", "", 500f, 40f, 22f, mono, Paper, order + 1);
             TextMeshPro collectibles = Text(hud, "Collectibles", "", 800f, 38f, 14f, mono, Muted, order + 1);
             TextMeshPro score = Text(hud, "Score", "", 900f, 38f, 14f, mono, Muted, order + 1);
@@ -502,6 +503,9 @@ namespace LowercaseUppercase.Editor
             flow.timer = timer;
             flow.score = score;
             flow.collectibles = collectibles;
+            flow.lives = lives;
+            flow.lifeColor = Player;
+            flow.lostLifeColor = Breakable;
             flow.timerColor = Paper;
             flow.lowTimeColor = Danger;
 

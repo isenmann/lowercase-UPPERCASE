@@ -7,7 +7,7 @@ namespace LowercaseUppercase
     /// The clock and the score, which outlive the scene reload that follows a death. Time running out ends the run, so
     /// nothing refills the clock during a level. The score carries from level to level until the menu is reached.
     /// Enemies return when the level reloads, so each one pays only once per level, otherwise dying could earn points.
-    /// A # that was picked up stays gone through the reload.
+    /// A # that was picked up stays gone through the reload. A run has three lives; losing the last one ends it.
     /// </summary>
     public static class LevelRun
     {
@@ -15,6 +15,7 @@ namespace LowercaseUppercase
         public const int PointsPerEnemy = 100;
         public const int PointsPerSecondLeft = 10;
         public const int PointsPerCollectible = 50;
+        public const int StartingLives = 3;
 
         static readonly HashSet<Vector2> paidEnemies = new HashSet<Vector2>();
         static readonly HashSet<Vector2> collected = new HashSet<Vector2>();
@@ -25,6 +26,7 @@ namespace LowercaseUppercase
 
         public static float TimeLeft { get; set; }
         public static int Score { get; private set; }
+        public static int Lives { get; private set; }
 
         public static bool TimeIsUp => TimeLeft <= 0f;
 
@@ -35,6 +37,7 @@ namespace LowercaseUppercase
             continuingAfterDeath = false;
             scoreAtLevelStart = 0;
             Score = 0;
+            Lives = StartingLives;
             TimeLeft = LevelSeconds;
             paidEnemies.Clear();
             collected.Clear();
@@ -56,6 +59,13 @@ namespace LowercaseUppercase
             scoreAtLevelStart = Score;
             paidEnemies.Clear();
             collected.Clear();
+        }
+
+        /// <summary>Takes one life. True if any are left to carry on with.</summary>
+        public static bool LoseLife()
+        {
+            Lives = Mathf.Max(0, Lives - 1);
+            return Lives > 0;
         }
 
         public static void Tick(float deltaTime) => TimeLeft = Mathf.Max(0f, TimeLeft - deltaTime);

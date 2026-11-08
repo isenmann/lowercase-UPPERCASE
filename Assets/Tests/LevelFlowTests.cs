@@ -32,6 +32,10 @@ namespace LowercaseUppercase.Tests
         static LetterController FindLetter() => GameObject.Find("Letter").GetComponent<LetterController>();
         static LevelTransition FindTransition() => UnityEngine.Object.FindAnyObjectByType<LevelTransition>();
 
+        // Every test gets a full set of lives, or the deaths of earlier tests would add up to a game over.
+        [SetUp]
+        public void StartANewGame() => LevelRun.NewGame();
+
         [UnityTest]
         public IEnumerator TheMenuIsTheFirstSceneAndPlayStartsTheFirstLevel()
         {
