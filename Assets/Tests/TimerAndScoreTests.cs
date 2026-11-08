@@ -306,6 +306,28 @@ namespace LowercaseUppercase.Tests
             Assert.AreEqual(LevelRun.PointsPerEnemy, LevelRun.Score);
         }
 
+        [Test]
+        public void AsterisksCarryIntoTheNextLevelButADeathTakesThemAway()
+        {
+            LevelRun.EnterLevel();
+            LevelRun.HasAsterisks = true;
+            LevelRun.AbandonLevel();
+            Assert.IsFalse(LevelRun.HasAsterisks);
+
+            LevelRun.HasAsterisks = true;
+            LevelRun.EnterLevel();
+            Assert.IsTrue(LevelRun.HasAsterisks);
+            LevelRun.AbandonLevel();
+            Assert.IsTrue(LevelRun.HasAsterisks);
+
+            LevelRun.LoseLife();
+            Assert.IsFalse(LevelRun.HasAsterisks);
+
+            LevelRun.HasAsterisks = true;
+            LevelRun.NewGame();
+            Assert.IsFalse(LevelRun.HasAsterisks);
+        }
+
         [UnityTest]
         public IEnumerator TheMenuClearsTheScore()
         {

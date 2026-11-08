@@ -14,7 +14,7 @@ namespace LowercaseUppercase
         public float range = 12f;
         [Tooltip("Minimum seconds between shots.")]
         public float cooldown = 0.2f;
-        [Tooltip("Off means the letter can't shoot until it hits a power block.")]
+        [Tooltip("Off means the letter can't shoot until it hits a power block, in this level or an earlier one of the run.")]
         public bool startsArmed = true;
 
         public bool IsArmed { get; private set; }
@@ -27,10 +27,14 @@ namespace LowercaseUppercase
         {
             letter = GetComponent<LetterController>();
             visual = GetComponent<LetterVisual>();
-            IsArmed = startsArmed;
+            IsArmed = startsArmed || LevelRun.HasAsterisks;
         }
 
-        public void Arm() => IsArmed = true;
+        public void Arm()
+        {
+            IsArmed = true;
+            LevelRun.HasAsterisks = true;
+        }
 
         public void Fire()
         {

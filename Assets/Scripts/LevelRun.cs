@@ -8,6 +8,7 @@ namespace LowercaseUppercase
     /// nothing refills the clock during a level. The score carries from level to level until the menu is reached.
     /// Enemies return when the level reloads, so each one pays only once per level, otherwise dying could earn points.
     /// A # that was picked up stays gone through the reload. A run has three lives; losing the last one ends it.
+    /// The asterisks from a power block carry into later levels, but a death takes them away.
     /// </summary>
     public static class LevelRun
     {
@@ -23,10 +24,13 @@ namespace LowercaseUppercase
         // Only set in the moment before a reload, so any other way into a level starts it afresh.
         static bool continuingAfterDeath;
         static int scoreAtLevelStart;
+        static bool armedAtLevelStart;
 
         public static float TimeLeft { get; set; }
         public static int Score { get; private set; }
         public static int Lives { get; private set; }
+        /// <summary>Whether the letter has its asterisks. Set by the shooter when a power block arms it.</summary>
+        public static bool HasAsterisks { get; set; }
 
         public static bool TimeIsUp => TimeLeft <= 0f;
 
@@ -38,6 +42,8 @@ namespace LowercaseUppercase
             scoreAtLevelStart = 0;
             Score = 0;
             Lives = StartingLives;
+            HasAsterisks = false;
+            armedAtLevelStart = false;
             TimeLeft = LevelSeconds;
             paidEnemies.Clear();
             collected.Clear();
@@ -57,13 +63,15 @@ namespace LowercaseUppercase
 
             TimeLeft = LevelSeconds;
             scoreAtLevelStart = Score;
+            armedAtLevelStart = HasAsterisks;
             paidEnemies.Clear();
             collected.Clear();
         }
 
-        /// <summary>Takes one life. True if any are left to carry on with.</summary>
+        /// <summary>Takes one life, and the asterisks with it. True if any lives are left to carry on with.</summary>
         public static bool LoseLife()
         {
+            HasAsterisks = false;
             Lives = Mathf.Max(0, Lives - 1);
             return Lives > 0;
         }
@@ -74,7 +82,11 @@ namespace LowercaseUppercase
         public static void ContinueAfterDeath() => continuingAfterDeath = true;
 
         /// <summary>A deliberate restart is a fresh attempt, so it gives back what this level earned.</summary>
-        public static void AbandonLevel() => Score = scoreAtLevelStart;
+        public static void AbandonLevel()
+        {
+            Score = scoreAtLevelStart;
+            HasAsterisks = armedAtLevelStart;
+        }
 
         public static void EnemyKilled(Vector2 spawnPosition)
         {
