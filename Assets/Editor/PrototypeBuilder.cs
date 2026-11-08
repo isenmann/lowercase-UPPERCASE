@@ -391,6 +391,8 @@ namespace LowercaseUppercase.Editor
                 transition.level = level;
                 transition.letter = letter;
                 transition.nextScene = nextScene;
+                // The last level ends the run, so its score goes to the high score table on the way to the menu.
+                if (nextScene == SceneName(MenuScene)) transition.endScreen = flow.gameOver;
                 // Larger than the screen, so camera shake can't show its edges.
                 transition.fade = PixelRect(hud, "Fade", -100f, -100f, 1480f, 920f, Color.black, 100);
             }
@@ -508,14 +510,24 @@ namespace LowercaseUppercase.Editor
             var gameOver = new GameObject("Game Over");
             gameOver.transform.SetParent(hud, false);
             PixelRect(gameOver.transform, "Backdrop", -100f, -100f, 1480f, 920f, Background, gameOverOrder);
-            // Text boxes are 720px wide from their left edge, so 280 centres them on the 1280px screen.
-            Text(gameOver.transform, "Heading", "GAME OVER", 280f, 350f, 72f, black, Danger, gameOverOrder + 1)
-                .alignment = TextAlignmentOptions.Baseline;
-            TextMeshPro finalScore = Text(gameOver.transform, "Final Score", "", 280f, 410f, 22f, mono, Paper, gameOverOrder + 1);
-            finalScore.alignment = TextAlignmentOptions.Baseline;
+            TextMeshPro heading = Centred(gameOver.transform, "Heading", "GAME OVER", 150f, 72f, black, Danger, gameOverOrder + 1);
+            TextMeshPro finalScore = Centred(gameOver.transform, "Final Score", "", 198f, 22f, mono, Paper, gameOverOrder + 1);
+            Centred(gameOver.transform, "High Scores Heading", "high scores", 250f, 14f, mono, Muted, gameOverOrder + 1);
+            var rows = new TMP_Text[HighScores.Size];
+            for (int i = 0; i < rows.Length; i++)
+                rows[i] = Centred(gameOver.transform, $"High Score {i + 1}", "", 284f + i * 30f, 20f, mono, Paper, gameOverOrder + 1);
+            TextMeshPro hint = Centred(gameOver.transform, "Hint", "", 610f, 14f, mono, Muted, gameOverOrder + 1);
             gameOver.SetActive(false);
-            flow.gameOverScreen = gameOver;
-            flow.gameOverScore = finalScore;
+
+            var screen = gameOver.AddComponent<GameOverScreen>();
+            screen.heading = heading.gameObject;
+            screen.score = finalScore;
+            screen.rows = rows;
+            screen.hint = hint;
+            screen.rowColor = Paper;
+            screen.emptyRowColor = Breakable;
+            screen.newRowColor = Player;
+            flow.gameOver = screen;
 
             BuildPauseMenu(hud, flow, letter);
 
@@ -525,6 +537,15 @@ namespace LowercaseUppercase.Editor
             flow.upperChipLabel = upperLabel;
             flow.readout = readout;
             return flow;
+        }
+
+        // Text boxes are 720px wide from their left edge, so 280 centres them on the 1280px screen.
+        static TextMeshPro Centred(Transform parent, string name, string content, float baselinePx, float fontPx,
+            TMP_FontAsset font, Color color, int order)
+        {
+            TextMeshPro text = Text(parent, name, content, 280f, baselinePx, fontPx, font, color, order);
+            text.alignment = TextAlignmentOptions.Baseline;
+            return text;
         }
 
         /// <summary>A small box in the middle of the screen over a dimmed level: Resume, then Main menu.</summary>

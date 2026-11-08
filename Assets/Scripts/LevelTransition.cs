@@ -33,6 +33,8 @@ namespace LowercaseUppercase
         public SpriteRenderer fade;
         [Tooltip("The scene that loads after this level collapses.")]
         public string nextScene;
+        [Tooltip("Only in the last level: the high score table shown once the level has collapsed, before the menu.")]
+        public GameOverScreen endScreen;
 
         public bool IsPlaying { get; private set; }
 
@@ -182,6 +184,12 @@ namespace LowercaseUppercase
 
             SetFade(1f);
             yield return new WaitForSecondsRealtime(BlackHoldSeconds);
+            if (endScreen != null)
+            {
+                // It goes to the menu itself once the table has been seen.
+                endScreen.Show(LevelRun.Score, gameOver: false);
+                yield break;
+            }
             SceneManager.LoadScene(nextScene);
         }
 

@@ -17,7 +17,6 @@ namespace LowercaseUppercase
         const float OffscreenMargin = 0.3f;
         const float LowTimeSeconds = 10f;
         const float BankSeconds = 1.2f;
-        const float GameOverSeconds = 2.5f;
 
         public LetterController letter;
         public float killY = -6f;
@@ -41,8 +40,7 @@ namespace LowercaseUppercase
         public PauseMenu pauseMenu;
 
         [Header("Game over")]
-        public GameObject gameOverScreen;
-        public TMP_Text gameOverScore;
+        public GameOverScreen gameOver;
 
         [Header("Form chips")]
         public SpriteRenderer lowerChip;
@@ -62,7 +60,6 @@ namespace LowercaseUppercase
         float timeAtSlot;
         int scoreAtSlot;
         float bankProgress;
-        float gameOverEnds;
         int collectibleCount;
         Checkpoint resumedAt;
 
@@ -101,13 +98,9 @@ namespace LowercaseUppercase
 
         void Update()
         {
+            // The game over screen reads its own keys, including the name typed into the high scores.
+            if (IsGameOver || (gameOver != null && gameOver.IsShowing)) return;
             Keyboard keyboard = Keyboard.current;
-            if (IsGameOver)
-            {
-                bool skipped = keyboard != null && keyboard.escapeKey.wasPressedThisFrame;
-                if (skipped || Time.unscaledTime >= gameOverEnds) LoadScene(MenuBuildIndex);
-                return;
-            }
 
             // The popup reads its own keys, and the level waits underneath it.
             if (pauseMenu != null && pauseMenu.IsOpen) return;
@@ -192,9 +185,11 @@ namespace LowercaseUppercase
         void ShowGameOver()
         {
             IsGameOver = true;
-            gameOverEnds = Time.unscaledTime + GameOverSeconds;
-            gameOverScore.text = $"score {LevelRun.Score}";
-            gameOverScreen.SetActive(true);
+            // Letters typed into the high scores must not move or fire the letter.
+            var input = letter.GetComponent<LetterInput>();
+            if (input != null) input.enabled = false;
+            letter.SetInput(0f, false, false);
+            gameOver.Show(LevelRun.Score, gameOver: true);
         }
 
         void OnSlotted()

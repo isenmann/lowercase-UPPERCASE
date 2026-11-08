@@ -48,7 +48,19 @@ namespace LowercaseUppercase.Tests
         };
 
         [SetUp]
-        public void StartANewGame() => LevelRun.NewGame();
+        public void StartANewGame()
+        {
+            LevelRun.NewGame();
+            HighScores.StorageKey = HighScores.DefaultStorageKey + ".tests";
+            HighScores.Clear();
+        }
+
+        [TearDown]
+        public void ForgetTheTestHighScores()
+        {
+            HighScores.Clear();
+            HighScores.StorageKey = HighScores.DefaultStorageKey;
+        }
 
         [UnityTest]
         public IEnumerator EveryLevelStartsWithAFullClockThatCountsDown(
@@ -97,15 +109,85 @@ namespace LowercaseUppercase.Tests
             LevelRun.TimeLeft = 0.01f;
 
             yield return WaitUntil(() => letter.IsFallingOff);
-            Assert.IsFalse(flow.gameOverScreen.activeSelf, "The fall should play before the game over screen.");
+            Assert.IsFalse(flow.gameOver.gameObject.activeSelf, "The fall should play before the game over screen.");
 
             yield return WaitUntil(() => flow.IsGameOver);
-            Assert.IsTrue(flow.gameOverScreen.activeSelf);
-            Assert.AreEqual($"score {LevelRun.PointsPerEnemy}", flow.gameOverScore.text);
+            Assert.IsTrue(flow.gameOver.gameObject.activeSelf);
+            Assert.AreEqual($"score {LevelRun.PointsPerEnemy}", flow.gameOver.score.text);
+            Assert.IsTrue(flow.gameOver.IsEnteringName, "The first score in an empty table should ask for a name.");
+            flow.gameOver.ConfirmName();
 
             yield return WaitUntil(() => SceneManager.GetActiveScene().name == "Menu");
             yield return null;
             Assert.AreEqual(0, LevelRun.Score);
+        }
+
+        [UnityTest]
+        public IEnumerator AHighScoreTakesATypedName()
+        {
+            for (int i = 1; i <= HighScores.Size; i++) HighScores.Insert(i * 1000);
+            yield return LoadWithoutIntro("Crack");
+            PrototypeFlow flow = UnityEngine.Object.FindAnyObjectByType<PrototypeFlow>();
+            for (int i = 0; i < 25; i++) LevelRun.EnemyKilled(new Vector2(i, 0f));
+            LevelRun.TimeLeft = 0.01f;
+
+            yield return WaitUntil(() => flow.IsGameOver);
+            GameOverScreen screen = flow.gameOver;
+            Assert.IsTrue(screen.IsEnteringName);
+            Assert.AreEqual(8, screen.Place, "2500 should land below 3000 and above 2000.");
+            Assert.IsFalse(UnityEngine.Object.FindAnyObjectByType<LetterInput>().enabled, "Typing must not move the letter.");
+
+            foreach (char c in " ad<a>  b!") screen.Type(c);
+            Assert.AreEqual("ada  b!", screen.TypedName, "No leading space and no tag characters.");
+            foreach (char c in "cdefghijklmnop") screen.Type(c);
+            Assert.AreEqual(HighScores.MaxNameLength, screen.TypedName.Length);
+            screen.ConfirmName();
+
+            var entries = HighScores.Load();
+            Assert.AreEqual(HighScores.Size, entries.Count);
+            Assert.AreEqual(2500, entries[8].score);
+            Assert.AreEqual("ada  b!cdefg", entries[8].name);
+            Assert.AreEqual(2000, entries[9].score, "1000 should be the one pushed out.");
+        }
+
+        [UnityTest]
+        public IEnumerator FinishingTheLastLevelShowsTheTableWithoutGameOver()
+        {
+            yield return LoadWithoutIntro("Final");
+            PrototypeFlow flow = UnityEngine.Object.FindAnyObjectByType<PrototypeFlow>();
+            LevelTransition transition = flow.GetComponent<LevelTransition>();
+            Assert.AreSame(flow.gameOver, transition.endScreen, "Final should end on the high score table.");
+
+            LevelRun.EnemyKilled(Vector2.zero);
+            flow.gameOver.Show(LevelRun.Score, gameOver: false);
+            Assert.IsFalse(flow.gameOver.heading.activeSelf, "A finished run isn't a game over.");
+            Assert.IsTrue(flow.gameOver.IsEnteringName);
+            yield return null;
+            Assert.AreEqual("Final", SceneManager.GetActiveScene().name, "Typing must not leave the level.");
+        }
+
+        [UnityTest]
+        public IEnumerator OnlyTheLastLevelEndsOnTheTable(
+            [Values("Overworld", "Crack", "Tar")] string scene)
+        {
+            yield return LoadWithoutIntro(scene);
+            Assert.IsNull(UnityEngine.Object.FindAnyObjectByType<LevelTransition>().endScreen);
+        }
+
+        [UnityTest]
+        public IEnumerator ALowScoreOnlyShowsTheTable()
+        {
+            for (int i = 1; i <= HighScores.Size; i++) HighScores.Insert(i * 1000);
+            yield return LoadWithoutIntro("Crack");
+            PrototypeFlow flow = UnityEngine.Object.FindAnyObjectByType<PrototypeFlow>();
+            LevelRun.EnemyKilled(Vector2.zero);
+            LevelRun.TimeLeft = 0.01f;
+
+            yield return WaitUntil(() => flow.IsGameOver);
+            Assert.IsFalse(flow.gameOver.IsEnteringName);
+            Assert.AreEqual(-1, flow.gameOver.Place);
+            Assert.AreEqual(HighScores.Size, HighScores.Load().Count);
+            Assert.AreEqual(1000, HighScores.Load()[HighScores.Size - 1].score);
         }
 
         [UnityTest]
