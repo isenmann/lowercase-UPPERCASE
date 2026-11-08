@@ -106,8 +106,12 @@ namespace LowercaseUppercase.Editor
             chaptersPanel.gameObject.SetActive(false);
 
             RectTransform optionsPanel = MenuPanel(ui, "OptionsPanel");
-            UnityEngine.UI.Button fullscreen = OutlineButton(optionsPanel, "FullscreenButton", "Fullscreen: off", outline,
+            // Window mode and resolution share a row, so the panel keeps its height.
+            RectTransform displayRow = ButtonRow(optionsPanel, "DisplayRow");
+            UnityEngine.UI.Button fullscreen = OutlineButton(displayRow, "FullscreenButton", "Fullscreen", outline,
                 medium, out TextMeshProUGUI fullscreenLabel);
+            UnityEngine.UI.Button resolution = OutlineButton(displayRow, "ResolutionButton", "1920×1080", outline,
+                medium, out TextMeshProUGUI resolutionLabel);
             UnityEngine.UI.Button sound = OutlineButton(optionsPanel, "SoundButton", "Sounds: Chip", outline,
                 medium, out TextMeshProUGUI soundLabel);
             TextMeshProUGUI controls = UiText(optionsPanel, "Controls",
@@ -139,6 +143,8 @@ namespace LowercaseUppercase.Editor
             menu.chaptersBack = chaptersBack;
             menu.fullscreenButton = fullscreen;
             menu.fullscreenLabel = fullscreenLabel;
+            menu.resolutionButton = resolution;
+            menu.resolutionLabel = resolutionLabel;
             menu.soundButton = sound;
             menu.soundLabel = soundLabel;
             menu.optionsBack = optionsBack;
@@ -216,6 +222,22 @@ namespace LowercaseUppercase.Editor
             layout.childControlHeight = false;
             layout.childForceExpandWidth = true;
             layout.childForceExpandHeight = false;
+            return rect;
+        }
+
+        static RectTransform ButtonRow(RectTransform panel, string name)
+        {
+            var go = new GameObject(name, typeof(RectTransform));
+            go.transform.SetParent(panel, false);
+            var rect = (RectTransform)go.transform;
+            rect.sizeDelta = new Vector2(MenuColumnWidth, 48f);
+
+            var layout = go.AddComponent<UnityEngine.UI.HorizontalLayoutGroup>();
+            layout.spacing = 12f;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = true;
             return rect;
         }
 

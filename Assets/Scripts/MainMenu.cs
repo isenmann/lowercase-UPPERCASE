@@ -30,8 +30,12 @@ namespace LowercaseUppercase
         public UnityEngine.UI.Button chaptersBack;
 
         [Header("Options")]
+        [Tooltip("Switches between borderless fullscreen and a window.")]
         public UnityEngine.UI.Button fullscreenButton;
         public TMP_Text fullscreenLabel;
+        [Tooltip("Steps through the monitor's resolutions.")]
+        public UnityEngine.UI.Button resolutionButton;
+        public TMP_Text resolutionLabel;
         [Tooltip("Switches between the Chip and Type sound sets.")]
         public UnityEngine.UI.Button soundButton;
         public TMP_Text soundLabel;
@@ -60,7 +64,8 @@ namespace LowercaseUppercase
             optionsButton.onClick.AddListener(() => Confirm(() => Open(optionsPanel, fullscreenButton)));
             chaptersBack.onClick.AddListener(Back);
             optionsBack.onClick.AddListener(Back);
-            fullscreenButton.onClick.AddListener(() => Confirm(() => Screen.fullScreen = !Screen.fullScreen));
+            fullscreenButton.onClick.AddListener(() => Confirm(DisplaySettings.ToggleFullscreen));
+            if (resolutionButton != null) resolutionButton.onClick.AddListener(() => Confirm(DisplaySettings.NextResolution));
             if (soundButton != null) soundButton.onClick.AddListener(SwitchSoundSet);
 
             for (int i = 0; i < chapterButtons.Length; i++)
@@ -86,7 +91,8 @@ namespace LowercaseUppercase
 
         void Update()
         {
-            fullscreenLabel.text = Screen.fullScreen ? "Fullscreen: on" : "Fullscreen: off";
+            fullscreenLabel.text = DisplaySettings.ModeLabel;
+            if (resolutionLabel != null) resolutionLabel.text = DisplaySettings.ResolutionLabel;
             if (soundLabel != null) soundLabel.text = $"Sounds: {Sfx.Set}";
 
             if (loading) return;
