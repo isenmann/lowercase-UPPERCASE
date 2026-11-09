@@ -106,7 +106,10 @@ namespace LowercaseUppercase.Levels
             RectTransform helpRow = ButtonRow(mainPanel, "OptionsRow");
             UnityEngine.UI.Button options = OutlineButton(helpRow, "OptionsButton", "Options", outline, medium, out _);
             UnityEngine.UI.Button guide = OutlineButton(helpRow, "GuideButton", "How to play", outline, medium, out _);
-            UnityEngine.UI.Button exit = OutlineButton(mainPanel, "ExitButton", "Exit", outline, medium, out _);
+            // Editor and Exit share a row; the web build hides Exit, and Editor takes the whole row.
+            RectTransform exitRow = ButtonRow(mainPanel, "ExitRow");
+            UnityEngine.UI.Button editor = OutlineButton(exitRow, "EditorButton", "Editor", outline, medium, out _);
+            UnityEngine.UI.Button exit = OutlineButton(exitRow, "ExitButton", "Exit", outline, medium, out _);
 
             string[] scenes = System.Array.ConvertAll(PlayOrder, SceneName);
             RectTransform chaptersPanel = MenuPanel(ui, "ChaptersPanel");
@@ -165,6 +168,9 @@ namespace LowercaseUppercase.Levels
             menu.randomScene = SceneName(RandomScene);
             menu.optionsButton = options;
             menu.exitButton = exit;
+            menu.editorButton = editor;
+            BuildMyLevels(ui, menu, outline, medium, regular);
+            fade.transform.SetAsLastSibling();
             menu.chapterButtons = chapterButtons;
             menu.chapterScenes = scenes;
             menu.chaptersBack = chaptersBack;

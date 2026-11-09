@@ -12,9 +12,16 @@ namespace LowercaseUppercase.Tests
     {
         LevelEditor editor;
 
+        string folder;
+
         [UnitySetUp]
         public IEnumerator OpenTheEditor()
         {
+            // The editor saves as it goes; tests keep their levels out of the player's.
+            folder = System.IO.Path.Combine(Application.temporaryCachePath, "editor-test-levels");
+            if (System.IO.Directory.Exists(folder)) System.IO.Directory.Delete(folder, true);
+            LevelStore.FolderOverride = folder;
+            CustomRun.EditPath = null;
             yield return SceneManager.LoadSceneAsync("LevelEditor");
             yield return null;
             editor = Object.FindAnyObjectByType<LevelEditor>();
@@ -25,6 +32,10 @@ namespace LowercaseUppercase.Tests
         {
             CustomRun.EndTest();
             CustomRun.Level = null;
+            CustomRun.EditPath = null;
+            CustomRun.ReturnToMyLevels = false;
+            LevelStore.FolderOverride = null;
+            if (System.IO.Directory.Exists(folder)) System.IO.Directory.Delete(folder, true);
         }
 
         static IEnumerator WaitFor<T>() where T : Object
@@ -442,6 +453,38 @@ namespace LowercaseUppercase.Tests
                 },
             });
             Assert.That(editor.Warnings.Select(w => w.Text), Does.Contain(EditorWarnings.NoRoom));
+        }
+    
+        // ---------------------------------------------------------------- saving (step 6)
+
+        [Test]
+        public void AChangeIsSavedToAFile()
+        {
+            Assert.That(CustomRun.EditPath, Is.Null, "a new level has no file until it changes");
+            editor.palette.Select(Tool("checkpoint"));
+            editor.ClickAt(new Vector2(400f, 520f));
+            editor.Checkpoint();
+
+            Assert.That(CustomRun.EditPath, Is.Not.Null);
+            CustomLevelData saved = LevelStore.Load(CustomRun.EditPath);
+            Assert.That(saved.pieces.Count, Is.EqualTo(2));
+            Assert.That(LevelStore.List().Count, Is.EqualTo(1));
+        }
+
+        [UnityTest]
+        public IEnumerator LeavingOpensMyLevelsWithTheLevelListed()
+        {
+            editor.palette.Select(Tool("checkpoint"));
+            editor.ClickAt(new Vector2(400f, 520f));
+            editor.Leave();
+            yield return WaitFor<MainMenu>();
+            yield return null;
+
+            var myLevels = Object.FindAnyObjectByType<MyLevelsMenu>();
+            Assert.That(myLevels, Is.Not.Null);
+            Assert.That(myLevels.gameObject.activeInHierarchy, Is.True);
+            Assert.That(myLevels.Levels.Count, Is.EqualTo(1));
+            Assert.That(myLevels.Levels[0].Name, Is.EqualTo("untitled"));
         }
     }
 }

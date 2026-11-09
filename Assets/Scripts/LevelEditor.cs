@@ -58,6 +58,8 @@ namespace LowercaseUppercase
         public SpriteRenderer handleMark;
 
         [Header("HUD")]
+        [Tooltip("Goes back to My levels in the menu.")]
+        public TMP_Text backButton;
         public TMP_Text playButton;
         public TMP_Text readout;
         public TMP_Text sentence;
@@ -133,7 +135,37 @@ namespace LowercaseUppercase
         {
             // A level transition or a pause can leave the clock stopped on the way here.
             Time.timeScale = 1f;
-            Open(CustomRun.Testing && CustomRun.Level != null ? CustomRun.Level : NewLevel());
+            // My levels hands over the level to edit and its file; a new level has neither until its first change.
+            Open(CustomRun.Level ?? NewLevel());
+        }
+
+        /// <summary>Saves and goes back to My levels in the menu.</summary>
+        public void Leave()
+        {
+            if (IsTyping) Commit();
+            dragging = draggingHandle = false;
+            Checkpoint();
+            CustomRun.Level = null;
+            CustomRun.EditPath = null;
+            CustomRun.ReturnToMyLevels = true;
+            SceneManager.LoadScene(CustomRun.MenuScene);
+        }
+
+        /// <summary>
+        /// Writes the level to its file, starting one for a level that has none yet. Saving is quiet; only a failure
+        /// is shown.
+        /// </summary>
+        void Save()
+        {
+            try
+            {
+                CustomRun.EditPath = LevelStore.Save(Level, CustomRun.EditPath);
+            }
+            catch (System.Exception e) when (e is System.IO.IOException || e is System.UnauthorizedAccessException)
+            {
+                ShowNotice("couldn't save: " + e.Message);
+                Debug.LogWarning($"Level editor: couldn't save the level: {e}");
+            }
         }
 
         /// <summary>Back from a test play: the camera, the selection and the tool as they were.</summary>
@@ -361,6 +393,11 @@ namespace LowercaseUppercase
             if (Over(playButton, world))
             {
                 Play();
+                return;
+            }
+            if (Over(backButton, world))
+            {
+                Leave();
                 return;
             }
             if (Over(settingsButton, world) || Over(sentence, world))
@@ -782,7 +819,9 @@ namespace LowercaseUppercase
         public void Checkpoint()
         {
             changed = false;
-            if (History != null && History.Record(Level.ToJson(false))) FindWarnings();
+            if (History == null || !History.Record(Level.ToJson(false))) return;
+            FindWarnings();
+            Save();
         }
 
         public void Undo() => GoTo(() => History.Undo());
@@ -810,6 +849,7 @@ namespace LowercaseUppercase
             Rebuild();
             changed = false;
             FindWarnings();
+            Save();
 
             if (settings) ShowSettings();
             else if (start) SelectStart();
@@ -901,7 +941,13 @@ namespace LowercaseUppercase
             if (keyboard.digit1Key.wasPressedThisFrame) palette.ShowPage(0);
             if (keyboard.digit2Key.wasPressedThisFrame) palette.ShowPage(1);
             if (keyboard.digit3Key.wasPressedThisFrame) palette.ShowPage(2);
-            if (keyboard.escapeKey.wasPressedThisFrame) Deselect();
+            if (keyboard.escapeKey.wasPressedThisFrame)
+            {
+                // Esc first lets go of what is picked; with nothing picked, it leaves.
+                if (Selected != null || StartSelected || SettingsShown) Deselect();
+                else Leave();
+                return;
+            }
             if (keyboard.deleteKey.wasPressedThisFrame || keyboard.backspaceKey.wasPressedThisFrame) DeleteSelected();
             bool enter = keyboard.enterKey.wasPressedThisFrame || keyboard.numpadEnterKey.wasPressedThisFrame;
             if (enter && Selected != null && EditorPalette.HasText(Selected)) BeginTyping(Selected, isNew: false);

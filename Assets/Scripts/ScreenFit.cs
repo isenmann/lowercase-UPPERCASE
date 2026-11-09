@@ -41,6 +41,7 @@ namespace LowercaseUppercase
             { "Readout", new Vector2Int(-1, -1) },
             { "Controls", new Vector2Int(1, -1) },
             { "Settings Button", new Vector2Int(1, 1) },
+            { "Back Button", new Vector2Int(-1, 1) },
             { "Warnings", new Vector2Int(-1, 1) },
             { "Editor Readout", new Vector2Int(-1, 1) },
             { "Palette", new Vector2Int(-1, -1) },

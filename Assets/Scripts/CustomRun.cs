@@ -11,8 +11,14 @@ namespace LowercaseUppercase
     {
         public const string Scene = "CustomLevel";
         public const string EditorScene = "LevelEditor";
+        public const string MenuScene = "Menu";
 
         public static CustomLevelData Level { get; set; }
+
+        /// <summary>The file of the level being edited, or null for a level not saved yet.</summary>
+        public static string EditPath { get; set; }
+        /// <summary>Set on the way to the menu from a custom level or the editor, so it opens on My levels.</summary>
+        public static bool ReturnToMyLevels { get; set; }
 
         /// <summary>The level is being tried out from the editor: Esc and the exit both go back to it.</summary>
         public static bool Testing { get; private set; }
@@ -34,6 +40,8 @@ namespace LowercaseUppercase
         static void Reset()
         {
             Level = null;
+            EditPath = null;
+            ReturnToMyLevels = false;
             EndTest();
         }
 

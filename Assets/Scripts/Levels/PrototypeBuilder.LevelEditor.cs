@@ -108,7 +108,7 @@ namespace LowercaseUppercase.Levels
             PixelRect(hud, "Bottom Bar", 0f, 648f, 1280f, 72f, Background, order);
             PixelRect(hud, "Bottom Line", 0f, 648f, 1280f, 1f, BarLine, order);
 
-            Text(hud, "Title", "Level editor", 32f, 38f, 14f, mono, Muted, order + 1);
+            editor.backButton = Text(hud, "Back Button", "< my levels", 32f, 38f, 14f, mono, Interactive, order + 1);
             editor.readout = Text(hud, "Editor Readout", "", 168f, 37f, 12f, mono, Muted, order + 1);
             editor.sentence = Text(hud, "Sentence", "", 860f, 40f, 22f, mono, Paper, order + 1);
             editor.settingsButton = Text(hud, "Settings Button", "settings", 1080f, 38f, 14f, mono, Interactive, order + 1);

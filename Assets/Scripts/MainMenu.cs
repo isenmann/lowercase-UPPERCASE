@@ -9,7 +9,7 @@ using UnityEngine.SceneManagement;
 namespace LowercaseUppercase
 {
     /// <summary>
-    /// The title screen: Play starts the first level, Chapters picks a level already reached (see LevelProgress), Random starts an endless run of random levels, Options holds the settings and resets progress, How to play
+    /// The title screen: Play starts the first level, Chapters picks a level already reached (see LevelProgress), Random starts an endless run of random levels, Options holds the settings and resets progress, Editor opens My levels (see MyLevelsMenu), How to play
     /// explains the two forms and the level pieces, and Exit quits. The web build hides Exit, since a page can't close itself, and the window mode and resolution, since the
     /// page's canvas sets the size there.
     /// </summary>
@@ -29,6 +29,8 @@ namespace LowercaseUppercase
         public UnityEngine.UI.Button randomButton;
         public string randomScene = "Random";
         public UnityEngine.UI.Button optionsButton;
+        [Tooltip("Opens My levels, the levels made in the level editor.")]
+        public UnityEngine.UI.Button editorButton;
         [Tooltip("Quits the game. Hidden in the web build.")]
         public UnityEngine.UI.Button exitButton;
 
@@ -73,6 +75,11 @@ namespace LowercaseUppercase
         [Tooltip("Most columns the list uses, however wide the screen.")]
         public int maxResolutionColumns = 8;
 
+        [Header("My levels")]
+        [Tooltip("Covers the whole menu while open.")]
+        public GameObject myLevelsPanel;
+        public MyLevelsMenu myLevels;
+
         [Header("How to play")]
         public UnityEngine.UI.Button guideButton;
         [Tooltip("Covers the whole menu while open.")]
@@ -115,6 +122,11 @@ namespace LowercaseUppercase
             optionsButton.onClick.AddListener(() => Confirm(() => Open(optionsPanel, firstOption)));
             chaptersBack.onClick.AddListener(Back);
             optionsBack.onClick.AddListener(Back);
+            if (myLevelsPanel != null)
+            {
+                editorButton.onClick.AddListener(() => Confirm(() => OpenMyLevels()));
+                myLevels.backButton.onClick.AddListener(Back);
+            }
             if (guidePanel != null)
             {
                 guideButton.onClick.AddListener(() => Confirm(OpenGuide));
@@ -190,7 +202,10 @@ namespace LowercaseUppercase
 
         void Start()
         {
-            ShowMain();
+            // Back from a custom level or the editor, the menu opens where they were started from.
+            if (CustomRun.ReturnToMyLevels && myLevelsPanel != null) OpenMyLevels();
+            else ShowMain();
+            CustomRun.ReturnToMyLevels = false;
             StartCoroutine(Fade(1f, 0f));
         }
 
@@ -238,6 +253,7 @@ namespace LowercaseUppercase
         {
             Sfx.Play(Sound.MenuBack);
             if (openPanel == resolutionPanel) Open(optionsPanel, resolutionButton);
+            else if (openPanel == myLevelsPanel) Open(mainPanel, editorButton);
             else ShowMain();
         }
 
@@ -261,6 +277,7 @@ namespace LowercaseUppercase
             optionsPanel.SetActive(panel == optionsPanel);
             if (guidePanel != null) guidePanel.SetActive(panel == guidePanel);
             if (resolutionPanel != null) resolutionPanel.SetActive(panel == resolutionPanel);
+            if (myLevelsPanel != null) myLevelsPanel.SetActive(panel == myLevelsPanel);
             openPanel = panel;
             firstButton = first;
             // Opening a panel selects its first button; that isn't a move.
@@ -430,7 +447,15 @@ namespace LowercaseUppercase
             Load(randomScene);
         }
 
-        void Load(string scene)
+        /// <summary>Lists the levels made in the editor, starting on the given row.</summary>
+        public void OpenMyLevels(int focusRow = 0)
+        {
+            myLevelsPanel.SetActive(true); // Its list lays itself out only while active.
+            Open(myLevelsPanel, myLevels.Refresh(focusRow));
+        }
+
+        /// <summary>Fades out and loads a scene, once.</summary>
+        public void Load(string scene)
         {
             if (loading) return;
             loading = true;
