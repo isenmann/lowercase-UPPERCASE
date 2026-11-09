@@ -285,7 +285,21 @@ namespace LowercaseUppercase
         void Restart()
         {
             if (transition != null) LevelTransition.SkipNextIntro = true;
-            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+            Scene active = SceneManager.GetActiveScene();
+            if (active.buildIndex >= 0) SceneManager.LoadScene(active.buildIndex);
+            else ReloadOutsideTheBuild(active.path);
+        }
+
+        /// <summary>
+        /// Test rooms such as the Enemy Room aren't in the build settings, so they have no build index to reload by.
+        /// The editor can still load them by path; a player build never contains them.
+        /// </summary>
+        static void ReloadOutsideTheBuild(string path)
+        {
+#if UNITY_EDITOR
+            UnityEditor.SceneManagement.EditorSceneManager.LoadSceneInPlayMode(path,
+                new LoadSceneParameters(LoadSceneMode.Single));
+#endif
         }
 
         static void LoadScene(int index)
