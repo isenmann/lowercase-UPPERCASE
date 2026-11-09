@@ -199,7 +199,7 @@ namespace LowercaseUppercase.Levels
         }
 
         /// <summary>Share, over the list: a heading, whether the code was copied and the maker finished the level, the
-        /// code in a box to select from, and Copy and Back.</summary>
+        /// code in a box to select from, and Copy, Shared levels and Back.</summary>
         static void BuildSharePanel(RectTransform panel, MyLevelsMenu myLevels, Sprite outline, TMP_FontAsset medium,
             TMP_FontAsset regular)
         {
@@ -211,11 +211,12 @@ namespace LowercaseUppercase.Levels
             myLevels.shareCode.readOnly = true;
             RectTransform buttons = OverlayButtonRow(column);
             myLevels.shareCopy = OutlineButton(buttons, "CopyButton", "Copy again", outline, medium, out _);
+            myLevels.shareSite = OutlineButton(buttons, "SharedLevelsButton", "Shared levels", outline, medium, out _);
             myLevels.shareBack = OutlineButton(buttons, "BackButton", "Back", outline, medium, out _);
         }
 
-        /// <summary>Import, over the list: a heading, a box to paste a code into, what went wrong, and Paste, Import and
-        /// Back.</summary>
+        /// <summary>Import, over the list: a heading, a box to paste a code into, what went wrong, and Paste, Import,
+        /// Shared levels and Back.</summary>
         static void BuildImportPanel(RectTransform panel, MyLevelsMenu myLevels, Sprite outline, TMP_FontAsset medium,
             TMP_FontAsset regular)
         {
@@ -227,6 +228,7 @@ namespace LowercaseUppercase.Levels
             RectTransform buttons = OverlayButtonRow(column);
             myLevels.importPaste = OutlineButton(buttons, "PasteButton", "Paste", outline, medium, out _);
             myLevels.importConfirm = OutlineButton(buttons, "ImportButton", "Import", outline, medium, out _);
+            myLevels.importSite = OutlineButton(buttons, "SharedLevelsButton", "Shared levels", outline, medium, out _);
             myLevels.importBack = OutlineButton(buttons, "BackButton", "Back", outline, medium, out _);
         }
 

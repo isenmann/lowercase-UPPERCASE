@@ -9,7 +9,7 @@ namespace LowercaseUppercase
     /// <summary>
     /// The menu's My levels panel: one row per level made in the editor, with Play (the level's name), Edit, Share and
     /// Delete, and New level, Import and Back under the list. <see cref="MainMenu"/> opens and closes it; this fills it
-    /// in, and opens Share and Import over it. Delete asks for a second press, like Reset progress. The strip above the
+    /// in, and opens Share and Import over it. Both of those link to the shared levels page. Delete asks for a second press, like Reset progress. The strip above the
     /// list shows a picture of the row last pointed at or moved to; clicking the name still plays it.
     /// </summary>
     public class MyLevelsMenu : MonoBehaviour
@@ -33,6 +33,8 @@ namespace LowercaseUppercase
         public TMP_Text shareStatus;
         public TMP_InputField shareCode;
         public Button shareCopy;
+        [Tooltip("Opens the shared levels page, where finished levels can be uploaded.")]
+        public Button shareSite;
         public Button shareBack;
 
         [Header("Import")]
@@ -42,13 +44,19 @@ namespace LowercaseUppercase
         public TMP_Text importStatus;
         public Button importPaste;
         public Button importConfirm;
+        [Tooltip("Opens the shared levels page, to find codes to import.")]
+        public Button importSite;
         public Button importBack;
+
+        [Header("Shared levels page")]
+        [Tooltip("Where players share their codes: the page in Web/, put online with Cloudflare Workers.")]
+        public string sharedLevelsUrl = "https://lowercase-uppercase-levels.devplayrepeat.workers.dev";
 
         [Header("Words")]
         public string deleteText = "Delete";
         public string deleteConfirmText = "Really?";
         public string finishedMark = "  <color=#6B7180>finished</color>";
-        public string importHint = "Paste a level code, then Import.";
+        public string importHint = "Paste a level code, then Import. Shared levels has more to find.";
 
         const float UnreadableAlpha = 0.4f;
 
@@ -82,6 +90,8 @@ namespace LowercaseUppercase
             newButton.onClick.AddListener(NewLevel);
             importButton.onClick.AddListener(OpenImport);
             shareCopy.onClick.AddListener(CopyShareCode);
+            shareSite.onClick.AddListener(OpenSharedLevels);
+            importSite.onClick.AddListener(OpenSharedLevels);
             shareBack.onClick.AddListener(() => CloseOverlay());
             importPaste.onClick.AddListener(PasteImportCode);
             importConfirm.onClick.AddListener(() => Import());
@@ -223,8 +233,8 @@ namespace LowercaseUppercase
             shareHeading.text = $"Share {level.name}";
             shareCode.text = LevelShareCode.Encode(level);
             string finished = level.FinishedByMaker
-                ? "Finished by its maker."
-                : "Not finished yet: reach the exit in a test play from the start, and it will say so.";
+                ? "Finished by its maker, so it can go on Shared levels too."
+                : "Not finished yet: reach the exit in a test play from the start. Shared levels only takes finished ones.";
             shareStatus.text = (Copy(shareCode.text) ? "Copied to the clipboard. " : "Select the code to copy it. ") + finished;
             sharePanel.SetActive(true);
             menu.Focus(shareCopy);
@@ -242,6 +252,13 @@ namespace LowercaseUppercase
             if (Application.platform == RuntimePlatform.WebGLPlayer) return false;
             GUIUtility.systemCopyBuffer = text;
             return true;
+        }
+
+        /// <summary>Opens the shared levels page in the browser, or in a new tab in the web build.</summary>
+        public void OpenSharedLevels()
+        {
+            Sfx.Play(Sound.MenuConfirm);
+            Application.OpenURL(sharedLevelsUrl);
         }
 
         void OpenImport()

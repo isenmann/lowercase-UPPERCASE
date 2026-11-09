@@ -85,3 +85,6 @@ Thumbs.db
 /Web/.wrangler/
 /Web/node_modules/
 /Web/public/fonts/
+
+# Wrangler state when it is run from the repository root
+/.wrangler/
