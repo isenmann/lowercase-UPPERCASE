@@ -286,6 +286,64 @@ namespace LowercaseUppercase.Tests
         }
 
         [UnityTest]
+        public IEnumerator TheMimicCopiesTheLettersCaseAMomentLater()
+        {
+            yield return Load();
+            EnemyMimic mimic = UnityEngine.Object.FindAnyObjectByType<EnemyMimic>();
+            Assert.IsFalse(mimic.IsUpper);
+
+            letter.SetInput(0f, false, true);
+            yield return WaitUntil(() => letter.Form == LetterForm.Uppercase);
+            Assert.IsFalse(mimic.IsUpper, "It should take a moment to copy.");
+            yield return WaitUntil(() => mimic.IsUpper);
+            Assert.AreEqual("B", mimic.GetComponent<Enemy>().glyph.text);
+
+            letter.SetInput(0f, false, false);
+            yield return WaitUntil(() => !mimic.IsUpper);
+        }
+
+        [UnityTest]
+        public IEnumerator AnUppercaseMimicCantBeStomped()
+        {
+            yield return Load();
+            EnemyMimic mimic = UnityEngine.Object.FindAnyObjectByType<EnemyMimic>();
+            mimic.GetComponent<EnemyWalk>().speed = 0f;
+            yield return GrowInPlace();
+            yield return WaitUntil(() => mimic.IsUpper);
+
+            PlaceLetterAt((Vector2)mimic.transform.position + Vector2.up * 1.2f);
+            LetterController dropping = letter;
+            yield return WaitUntil(() => dropping == null);
+        }
+
+        [UnityTest]
+        public IEnumerator TheCursorErasesTheWordsBehindTheLetterAndStops()
+        {
+            yield return Load();
+            EnemyCursor cursor = UnityEngine.Object.FindAnyObjectByType<EnemyCursor>();
+            cursor.speed = 12f; // The stretch takes about 9 s at its own speed, longer than the timeout.
+            Bounds safe = GameObject.Find("Word safe again").GetComponent<BoxCollider2D>().bounds;
+            PlaceLetterAt(new Vector2(safe.center.x, safe.max.y + 0.01f));
+
+            yield return WaitUntil(() => cursor.IsDone);
+            WordBlock first = GameObject.Find("Word backspace").GetComponent<WordBlock>();
+            Assert.IsTrue(first.IsErased, "Words in the stretch should be erased.");
+            Assert.IsFalse(GameObject.Find("Word safe again").GetComponent<WordBlock>().IsErased,
+                "Words past the stretch should stay.");
+            Assert.IsTrue(letter != null, "A letter past the stretch should be safe.");
+        }
+
+        [UnityTest]
+        public IEnumerator StandingStillInFrontOfTheCursorCostsALife()
+        {
+            yield return Load();
+            EnemyCursor cursor = UnityEngine.Object.FindAnyObjectByType<EnemyCursor>();
+            PlaceLetterAt(new Vector2(cursor.transform.position.x + cursor.startLead + 0.5f, letter.transform.position.y));
+            LetterController standing = letter;
+            yield return WaitUntil(() => standing == null);
+        }
+
+        [UnityTest]
         public IEnumerator ShootingAnArrowPaysNothing()
         {
             yield return Load();

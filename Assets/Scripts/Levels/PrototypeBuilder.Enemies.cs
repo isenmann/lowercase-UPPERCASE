@@ -12,6 +12,8 @@ namespace LowercaseUppercase.Levels
         // Arrows fly above a lowercase letter (0.4 high) and into an uppercase one (0.92 high, and it only jumps 0.6).
         const float ArrowFeetAboveGround = 0.5f;
         const float LauncherFontPx = 72f;
+        const float CursorFontPx = 260f;        // About 4.3 units tall: higher than any letter jumps.
+        const float CursorBelowGround = 0.6f;   // It starts inside the ground word, so nothing slips under it.
         const float LauncherLineSpacing = -88f; // Guillemets are short, so the rows are packed tighter than a column of letters.
 
         // ---------------------------------------------------------------- walkers
@@ -208,6 +210,32 @@ namespace LowercaseUppercase.Levels
         {
             Enemy enemy = BuildWalker(parent, ground, leftPx, "\u2195", 64f, stompable: true, shootable: true);
             return enemy.gameObject.AddComponent<EnemyCaseSwap>();
+        }
+
+        // ---------------------------------------------------------------- mimic and cursor
+
+        /// <summary>A walking b that turns into a B a moment after the letter turns UPPERCASE, and back.</summary>
+        static EnemyMimic BuildMimic(Transform parent, WordBlock ground, float leftPx)
+        {
+            Enemy enemy = BuildWalker(parent, ground, leftPx, "b", 56f, stompable: true, shootable: true);
+            return enemy.gameObject.AddComponent<EnemyMimic>();
+        }
+
+        /// <summary>
+        /// A tall blinking cursor at <paramref name="startPx"/> that sweeps right to <paramref name="endPx"/> once the
+        /// letter passes it, erasing every word that starts in between. It reaches from inside the ground to well above
+        /// a jump, so it can't be jumped. Nothing kills it.
+        /// </summary>
+        static EnemyCursor BuildCursorChase(Transform level, float startPx, float endPx, float surfacePx = Ground,
+            float speed = 3.5f)
+        {
+            Enemy enemy = BuildEnemyAt(level, new Vector3(X(startPx), Y(surfacePx) - CursorBelowGround, 0f), "|",
+                CursorFontPx, stompable: false, shootable: false);
+            enemy.name = "Backspace Cursor";
+            var cursor = enemy.gameObject.AddComponent<EnemyCursor>();
+            cursor.endX = X(endPx);
+            cursor.speed = speed;
+            return cursor;
         }
 
         static float LeftEdge(WordBlock block)

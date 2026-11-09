@@ -63,6 +63,7 @@ namespace LowercaseUppercase
         public Color powerColor = new Color32(0xFF, 0xD2, 0x3F, 0xFF);
 
         public bool IsSpent { get; private set; }
+        public bool IsErased { get; private set; }
         public Vector2 WorldCentre => transform.TransformPoint(box.offset);
 
         TextMeshPro text;
@@ -145,6 +146,7 @@ namespace LowercaseUppercase
 
         void Update()
         {
+            if (IsErased) return;
             if (kind == WordKind.Period)
             {
                 text.color = Time.time < pressedUntil ? pressedColor : restingColor;
@@ -251,6 +253,18 @@ namespace LowercaseUppercase
                 yield return null;
             }
             transform.localScale = Vector3.one;
+        }
+
+        /// <summary>Wiped out by the backspace cursor: it can't be touched any more and only a faint trace is left.</summary>
+        public void Erase(float traceAlpha)
+        {
+            if (IsErased) return;
+            IsErased = true;
+            StopAllCoroutines();
+            box.enabled = false;
+            Color faded = text.color;
+            faded.a = traceAlpha;
+            text.color = faded;
         }
 
         public void Smash()

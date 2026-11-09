@@ -47,6 +47,8 @@ namespace LowercaseUppercase.Levels
             x = FirePen(level, x);
             x = CurlPen(level, x);
             x = CaseSwapPen(level, x);
+            x = MimicPen(level, x);
+            x = CursorPen(level, x);
             PowerBlock(level, x - 120f, LowPlatform);
             x = EyePen(level, x);
             x = Exit(level, x, "the end of the room", "the", "nd");
@@ -169,6 +171,38 @@ namespace LowercaseUppercase.Levels
             x = RightEdge(ground) + WordGap;
             Note(level, left + 40f, 300f, "\u2195 touch it and Shift works the other way");
             BuildCaseSwapper(level, ground, left + 400f);
+            PlaceCheckpoint(level, x - 60f, Ground);
+            return x;
+        }
+
+        /// <summary>A mimic walking a word: switch to A only just before landing on it.</summary>
+        static float MimicPen(Transform level, float x)
+        {
+            float left = x;
+            WordBlock ground = Word(level, "mimics copy your case", x, Ground, 72f);
+            x = RightEdge(ground) + WordGap;
+            Note(level, left + 40f, 300f, "b becomes B after you: turn A just before you land");
+            BuildMimic(level, ground, left + 360f);
+            PlaceCheckpoint(level, x - 60f, Ground);
+            return x;
+        }
+
+        /// <summary>A stretch of words with gaps that the backspace cursor erases behind the letter.</summary>
+        static float CursorPen(Transform level, float x)
+        {
+            float start = x;
+            Note(level, x + 40f, 300f, "| keep moving: the cursor erases the words behind you");
+            WordBlock first = Word(level, "backspace", x, Ground, 72f);
+            x = RightEdge(first) + 110f;
+            WordBlock second = Word(level, "erases every", x, Ground, 72f);
+            x = RightEdge(second) + 130f;
+            WordBlock third = Word(level, "word", x, Ground - 90f, 72f);
+            x = RightEdge(third) + 120f;
+            WordBlock fourth = Word(level, "you leave behind", x, Ground, 72f);
+            x = RightEdge(fourth) + WordGap;
+            BuildCursorChase(level, start + 10f, x - 10f);
+
+            Floor(level, "safe again", ref x);
             PlaceCheckpoint(level, x - 60f, Ground);
             return x;
         }

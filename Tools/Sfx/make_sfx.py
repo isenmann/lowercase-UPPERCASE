@@ -792,6 +792,19 @@ def _(st):
     return seq(st, [84, 91, 84, 91], 0.045, 0.12, dec=0.04).render()
 
 
+@event("Shooting and enemies", "cursor_erase", "Cursor erases a word", "The backspace cursor wipes out a word behind the letter.", "EnemyCursor.EraseUpTo", 0.35)
+def _(st):
+    if st == "chip":
+        return Mix().add(noise(st, 0.1, glide(3000, 600, 0.1), dec=0.05)).add(tone(st, glide(500, 200, 0.1), 0.1, 0.6, duty=0.5)).render()
+    if st == "ink":
+        return Mix().add(noise(st, 0.12, glide(2500, 500, 0.12), dec=0.05), 0, 0.8).add(tone(st, glide(420, 180, 0.12), 0.12, dec=0.05)).render()
+    if st == "type":  # the backspace key with a short rub-out
+        m = Mix().add(key(0.85, 0.9))
+        m.add(svf(white(0.1), glide(2800, 900, 0.1), 1.3, "bp") * env(0.1, 0.004, 0.035), 0.02, 0.7)
+        return m.render()
+    return Mix().add(tone(st, glide(1800, 700, 0.12), 0.18, dec=0.05)).render()
+
+
 STYLES = [
     dict(id="chip", name="Chip", blurb="Square waves and stepped noise, stair-stepped at 60 fps like an 8-bit console."),
     dict(id="ink", name="Ink", blurb="Soft sine and triangle tones, smooth glides, rounded edges. Calm and modern."),
