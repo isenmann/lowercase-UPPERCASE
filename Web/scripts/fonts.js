@@ -4,7 +4,10 @@ import { copyFileSync, existsSync, mkdirSync, readdirSync } from "node:fs";
 
 const source = new URL("../../Assets/Fonts/", import.meta.url);
 const target = new URL("../public/fonts/", import.meta.url);
-const wanted = ["SpaceMono-Regular.ttf", "SpaceMono-Bold.ttf", "ArchivoBlack-Regular.ttf", "SpaceGrotesk-Medium.ttf"];
+const wanted = [
+  "SpaceMono-Regular.ttf", "SpaceMono-Bold.ttf", "ArchivoBlack-Regular.ttf",
+  "SpaceGrotesk-Regular.ttf", "SpaceGrotesk-Medium.ttf", "SpaceGrotesk-Bold.ttf"
+];
 
 const missing = wanted.filter(name => !existsSync(new URL(name, source)));
 if (missing.length > 0) {

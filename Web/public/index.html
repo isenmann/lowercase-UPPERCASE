@@ -2,11 +2,73 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Levels for lowercase / UPPERCASE made by its players. Copy a code into the game, or share your own level.">
+  <meta name="theme-color" content="#111318">
   <title>lowercase / UPPERCASE Levels</title>
+  <link rel="icon" href="favicon.png">
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="page.js"></script>
 </head>
 <body>
-  <!-- A stand-in until the page itself is built (step 5 of the plan). -->
-  <p>Shared levels for lowercase / UPPERCASE are on their way.</p>
+  <div class="page">
+    <!-- The game's title screen: the words behind, the tagline, and the two forms of the title. -->
+    <section class="banner" aria-label="lowercase / UPPERCASE, a one-letter platformer">
+      <pre class="backdrop" aria-hidden="true">the cat sat on the mat     and the mat was cold
+     a quick brown fox     jumps over     the lazy dog
+the ice was thin            so the dog stayed home
+        once upon a time     there was a small letter</pre>
+      <p class="tagline">A ONE-LETTER PLATFORMER · GAME OFF 2026</p>
+      <p class="title-lower">lowercase</p>
+      <p class="title-upper">UPPERCASE</p>
+    </section>
+
+    <header>
+      <div>
+        <h1>Shared levels</h1>
+        <div class="count" id="count" role="status">Loading levels...</div>
+      </div>
+      <a class="button primary" href="ITCH_URL">Get the game</a>
+    </header>
+
+    <form class="upload" id="form" novalidate>
+      <label for="input">Add your level</label>
+      <div class="line">
+        <input class="field" id="input" maxlength="65536" autocomplete="off" autocapitalize="off" spellcheck="false"
+          placeholder="Paste a level code: luc1:...">
+        <button class="button primary" type="submit" id="send">Upload</button>
+      </div>
+      <div class="message" id="message" role="status">In the game: My levels, Share, and the code is copied. Only levels you
+        finished in a test play from the start can go up.</div>
+      <div class="pasted" id="pasted" hidden>
+        <div class="pasted-head">
+          <span class="pasted-name" id="pasted-name"></span>
+          <span class="sentence" id="pasted-sentence"></span>
+        </div>
+        <div class="strip small" id="pasted-strip"></div>
+      </div>
+    </form>
+
+    <div class="main">
+      <div class="list" id="list">
+        <button class="button more" type="button" id="more" disabled>Loading...</button>
+      </div>
+      <section class="detail" id="detail" hidden>
+        <div>
+          <h2 id="name"></h2>
+          <p class="sentence" id="sentence"></p>
+        </div>
+        <div class="strip" id="strip" tabindex="0" aria-label="The level. Drag or scroll to look along it."></div>
+        <div class="chips" id="facts"></div>
+        <div class="chips" id="chips"></div>
+        <code class="code" id="code"></code>
+        <button class="button primary copy" type="button" id="copy">Copy code</button>
+        <p class="hint">To play: open lowercase / UPPERCASE, go to My levels, choose Import and paste the code.</p>
+      </section>
+    </div>
+
+    <footer>lowercase / UPPERCASE · Game Off 2026 · Only the level code is stored. Everything else here is worked out
+      from it.</footer>
+  </div>
 </body>
 </html>
