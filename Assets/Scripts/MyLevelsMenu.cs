@@ -7,9 +7,9 @@ using UnityEngine.UI;
 namespace LowercaseUppercase
 {
     /// <summary>
-    /// The menu's My levels panel: one row per level made in the editor, with Play (the level's name), Edit and Delete,
-    /// and New level and Back under the list. <see cref="MainMenu"/> opens and closes it; this fills it in.
-    /// Delete asks for a second press, like Reset progress.
+    /// The menu's My levels panel: one row per level made in the editor, with Play (the level's name), Edit, Share and
+    /// Delete, and New level, Import and Back under the list. <see cref="MainMenu"/> opens and closes it; this fills it
+    /// in, and opens Share and Import over it. Delete asks for a second press, like Reset progress.
     /// </summary>
     public class MyLevelsMenu : MonoBehaviour
     {
@@ -20,21 +20,46 @@ namespace LowercaseUppercase
         [Tooltip("Shown instead of the list when there are no levels yet.")]
         public TMP_Text emptyText;
         public Button newButton;
+        public Button importButton;
         public Button backButton;
+
+        [Header("Share")]
+        [Tooltip("Covers the list while open: the level's code, already copied, and whether its maker finished it.")]
+        public GameObject sharePanel;
+        public TMP_Text shareHeading;
+        public TMP_Text shareStatus;
+        public TMP_InputField shareCode;
+        public Button shareCopy;
+        public Button shareBack;
+
+        [Header("Import")]
+        [Tooltip("Covers the list while open: a box to paste a code into.")]
+        public GameObject importPanel;
+        public TMP_InputField importCode;
+        public TMP_Text importStatus;
+        public Button importPaste;
+        public Button importConfirm;
+        public Button importBack;
+
+        [Header("Words")]
         public string deleteText = "Delete";
         public string deleteConfirmText = "Really?";
+        public string finishedMark = "  <color=#6B7180>finished</color>";
+        public string importHint = "Paste a level code, then Import.";
 
         const float UnreadableAlpha = 0.4f;
 
         readonly List<Row> rows = new List<Row>();
         Button armedDelete;
         GameObject shown;
+        int overlayRow;
 
         sealed class Row
         {
             public StoredLevel Level;
             public Button Play;
             public Button Edit;
+            public Button Share;
             public Button Delete;
             public TMP_Text DeleteLabel;
         }
@@ -52,7 +77,17 @@ namespace LowercaseUppercase
         void Awake()
         {
             newButton.onClick.AddListener(NewLevel);
+            importButton.onClick.AddListener(OpenImport);
+            shareCopy.onClick.AddListener(CopyShareCode);
+            shareBack.onClick.AddListener(() => CloseOverlay());
+            importPaste.onClick.AddListener(PasteImportCode);
+            importConfirm.onClick.AddListener(() => Import());
+            importBack.onClick.AddListener(() => CloseOverlay());
+            sharePanel.SetActive(false);
+            importPanel.SetActive(false);
         }
+
+        public bool OverlayOpen => sharePanel.activeSelf || importPanel.activeSelf;
 
         /// <summary>
         /// Lists the levels again, and returns the button to start on: the Play of the row at focusRow (or the last
@@ -69,6 +104,8 @@ namespace LowercaseUppercase
             }
             rows.Clear();
             armedDelete = null;
+            sharePanel.SetActive(false);
+            importPanel.SetActive(false);
 
             foreach (StoredLevel level in LevelStore.List()) rows.Add(MakeRow(content, level));
 
@@ -93,6 +130,7 @@ namespace LowercaseUppercase
                 Level = level,
                 Play = go.transform.Find("PlayButton").GetComponent<Button>(),
                 Edit = go.transform.Find("EditButton").GetComponent<Button>(),
+                Share = go.transform.Find("ShareButton").GetComponent<Button>(),
                 Delete = go.transform.Find("DeleteButton").GetComponent<Button>(),
             };
             row.DeleteLabel = row.Delete.GetComponentInChildren<TMP_Text>();
@@ -100,17 +138,21 @@ namespace LowercaseUppercase
 
             TMP_Text name = row.Play.GetComponentInChildren<TMP_Text>();
             bool readable = level.Level != null;
-            name.text = readable ? level.Name : $"can't read {level.Name}";
+            name.text = !readable ? $"can't read {level.Name}"
+                : level.Level.FinishedByMaker ? level.Name + finishedMark : level.Name;
             row.Play.interactable = readable;
             row.Edit.interactable = readable;
+            row.Share.interactable = readable;
             if (!readable)
             {
                 name.alpha = UnreadableAlpha;
                 row.Edit.GetComponentInChildren<TMP_Text>().alpha = UnreadableAlpha;
+                row.Share.GetComponentInChildren<TMP_Text>().alpha = UnreadableAlpha;
             }
 
             row.Play.onClick.AddListener(() => Play(level));
             row.Edit.onClick.AddListener(() => Edit(level));
+            row.Share.onClick.AddListener(() => Share(row));
             row.Delete.onClick.AddListener(() => Delete(row));
             return row;
         }
@@ -153,6 +195,100 @@ namespace LowercaseUppercase
             LevelStore.Delete(row.Level.Path);
             Sfx.Play(Sound.MenuBack);
             menu.OpenMyLevels(index);
+        }
+
+        // ---------------------------------------------------------------- share and import
+
+        void Share(Row row)
+        {
+            if (row.Level.Level == null) return;
+            overlayRow = rows.IndexOf(row);
+            Sfx.Play(Sound.MenuConfirm);
+            Show(row.Level.Level);
+        }
+
+        /// <summary>Opens Share for a level: its code, copied to the clipboard, and whether its maker finished it.</summary>
+        public void Show(CustomLevelData level)
+        {
+            shareHeading.text = $"Share {level.name}";
+            shareCode.text = LevelShareCode.Encode(level);
+            string finished = level.FinishedByMaker
+                ? "Finished by its maker."
+                : "Not finished yet: reach the exit in a test play from the start, and it will say so.";
+            shareStatus.text = (Copy(shareCode.text) ? "Copied to the clipboard. " : "Select the code to copy it. ") + finished;
+            sharePanel.SetActive(true);
+            menu.Focus(shareCopy);
+        }
+
+        void CopyShareCode()
+        {
+            Sfx.Play(Sound.MenuConfirm);
+            if (Copy(shareCode.text)) shareStatus.text = "Copied to the clipboard again.";
+        }
+
+        static bool Copy(string text)
+        {
+            // The web build can't reach the clipboard this way.
+            if (Application.platform == RuntimePlatform.WebGLPlayer) return false;
+            GUIUtility.systemCopyBuffer = text;
+            return true;
+        }
+
+        void OpenImport()
+        {
+            overlayRow = 0;
+            Sfx.Play(Sound.MenuConfirm);
+            importCode.text = "";
+            importStatus.text = importHint;
+            importPanel.SetActive(true);
+            menu.Focus(importPaste);
+        }
+
+        void PasteImportCode()
+        {
+            Sfx.Play(Sound.MenuConfirm);
+            importCode.text = GUIUtility.systemCopyBuffer ?? "";
+            menu.Focus(importConfirm);
+        }
+
+        /// <summary>
+        /// Reads the pasted code and saves it as a new level at the top of the list, or says what is wrong with it.
+        /// </summary>
+        public bool Import()
+        {
+            CustomLevelData level;
+            try
+            {
+                level = LevelShareCode.Decode(importCode.text);
+            }
+            catch (System.FormatException e)
+            {
+                Sfx.Play(Sound.MenuBack);
+                importStatus.text = e.Message;
+                return false;
+            }
+
+            try
+            {
+                LevelStore.Save(level);
+            }
+            catch (System.Exception e) when (e is System.IO.IOException || e is System.UnauthorizedAccessException)
+            {
+                importStatus.text = "Couldn't save it: " + e.Message;
+                return false;
+            }
+            Sfx.Play(Sound.MenuStart);
+            menu.OpenMyLevels(0);
+            return true;
+        }
+
+        /// <summary>Closes Share or Import, back to the list where it was. False when neither was open.</summary>
+        public bool CloseOverlay()
+        {
+            if (!OverlayOpen) return false;
+            Sfx.Play(Sound.MenuBack);
+            menu.OpenMyLevels(overlayRow);
+            return true;
         }
 
         void Update()

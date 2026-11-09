@@ -35,7 +35,38 @@ namespace LowercaseUppercase
 
         public List<CustomPiece> pieces = new List<CustomPiece>();
 
+        [Tooltip("The ContentHash of the level when its maker last reached the exit in a test play from the start.")]
+        public string finishedHash = "";
+
         public string ToJson(bool pretty = true) => JsonUtility.ToJson(this, pretty);
+
+        /// <summary>
+        /// Whether its maker reached the exit in a test play from the start, and nothing that matters for play has
+        /// changed since. Renaming keeps it; moving a piece doesn't.
+        /// </summary>
+        public bool FinishedByMaker => !string.IsNullOrEmpty(finishedHash) && finishedHash == ContentHash();
+
+        public void MarkFinished() => finishedHash = ContentHash();
+
+        /// <summary>A short fingerprint of everything that matters for play: all but the name and the flag itself.</summary>
+        public string ContentHash()
+        {
+            string keptName = name, keptHash = finishedHash;
+            name = "";
+            finishedHash = "";
+            string json = ToJson(false);
+            name = keptName;
+            finishedHash = keptHash;
+
+            // FNV-1a, 32 bits: plenty to tell an edited level from the one that was finished.
+            uint hash = 2166136261;
+            foreach (char c in json)
+            {
+                hash ^= c;
+                hash *= 16777619;
+            }
+            return hash.ToString("x8");
+        }
 
         /// <summary>Reads a level, or throws a FormatException saying what is wrong with it.</summary>
         public static CustomLevelData FromJson(string json)
@@ -57,6 +88,7 @@ namespace LowercaseUppercase
                 throw new FormatException($"The level has format version {data.version}; this game reads up to {CurrentVersion}.");
             if (data.pieces == null) data.pieces = new List<CustomPiece>();
             if (data.seconds <= 0f) data.seconds = DefaultSeconds;
+            if (data.finishedHash == null) data.finishedHash = "";
             return data;
         }
     }

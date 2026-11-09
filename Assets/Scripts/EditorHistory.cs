@@ -30,6 +30,9 @@ namespace LowercaseUppercase
             return true;
         }
 
+        /// <summary>Replaces the level as it is now without making it a step of its own, for marks that aren't edits.</summary>
+        public void Amend(string json) => Current = json;
+
         /// <summary>The level before the last change, or null when there is nothing to undo.</summary>
         public string Undo() => Move(undo, redo);
 

@@ -251,6 +251,7 @@ namespace LowercaseUppercase
 
         void Back()
         {
+            if (openPanel == myLevelsPanel && myLevels.CloseOverlay()) return;
             Sfx.Play(Sound.MenuBack);
             if (openPanel == resolutionPanel) Open(optionsPanel, resolutionButton);
             else if (openPanel == myLevelsPanel) Open(mainPanel, editorButton);
@@ -445,6 +446,14 @@ namespace LowercaseUppercase
             if (loading) return;
             RandomRun.Begin();
             Load(randomScene);
+        }
+
+        /// <summary>Selects a button in the open panel, and makes it the one keys come back to.</summary>
+        public void Focus(UnityEngine.UI.Button button)
+        {
+            firstButton = button;
+            lastSelected = button.gameObject;
+            if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(button.gameObject);
         }
 
         /// <summary>Lists the levels made in the editor, starting on the given row.</summary>

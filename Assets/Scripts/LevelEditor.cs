@@ -179,7 +179,17 @@ namespace LowercaseUppercase
             if (CustomRun.EditorHistory != null) History = CustomRun.EditorHistory;
             if (CustomRun.EditorSelected != null && Level.pieces.Contains(CustomRun.EditorSelected))
                 Select(CustomRun.EditorSelected);
-            ShowNotice(CustomRun.TestFinished ? "test play: reached the exit" : "test play: stopped before the exit");
+            if (!CustomRun.TestFinished) ShowNotice("test play: stopped before the exit");
+            else if (CustomRun.TestStartPx != null)
+                ShowNotice("test play: reached the exit  ·  play from the start to finish the level");
+            else
+            {
+                // Finishing it isn't an edit, so it isn't a step to undo; it is saved straight away.
+                Level.MarkFinished();
+                History.Amend(Level.ToJson(false));
+                Save();
+                ShowNotice("test play: reached the exit  ·  finished, ready to share");
+            }
             CustomRun.EndTest();
         }
 
