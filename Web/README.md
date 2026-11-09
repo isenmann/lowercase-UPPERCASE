@@ -11,10 +11,12 @@ Register sharing page.
 | `src/worker.js` | `GET /api/levels` gives a page of codes (`?before=` takes the `next` of the previous page), `POST /api/levels` adds one (the body is the code). |
 | `schema.sql` | The database table. |
 | `scripts/fonts.js` | Copies the game's fonts from `Assets/Fonts` into `public/fonts`. |
-| `test/` | Tests for the code reading and the Worker. |
+| `test/` | Tests for the code reading and the Worker. `vectors.json` holds what the game makes of a set of codes and levels. |
 
 The game's C# code is the reference for level codes: `Assets/Scripts/LevelShareCode.cs` and
-`Assets/Scripts/CustomLevelData.cs`. After changing either, check `public/sharecode.js` and run `npm test`.
+`Assets/Scripts/CustomLevelData.cs`. `test/vectors.json` holds its verdicts on a set of codes, and what every piece
+of a few levels looks like once built. After changing level codes, the level format or how pieces are built, rerun
+lowercase UPPERCASE > Shared Levels > Write Test Vectors in Unity, then `npm test`.
 
 ## Fonts
 

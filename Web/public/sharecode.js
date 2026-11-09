@@ -36,9 +36,10 @@ export const ERROR_MESSAGES = {
 };
 
 /**
- * Returns { code, level, json } or { error }. `code` is the code without whitespace, `level` the parsed level and
- * `json` the text inside the code, exactly as the game wrote it. Only levels finished by their maker pass: the game
- * marks a level finished when a test play from the start reaches the exit, and any later edit clears the mark.
+ * Returns { code, level, json }, or { error }; with NotFinished it is both. `code` is the code without whitespace,
+ * `level` the parsed level and `json` the text inside the code, exactly as the game wrote it. Only levels finished by
+ * their maker pass: the game marks a level finished when a test play from the start reaches the exit, and any later
+ * edit clears the mark.
  */
 export async function decodeShareCode(text) {
   const code = String(text ?? "").replace(WHITESPACE, "");
@@ -90,8 +91,9 @@ export async function decodeShareCode(text) {
     return { error: "InvalidLevel" };
   }
 
+  // The level comes along, so the page can still show it while saying why it can't be uploaded.
   if (level.finishedHash !== contentHash(json)) {
-    return { error: "NotFinished" };
+    return { code, level, json, error: "NotFinished" };
   }
 
   return { code, level, json };
