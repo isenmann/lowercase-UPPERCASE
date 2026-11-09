@@ -487,5 +487,31 @@ namespace LowercaseUppercase.Tests
             Assert.That(myLevels.Levels.Count, Is.EqualTo(1));
             Assert.That(myLevels.Levels[0].Name, Is.EqualTo("untitled"));
         }
+    
+        // ---------------------------------------------------------------- preview picture
+
+        [UnityTest]
+        public IEnumerator MyLevelsShowsAPictureOfTheCurrentLevel()
+        {
+            editor.Level.pieces.Add(new CustomPiece(CustomPieceType.Word, 4000f, 520f, "far away", CustomPieceType.Solid));
+            editor.Rebuild();
+            editor.Leave();
+            yield return WaitFor<MainMenu>();
+
+            var preview = Object.FindAnyObjectByType<LevelPreviewStrip>();
+            float start = Time.realtimeSinceStartup;
+            while (preview.image.texture == null)
+            {
+                if (Time.realtimeSinceStartup - start > 10f) Assert.Fail("The picture was never drawn.");
+                yield return null;
+            }
+
+            Assert.That(preview.Shown.Name, Is.EqualTo("untitled"));
+            Assert.That(preview.image.texture.height, Is.EqualTo(360));
+            Assert.That(preview.scroll.content.rect.width, Is.GreaterThan(preview.scroll.viewport.rect.width),
+                "a level wider than the strip scrolls");
+            Assert.That(Object.FindObjectsByType<WordBlock>(), Is.Empty,
+                "the level built for the picture is gone again");
+        }
     }
 }

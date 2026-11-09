@@ -451,6 +451,7 @@ namespace LowercaseUppercase
         /// <summary>Selects a button in the open panel, and makes it the one keys come back to.</summary>
         public void Focus(UnityEngine.UI.Button button)
         {
+            if (button == null || loading) return;
             firstButton = button;
             lastSelected = button.gameObject;
             if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(button.gameObject);

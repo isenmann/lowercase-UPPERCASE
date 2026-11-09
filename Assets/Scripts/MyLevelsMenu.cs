@@ -9,7 +9,8 @@ namespace LowercaseUppercase
     /// <summary>
     /// The menu's My levels panel: one row per level made in the editor, with Play (the level's name), Edit, Share and
     /// Delete, and New level, Import and Back under the list. <see cref="MainMenu"/> opens and closes it; this fills it
-    /// in, and opens Share and Import over it. Delete asks for a second press, like Reset progress.
+    /// in, and opens Share and Import over it. Delete asks for a second press, like Reset progress. The strip above the
+    /// list shows a picture of the row last pointed at or moved to; clicking the name still plays it.
     /// </summary>
     public class MyLevelsMenu : MonoBehaviour
     {
@@ -17,6 +18,8 @@ namespace LowercaseUppercase
         [Tooltip("Inactive row inside the list, copied once per level: a name button that plays it, Edit and Delete.")]
         public GameObject rowTemplate;
         public ScrollRect scroll;
+        [Tooltip("The picture of the current row's level, above the list.")]
+        public LevelPreviewStrip preview;
         [Tooltip("Shown instead of the list when there are no levels yet.")]
         public TMP_Text emptyText;
         public Button newButton;
@@ -110,6 +113,7 @@ namespace LowercaseUppercase
             foreach (StoredLevel level in LevelStore.List()) rows.Add(MakeRow(content, level));
 
             bool any = rows.Count > 0;
+            if (preview != null) preview.Show(any ? rows[Mathf.Clamp(focusRow, 0, rows.Count - 1)].Level : null);
             scroll.gameObject.SetActive(any);
             emptyText.gameObject.SetActive(!any);
             content.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
@@ -134,6 +138,12 @@ namespace LowercaseUppercase
                 Delete = go.transform.Find("DeleteButton").GetComponent<Button>(),
             };
             row.DeleteLabel = row.Delete.GetComponentInChildren<TMP_Text>();
+            // Pointing at a row picks it, as moving there with keys does, so the picture follows the mouse too.
+            foreach (Button button in new[] { row.Play, row.Edit, row.Share, row.Delete })
+            {
+                var hover = button.GetComponent<SelectOnHover>();
+                if (hover != null) hover.Hovered = menu.Focus;
+            }
             row.DeleteLabel.text = deleteText;
 
             TMP_Text name = row.Play.GetComponentInChildren<TMP_Text>();
@@ -304,7 +314,11 @@ namespace LowercaseUppercase
 
             if (selected != shown && selected != null && selected.transform.parent != null
                 && selected.transform.parent.parent == scroll.content)
+            {
                 ShowInList(selected.transform);
+                Row row = rows.Find(r => r.Play.transform.parent == selected.transform.parent);
+                if (row != null && preview != null) preview.Show(row.Level);
+            }
             shown = selected;
         }
 

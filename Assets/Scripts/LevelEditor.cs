@@ -1126,7 +1126,7 @@ namespace LowercaseUppercase
 
         // ---------------------------------------------------------------- preview
 
-        /// <summary>Builds the level again from its data, and stops everything in it from moving.</summary>
+        /// <summary>Builds the level again from its data, frozen (see <see cref="FrozenLevel"/>).</summary>
         public void Rebuild()
         {
             // A new root, because a destroyed one lingers until the end of the frame, and the builder looks for
@@ -1136,14 +1136,11 @@ namespace LowercaseUppercase
             built.Clear();
             changed = true;
 
-            PrototypeBuilder.BuildCustomLevel(Preview, Level, mono, monoBold, black, white, (piece, part) =>
+            FrozenLevel.Build(Preview, Level, mono, monoBold, black, white, (piece, part) =>
             {
                 if (!built.TryGetValue(piece, out List<Transform> parts)) built[piece] = parts = new List<Transform>();
                 parts.Add(part);
             });
-            Freeze(Preview);
-            // Meshes are made lazily, and finding the piece under the mouse needs their bounds in this same frame.
-            foreach (TMP_Text text in Preview.GetComponentsInChildren<TMP_Text>(true)) text.ForceMeshUpdate();
 
             if (startMarker != null)
             {
@@ -1153,18 +1150,6 @@ namespace LowercaseUppercase
             if (sentence != null)
                 sentence.text = $"{Level.sentenceBefore}<color=#FFD23F>_</color>{Level.sentenceAfter}";
             if (panel != null && panel.gameObject.activeSelf) panel.Refresh();
-        }
-
-        /// <summary>
-        /// Switches off every behaviour in the preview before it starts, so enemies don't walk, springs don't
-        /// bounce and nothing hides itself. TextMesh Pro's own components stay on, or the words wouldn't show.
-        /// </summary>
-        static void Freeze(Transform root)
-        {
-            foreach (MonoBehaviour behaviour in root.GetComponentsInChildren<MonoBehaviour>(true))
-                if (behaviour.GetType().Namespace != "TMPro") behaviour.enabled = false;
-            foreach (Rigidbody2D body in root.GetComponentsInChildren<Rigidbody2D>(true))
-                body.simulated = false;
         }
 
         // ---------------------------------------------------------------- marks

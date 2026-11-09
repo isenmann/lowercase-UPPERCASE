@@ -5,7 +5,7 @@ using UnityEngine;
 namespace LowercaseUppercase.Levels
 {
     /// <summary>
-    /// The menu's My levels panel: a heading, a scrolling list of rows copied from an inactive template (the level's
+    /// The menu's My levels panel: a heading, a picture of the current row's level, a scrolling list of rows copied from an inactive template (the level's
     /// name, which plays it, then Edit, Share and Delete), a line for when there are none, and New level, Import and
     /// Back. Share and Import open over it, each with a box for the level's code.
     /// </summary>
@@ -16,7 +16,8 @@ namespace LowercaseUppercase.Levels
         const float ShareStatusHeight = 48f;
         const float MyLevelsRowHeight = 44f;
         const float MyLevelsRowSpacing = 8f;
-        const int MyLevelsRowsShown = 7;
+        const int MyLevelsRowsShown = 5;
+        const float PreviewHeight = 720f * LevelPreviewStrip.Scale;
 
         static RectTransform BuildMyLevels(Transform ui, MainMenu menu, Sprite outline, TMP_FontAsset medium,
             TMP_FontAsset regular)
@@ -45,6 +46,8 @@ namespace LowercaseUppercase.Levels
             TextMeshProUGUI heading = UiText(column, "Heading", "My levels", medium, 28f, Paper, TextAlignmentOptions.Center);
             heading.rectTransform.sizeDelta = new Vector2(MenuColumnWidth, ResolutionHeadingHeight);
             Fixed(heading.gameObject, MenuColumnWidth, ResolutionHeadingHeight);
+
+            myLevels.preview = BuildPreviewStrip(column, outline, regular);
 
             var listObject = new GameObject("LevelList", typeof(RectTransform));
             listObject.transform.SetParent(column, false);
@@ -134,8 +137,65 @@ namespace LowercaseUppercase.Levels
             UnityEngine.UI.Button delete = OutlineButton(row, "DeleteButton", "Delete", outline, medium, out _);
             delete.gameObject.AddComponent<UnityEngine.UI.LayoutElement>().preferredWidth = 120f;
 
+            foreach (UnityEngine.UI.Button button in new[] { play, edit, share, delete })
+                button.gameObject.AddComponent<SelectOnHover>();
+
             rowObject.SetActive(false);
             return rowObject;
+        }
+
+        /// <summary>
+        /// A window as wide as the list onto a picture of the whole level, scrolled sideways by the wheel or a drag, with
+        /// a line on top of it for a level that can't be drawn.
+        /// </summary>
+        static LevelPreviewStrip BuildPreviewStrip(RectTransform column, Sprite outline, TMP_FontAsset regular)
+        {
+            var stripObject = new GameObject("Preview", typeof(RectTransform));
+            stripObject.transform.SetParent(column, false);
+            var strip = (RectTransform)stripObject.transform;
+            strip.sizeDelta = new Vector2(MyLevelsListWidth, PreviewHeight);
+            Fixed(stripObject, MyLevelsListWidth, PreviewHeight);
+
+            UnityEngine.UI.Image viewportImage = UiImage(strip, "Viewport", white, Background);
+            viewportImage.raycastTarget = true; // So the wheel and drags work on the picture.
+            RectTransform viewport = viewportImage.rectTransform;
+            Stretch(viewport);
+            viewport.gameObject.AddComponent<UnityEngine.UI.RectMask2D>();
+
+            UnityEngine.UI.RawImage picture = new GameObject("Picture", typeof(RectTransform))
+                .AddComponent<UnityEngine.UI.RawImage>();
+            picture.transform.SetParent(viewport, false);
+            picture.raycastTarget = false;
+            picture.enabled = false;
+            var left = new Vector2(0f, 0.5f);
+            Place(picture.rectTransform, left, left, Vector2.zero, new Vector2(MyLevelsListWidth, PreviewHeight));
+
+            UnityEngine.UI.Image frame = UiImage(strip, "Frame", outline, MenuOutline);
+            frame.type = UnityEngine.UI.Image.Type.Sliced;
+            Stretch(frame.rectTransform);
+
+            TextMeshProUGUI label = UiText(strip, "Label", "", regular, 17f, Muted, TextAlignmentOptions.Center);
+            Stretch(label.rectTransform);
+
+            var scroll = stripObject.AddComponent<UnityEngine.UI.ScrollRect>();
+            scroll.viewport = viewport;
+            scroll.content = picture.rectTransform;
+            scroll.horizontal = true;
+            scroll.vertical = false;
+            scroll.movementType = UnityEngine.UI.ScrollRect.MovementType.Clamped;
+            scroll.inertia = false;
+            scroll.scrollSensitivity = 40f;
+
+            var preview = stripObject.AddComponent<LevelPreviewStrip>();
+            preview.scroll = scroll;
+            preview.image = picture;
+            preview.label = label;
+            preview.pageColor = Background;
+            preview.mono = mono;
+            preview.monoBold = monoBold;
+            preview.black = black;
+            preview.white = white;
+            return preview;
         }
 
         /// <summary>Share, over the list: a heading, whether the code was copied and the maker finished the level, the
