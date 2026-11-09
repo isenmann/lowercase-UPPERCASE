@@ -103,7 +103,8 @@ namespace LowercaseUppercase.Tests
             yield return WaitUntil(() => !target.gameObject.activeSelf);
 
             // Being collected again by position must not pay twice.
-            LevelRun.Collect(target.transform.position);
+            // By where it was placed, as the game does: by now the # has risen away from there.
+            LevelRun.Collect(target.Home);
             Assert.AreEqual(LevelRun.PointsPerCollectible, LevelRun.Score);
         }
 

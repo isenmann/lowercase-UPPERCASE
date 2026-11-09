@@ -19,6 +19,8 @@ namespace LowercaseUppercase.Tests
         [UnitySetUp]
         public IEnumerator Load()
         {
+            // A new game each time: asterisks picked up in one test would otherwise arm the letter in the next.
+            LevelRun.NewGame();
             LevelTransition.SkipNextIntro = true;
             yield return SceneManager.LoadSceneAsync(Overworld);
             yield return null;

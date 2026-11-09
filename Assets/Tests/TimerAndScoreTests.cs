@@ -37,7 +37,14 @@ namespace LowercaseUppercase.Tests
         }
 
         static LetterController FindLetter() => GameObject.Find("Letter").GetComponent<LetterController>();
-        static Checkpoint FindCheckpoint() => UnityEngine.Object.FindAnyObjectByType<Checkpoint>();
+        /// <summary>The level's first checkpoint. Not just any one: which one Unity finds first changes between loads.</summary>
+        static Checkpoint FindCheckpoint()
+        {
+            Checkpoint first = null;
+            foreach (Checkpoint checkpoint in UnityEngine.Object.FindObjectsByType<Checkpoint>())
+                if (first == null || checkpoint.order < first.order) first = checkpoint;
+            return first;
+        }
         static Enemy FindEnemy() => UnityEngine.Object.FindAnyObjectByType<Enemy>();
 
         static readonly string[] AllLevels =

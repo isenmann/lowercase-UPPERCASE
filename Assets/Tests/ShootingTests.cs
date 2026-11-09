@@ -135,7 +135,7 @@ namespace LowercaseUppercase.Tests
         }
 
         [UnityTest]
-        public IEnumerator TheFKeyFires()
+        public IEnumerator TheCtrlKeyFires()
         {
             yield return Load(Playground);
             letter.GetComponent<LetterInput>().enabled = true;
@@ -144,10 +144,11 @@ namespace LowercaseUppercase.Tests
             try
             {
                 // Left to the regular update, so the press is seen as this frame's press, as it is in play.
-                InputSystem.QueueStateEvent(keyboard, new KeyboardState(Key.F));
+                // F only shoots in the Web build, where Ctrl+W would close the browser tab.
+                InputSystem.QueueStateEvent(keyboard, new KeyboardState(Key.LeftCtrl));
                 yield return null;
                 yield return null;
-                Assert.That(Shots().Length, Is.GreaterThan(0), "F should fire.");
+                Assert.That(Shots().Length, Is.GreaterThan(0), "Ctrl should fire.");
             }
             finally
             {

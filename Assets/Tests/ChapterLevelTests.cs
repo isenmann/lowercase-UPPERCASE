@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Linq;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -154,10 +155,14 @@ namespace LowercaseUppercase.Tests
             yield return Load("Ladder");
             Bounds start = BoundsOf(Find("Word the word says up"));
             Bounds landing = BoundsOf(Find("Word so it goes"));
-            // Step off the edge, let go while the lift carries the letter up, then walk onto the landing.
-            letter.Respawn(new Vector2(start.max.x - 0.5f, start.max.y + 0.05f));
-            letter.SetInput(1f, false, false);
-            yield return WaitUntil(() => letter.transform.position.x > start.max.x + 0.3f);
+            // Lifts have no walls, so a letter running off the edge flies through the column. Players stop in the
+            // lift, so the letter drops straight into it here, then walks onto the landing once it is high enough.
+            Bounds lift = UnityEngine.Object.FindObjectsByType<WordBlock>()
+                .Where(w => w.kind == WordKind.Up && BoundsOf(w).min.x > start.max.x - 0.1f)
+                .Select(BoundsOf)
+                .OrderBy(b => b.min.x)
+                .First();
+            letter.Respawn(new Vector2(lift.center.x, start.max.y + 0.05f));
             letter.SetInput(0f, false, false);
             yield return WaitUntil(() => letter.transform.position.y > landing.max.y + 0.2f);
             letter.SetInput(1f, false, false);

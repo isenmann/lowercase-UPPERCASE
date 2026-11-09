@@ -54,6 +54,12 @@ namespace LowercaseUppercase.Tests
         {
             yield return LoadWithoutIntro(levelAndNext[0]);
             FindLetter().SlotInto(FindLetter().transform.position);
+            if (levelAndNext[1] == "Menu")
+            {
+                // The last level shows the high scores first, which stay up for a few seconds on their own.
+                GameOverScreen endScreen = UnityEngine.Object.FindAnyObjectByType<GameOverScreen>(FindObjectsInactive.Include);
+                yield return WaitUntil(() => endScreen != null && endScreen.IsShowing);
+            }
             yield return WaitUntil(() => SceneManager.GetActiveScene().name == levelAndNext[1]);
             Assert.AreEqual(1f, Time.timeScale == 0f ? 1f : Time.timeScale, "Time should only stop for an intro.");
         }
@@ -116,7 +122,14 @@ namespace LowercaseUppercase.Tests
             "Trail", "Chain", "Ladder", "Skyline", "Flames", "Tar", "Final"
         };
 
-        static Checkpoint FindCheckpoint() => UnityEngine.Object.FindAnyObjectByType<Checkpoint>();
+        /// <summary>The level's first checkpoint. Not just any one: which one Unity finds first changes between loads.</summary>
+        static Checkpoint FindCheckpoint()
+        {
+            Checkpoint first = null;
+            foreach (Checkpoint checkpoint in UnityEngine.Object.FindObjectsByType<Checkpoint>())
+                if (first == null || checkpoint.order < first.order) first = checkpoint;
+            return first;
+        }
 
         static IEnumerator PassCheckpoint(LetterController letter, Checkpoint checkpoint)
         {

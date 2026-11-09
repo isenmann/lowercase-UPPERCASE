@@ -20,6 +20,9 @@ namespace LowercaseUppercase
         public TextMeshPro glyph;
 
         Vector2 home;
+
+        /// <summary>Where it was placed. It bobs and rises away from here, but is scored by this spot.</summary>
+        public Vector2 Home => home;
         Vector3 inkOffset;
         float popAge;
 
