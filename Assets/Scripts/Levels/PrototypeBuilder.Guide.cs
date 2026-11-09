@@ -5,8 +5,8 @@ using UnityEngine;
 namespace LowercaseUppercase.Levels
 {
     /// <summary>
-    /// The menu's "How to play" popup: two pages taken from the design canvas's "The two forms" and "Level vocabulary"
-    /// boards, rewritten to match what the game does now. Positions are CSS pixels from the top left of a 1280x720 board.
+    /// The menu's "How to play" popup: pages taken from the design canvas's "The two forms" and "Level vocabulary"
+    /// boards, rewritten to match what the game does now, plus a page listing every enemy. Positions are CSS pixels from the top left of a 1280x720 board.
     /// </summary>
     public static partial class PrototypeBuilder
     {
@@ -52,10 +52,43 @@ namespace LowercaseUppercase.Levels
                 "Pass it, and dying brings you back here instead of to the start."),
             new GuideTile("[<color=#FFD23F>*</color>]", Interactive, "both", "Power block",
                 "Hit it from below to get asterisks, then Ctrl shoots them. Dying loses them."),
-            new GuideTile("&", Danger, "both", "Enemy",
-                "Touching one costs a life. Shoot it, or land on it as UPPERCASE."),
             new GuideTile("#", Player, "both", "Hash",
                 "Worth 50 points. Each one can be taken once per level."),
+        };
+
+        // Tags say what stops each enemy: A lands on it, * shoots it, avoid means neither works.
+        static GuideTile[] EnemyTiles() => new[]
+        {
+            new GuideTile("&", Danger, "A *", "Walker",
+                "Paces along its word. The first enemy you meet."),
+            new GuideTile("\u00a7", Danger, "A", "Armour",
+                "Asterisks bounce off it. Only a capital landing on it gets through."),
+            new GuideTile("^", Danger, "*", "Spike",
+                "Walks like the others, but landing on it hurts."),
+            new GuideTile("!", Danger, "A *", "Hopper",
+                "Hops on a beat. Pass under it while it is up."),
+            new GuideTile("~", Danger, "A *", "Flier",
+                "Bobs and drifts through the air over gaps and bridges."),
+            new GuideTile("\u00ab <", Danger, "A *", "Arrow",
+                "Fired from a launcher. Flies over a and hits A."),
+            new GuideTile("\u00a1", Danger, "*", "Riser",
+                "Rises out of a hole in a spaced-out word. Stays down while you stand by it."),
+            new GuideTile("'", Danger, "*", "Drip",
+                "Hangs under a ceiling and falls when you pass below. It grows back."),
+            new GuideTile("\u00b0", Hot, "avoid", "Spark",
+                "Leaps out of a hot word and dives back in. Time your way past."),
+            new GuideTile("o\u00b7\u00b7\u00b7\u00b7", Hot, "avoid", "Fire bar",
+                "A bar of fire turning around a hot o. a slips under it."),
+            new GuideTile("@", Danger, "A *", "Curl",
+                "Land on it as A and it curls into an o. Touch the o to kick it into enemies."),
+            new GuideTile("\u00f6", Danger, "*", "Eye",
+                "Wakes when you come near and drifts after you, even through words."),
+            new GuideTile("\u2195", Danger, "A *", "Case swapper",
+                "Touch it and Shift works the other way until you touch another."),
+            new GuideTile("b", Danger, "A *", "Mimic",
+                "Copies your case a moment late. Turn A just before you land on the small b."),
+            new GuideTile("|", Danger, "avoid", "Cursor",
+                "Chases you and erases the words behind you. Keep moving."),
         };
 
         /// <summary>
@@ -84,13 +117,14 @@ namespace LowercaseUppercase.Levels
             pages = new[]
             {
                 FormsPage(board, filled, outline, keycap, shiftArrow, regular, bold).gameObject,
-                VocabularyPage(board, filled, outline, keycap, regular, bold).gameObject
+                VocabularyPage(board, filled, outline, keycap, regular, bold).gameObject,
+                EnemiesPage(board, filled, outline, keycap, regular, bold).gameObject
             };
 
             var rowObject = new GameObject("GuideTabs", typeof(RectTransform));
             rowObject.transform.SetParent(board, false);
             var row = (RectTransform)rowObject.transform;
-            Place(row, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 28f), new Vector2(3 * 210f + 2 * 12f, 44f));
+            Place(row, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 28f), new Vector2(4 * 210f + 3 * 12f, 44f));
             var layout = rowObject.AddComponent<UnityEngine.UI.HorizontalLayoutGroup>();
             layout.spacing = 12f;
             layout.childControlWidth = true;
@@ -98,10 +132,11 @@ namespace LowercaseUppercase.Levels
             layout.childForceExpandWidth = true;
             layout.childForceExpandHeight = true;
 
-            tabs = new UnityEngine.UI.Button[2];
-            tabLabels = new TextMeshProUGUI[2];
+            tabs = new UnityEngine.UI.Button[3];
+            tabLabels = new TextMeshProUGUI[3];
             tabs[0] = OutlineButton(row, "FormsTab", "The two forms", outline, medium, out tabLabels[0]);
             tabs[1] = OutlineButton(row, "VocabularyTab", "Level vocabulary", outline, medium, out tabLabels[1]);
+            tabs[2] = OutlineButton(row, "EnemiesTab", "Enemies", outline, medium, out tabLabels[2]);
             back = OutlineButton(row, "BackButton", "Back", outline, medium, out _);
 
             panel.gameObject.SetActive(false);
@@ -203,17 +238,7 @@ namespace LowercaseUppercase.Levels
             RectTransform page = GuidePage(board, "VocabularyPage", "Level vocabulary",
                 "The world is text. Punctuation is machinery, and words do what they say.", regular, bold);
 
-            const int columns = 4;
-            const float gap = 12f;
-            const float tileWidth = (1168f - (columns - 1) * gap) / columns;
-            const float tileHeight = 146f;
-            GuideTile[] tiles = VocabularyTiles();
-            for (int i = 0; i < tiles.Length; i++)
-            {
-                float x = 56f + (i % columns) * (tileWidth + gap);
-                float y = 100f + (i / columns) * (tileHeight + gap);
-                VocabularyTile(page, tiles[i], x, y, tileWidth, tileHeight, filled, outline, keycap, regular, bold);
-            }
+            TileGrid(page, VocabularyTiles(), 4, filled, outline, keycap, regular, bold);
 
             RectTransform goal = Strip(page, "Goal", 576f, 52f, filled, GuideCard);
             UnityEngine.UI.Image goalLine = UiImage(goal, "Outline", outline, BarLine);
@@ -236,6 +261,45 @@ namespace LowercaseUppercase.Levels
             return page;
         }
 
+        /// <summary>Tiles in rows of the given width, from under the title down to the strip at the bottom.</summary>
+        static void TileGrid(RectTransform page, GuideTile[] tiles, int columns, Sprite filled, Sprite outline,
+            Sprite keycap, TMP_FontAsset regular, TMP_FontAsset bold)
+        {
+            const float gap = 12f;
+            const float tileHeight = 146f;
+            float tileWidth = (1168f - (columns - 1) * gap) / columns;
+            for (int i = 0; i < tiles.Length; i++)
+            {
+                float x = 56f + (i % columns) * (tileWidth + gap);
+                float y = 100f + (i / columns) * (tileHeight + gap);
+                VocabularyTile(page, tiles[i], x, y, tileWidth, tileHeight, filled, outline, keycap, regular, bold);
+            }
+        }
+
+        // ---------------------------------------------------------------- enemies
+
+        static RectTransform EnemiesPage(RectTransform board, Sprite filled, Sprite outline, Sprite keycap,
+            TMP_FontAsset regular, TMP_FontAsset bold)
+        {
+            RectTransform page = GuidePage(board, "EnemiesPage", "Enemies",
+                "Anything red or orange bites. Touching one costs a life.", regular, bold);
+
+            TileGrid(page, EnemyTiles(), 5, filled, outline, keycap, regular, bold);
+
+            RectTransform key = Strip(page, "Key", 576f, 52f, filled, GuideCard);
+            UnityEngine.UI.Image keyLine = UiImage(key, "Outline", outline, BarLine);
+            keyLine.type = UnityEngine.UI.Image.Type.Sliced;
+            Stretch(keyLine.rectTransform);
+
+            TextMeshProUGUI text = UiText(key, "Text",
+                "<color=#FFD23F><b>A</b></color>  land on it as UPPERCASE      " +
+                "<color=#FFD23F>*</color>  shoot it with Ctrl      " +
+                "<color=#9AA0AE>avoid</color>  nothing stops it: get past",
+                regular, 16f, GuideBody, TextAlignmentOptions.Center);
+            Stretch(text.rectTransform);
+            return page;
+        }
+
         static void VocabularyTile(RectTransform page, GuideTile tile, float x, float y, float width, float height,
             Sprite filled, Sprite outline, Sprite keycap, TMP_FontAsset regular, TMP_FontAsset bold)
         {
@@ -244,13 +308,22 @@ namespace LowercaseUppercase.Levels
             TextMeshProUGUI glyph = UiText(card, "Glyph", tile.glyph, monoBold, 34f, tile.color, TextAlignmentOptions.TopLeft);
             PlaceTopLeft(glyph.rectTransform, 16f, 10f, width - 90f, 44f);
 
-            Color tagColor = tile.tag == "both" ? Muted : Player;
-            float tagWidth = tile.tag == "both" ? 48f : 28f;
-            UnityEngine.UI.Image pill = UiImage(card, "Tag", keycap, tagColor);
-            pill.type = UnityEngine.UI.Image.Type.Sliced;
-            PlaceTopLeft(pill.rectTransform, width - 16f - tagWidth, 16f, tagWidth, 22f);
-            TextMeshProUGUI tag = UiText(pill.rectTransform, "Label", tile.tag, mono, 12f, tagColor, TextAlignmentOptions.Center);
-            Stretch(tag.rectTransform);
+            // Several tags sit side by side, ending at the right edge.
+            string[] tags = tile.tag.Split(' ');
+            float right = width - 16f;
+            for (int i = tags.Length - 1; i >= 0; i--)
+            {
+                Color tagColor = tags[i].Length > 1 ? Muted : Player;
+                float tagWidth = tags[i].Length > 1 ? 16f + 8f * tags[i].Length : 28f;
+                right -= tagWidth;
+                UnityEngine.UI.Image pill = UiImage(card, tags.Length > 1 ? $"Tag {tags[i]}" : "Tag", keycap, tagColor);
+                pill.type = UnityEngine.UI.Image.Type.Sliced;
+                PlaceTopLeft(pill.rectTransform, right, 16f, tagWidth, 22f);
+                TextMeshProUGUI tag = UiText(pill.rectTransform, "Label", tags[i], mono, 12f, tagColor,
+                    TextAlignmentOptions.Center);
+                Stretch(tag.rectTransform);
+                right -= 6f;
+            }
 
             TextMeshProUGUI name = UiText(card, "Name", tile.name, bold, 17f, Paper, TextAlignmentOptions.TopLeft);
             PlaceTopLeft(name.rectTransform, 16f, 60f, width - 32f, 22f);
