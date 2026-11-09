@@ -84,6 +84,8 @@ namespace LowercaseUppercase.Levels
             x = RightEdge(ground) + WordGap;
 
             HashArc(level, x - 20f, x + 360f, 4, OnGround, 90f);
+            Note(level, x + 20f, 300f, "~ it bobs over the bridge. time it or shoot it.");
+            BuildFlier(level, x + 170f, Ground - 40f, 110f);
             x = RightEdge(Bridge(level, x, Ground)) + WordGap;
             Floor(level, "and cross", ref x);
             return x;
@@ -115,7 +117,7 @@ namespace LowercaseUppercase.Levels
                 x = RightEdge(Bridge(level, x, Ground)) + WordGap;
                 left = x;
                 WordBlock island = Word(level, i == 1 ? "island" : "isle", x, Ground, 72f);
-                if (i == 1) BuildEnemy(level, island, left + 80f);
+                if (i == 1) BuildSpike(level, island, left + 80f);
                 else Hash(level, left + 86f, OnGround - 70f);
                 x = RightEdge(island) + WordGap;
             }
@@ -129,7 +131,7 @@ namespace LowercaseUppercase.Levels
             float left = x;
             WordBlock ground = Word(level, "under the bridge it is busy", x, Ground, 72f);
             BuildEnemy(level, ground, left + 300f);
-            BuildEnemy(level, ground, left + 760f);
+            BuildArmour(level, ground, left + 760f);
 
             WordBlock up = Word(level, "up", left + 60f, LowPlatform, 72f);
             WordBlock high = Bridge(level, RightEdge(up) + WordGap, LowPlatform);
@@ -198,7 +200,11 @@ namespace LowercaseUppercase.Levels
             float left = x;
             Floor(level, "behind every door", ref x);
             HashesOn(level, Word(level, "hall", left + 560f, LowPlatform, 72f), 2);
-            return x;
+
+            // Arrows fly back along the hall: a runs under them and hops the launcher, A gets hit.
+            Note(level, x - 330f, 440f, "< arrows fly over a and hit A");
+            WordBlock launcher = BuildLauncher(level, x, Ground, facesLeft: true, interval: 2.4f);
+            return RightEdge(launcher) + WordGap;
         }
 
         // The plate is right beside the door, so A can hold it open and walk through.
@@ -239,7 +245,7 @@ namespace LowercaseUppercase.Levels
             left = x;
             WordBlock ground = Word(level, "the ampersand waits", x, Ground, 72f);
             x = RightEdge(ground) + WordGap;
-            BuildEnemy(level, ground, left + 400f);
+            BuildSpike(level, ground, left + 400f);
             PlateAndDoor(level, plate, RightEdge(ground) - 120f);
             return x;
         }

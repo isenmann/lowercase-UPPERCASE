@@ -148,6 +148,17 @@ namespace LowercaseUppercase.Levels
             return enemy.gameObject.AddComponent<EnemyDrip>();
         }
 
+        /// <summary>
+        /// A drip under the ceiling that runs the length of a level. The ceiling is built last, once the level's length
+        /// is known, so the drip starts just below where it will be and finds it as the level starts.
+        /// </summary>
+        static EnemyDrip BuildDripUnderCeiling(Transform parent, float leftPx)
+        {
+            Enemy enemy = BuildEnemyAt(parent, new Vector3(X(leftPx), Y(CeilingBaseline + 50f), 0f), "'", 72f,
+                stompable: false, shootable: true);
+            return enemy.gameObject.AddComponent<EnemyDrip>();
+        }
+
         // ---------------------------------------------------------------- fire
 
         /// <summary>A spark that leaps out of a hot word. Fire can't be stomped or shot, and it is drawn in hot-word orange.</summary>

@@ -91,10 +91,11 @@ namespace LowercaseUppercase.Levels
         static float CrackStomp(Transform level, float x)
         {
             float left = x;
-            WordBlock ground = Word(level, "can land on ampersands", x, Ground, 72f);
+            WordBlock ground = Word(level, "can land on armour", x, Ground, 72f);
             Note(level, left + 60f, 300f, "jump off the shelf and grow on the way down");
+            Note(level, left + 460f, 440f, "\u00a7 only dies when A lands on it");
             HashesOn(level, Word(level, "shelf", left + 180f, LowPlatform, 72f), 3);
-            BuildEnemy(level, ground, left + 520f);
+            BuildArmour(level, ground, left + 520f);
             HashArc(level, RightEdge(ground) - 20f, RightEdge(ground) + WidePit + 20f, 3);
             return RightEdge(ground) + WidePit;
         }
@@ -163,7 +164,7 @@ namespace LowercaseUppercase.Levels
             float left = x;
             WordBlock ground = Word(level, "watch your head", x, Ground, 72f);
             HashesOn(level, Word(level, "ledge", left + 100f, LowPlatform, 72f), 3);
-            BuildEnemy(level, ground, left + 420f);
+            BuildArmour(level, ground, left + 420f);
             return RightEdge(ground) + WidePit;
         }
 
@@ -239,7 +240,8 @@ namespace LowercaseUppercase.Levels
             x = RightEdge(ground) + WordGap;
             Stacked(level, ShortLowWord, left + 240f, TunnelRows, TunnelBottom);
             HashRow(level, left + 290f, OnGround, 3);
-            BuildEnemy(level, ground, left + 60f);
+            Note(level, left - 160f, 300f, "^ shoot it. landing on it hurts.");
+            BuildSpike(level, ground, left + 60f);
             return x;
         }
 
@@ -304,7 +306,7 @@ namespace LowercaseUppercase.Levels
             ground = Word(level, "knock it down", x, Ground, 72f);
             Stairs(level, x, ascending: false);
             BrickWall(level, left + 380f);
-            BuildEnemy(level, ground, left + 280f); // Pacing between the bottom step and the wall, right where the letter lands.
+            BuildArmour(level, ground, left + 280f); // Pacing between the bottom step and the wall, right where the letter lands from the stairs.
             return RightEdge(ground) + WordGap;
         }
 
@@ -317,7 +319,7 @@ namespace LowercaseUppercase.Levels
             Cloud(level, x + 400f, 180f);
             WordBlock ground = Word(level, "small and then big", x, Ground, 72f);
             Stacked(level, ShortLowWord, left + 100f, TunnelRows, TunnelBottom);
-            BuildEnemy(level, ground, left + 400f);
+            BuildSpike(level, ground, left + 400f);
             BrickWall(level, left + 620f);
             return RightEdge(ground) + WidePit;
         }

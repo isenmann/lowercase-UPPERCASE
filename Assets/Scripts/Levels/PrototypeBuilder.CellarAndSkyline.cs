@@ -57,7 +57,10 @@ namespace LowercaseUppercase.Levels
         static float CellarOpening(Transform level, float x)
         {
             float left = x;
-            Floor(level, "down in the cellar", ref x);
+            WordBlock first = Word(level, "down in the cellar", x, Ground, 72f);
+            x = RightEdge(first) + WordGap;
+            Note(level, left + 360f, 440f, "' drips fall when you pass under");
+            BuildDripUnderCeiling(level, left + 620f);
 
             left = x;
             WordBlock ground = Word(level, "mind your head", x, Ground, 72f);
@@ -77,7 +80,7 @@ namespace LowercaseUppercase.Levels
             // The enemy patrols through the tunnel, where A can't go to stomp it, so it has to be shot or dodged.
             Stacked(level, "lowlowlowlow", left + 420f, TunnelRows, TunnelBottom);
             HashRow(level, left + 480f, OnGround, 4);
-            BuildEnemy(level, ground, left + 200f);
+            BuildSpike(level, ground, left + 200f);
             return x;
         }
 
@@ -99,6 +102,7 @@ namespace LowercaseUppercase.Levels
 
         static float CellarBridgeAndDoor(Transform level, float x)
         {
+            BuildFlier(level, x + 170f, Ground - 40f, 110f);
             HashRow(level, x + 80f, OnGround, 4);
             x = RightEdge(Bridge(level, x, Ground)) + WordGap;
 
@@ -118,7 +122,7 @@ namespace LowercaseUppercase.Levels
             WordBlock ground = Word(level, "the last of the ampersands", x, Ground, 72f);
             x = RightEdge(ground) + WordGap;
             BuildEnemy(level, ground, left + 250f);
-            BuildEnemy(level, ground, left + 700f);
+            BuildSpike(level, ground, left + 700f);
             HashArc(level, left + 380f, left + 600f, 3, OnGround, 110f);
 
             float wordLeft = x + 110f;
@@ -152,7 +156,7 @@ namespace LowercaseUppercase.Levels
             x = SkylineBridgeAndSpring(level, x);
             x = SkylineIce(level, x);
             x = SkylineHooks(level, x);
-            Floor(level, "land here", ref x);
+            x = SkylineSwapper(level, x);
             x = ShiftRun(level, x, false, "slip in", "push out", "slip in", "push out", "slip in", "push out");
             x = SkylineLiftAndStar(level, x);
 
@@ -185,6 +189,7 @@ namespace LowercaseUppercase.Levels
             WordBlock landing = Platform(level, "then drop down", 400f, ref x, WordGap);
             PowerBlock(level, left + 40f, 400f - 145f);
             BuildEnemy(level, landing, left + 300f);
+            BuildEye(level, left + 500f, 120f);
             return x;
         }
 
@@ -211,7 +216,7 @@ namespace LowercaseUppercase.Levels
 
             float left = x;
             WordBlock landing = Platform(level, "soft landing", 340f, ref x, 130f);
-            BuildEnemy(level, landing, left + 260f);
+            BuildArmour(level, landing, left + 260f);
             return x;
         }
 
@@ -224,6 +229,16 @@ namespace LowercaseUppercase.Levels
             Hook(level, "Hook 2", x + 410f, 270f);
             HashArc(level, x + 210f, x + 370f, 3, 300f, 50f); // Along the leap from one comma to the next.
             return x + 620f;
+        }
+
+        // The case swapper waits right before the run of low gaps and brick, where Shift the other way round hurts.
+        static float SkylineSwapper(Transform level, float x)
+        {
+            float left = x;
+            WordBlock ground = Word(level, "land here and mind the swap", x, Ground, 72f);
+            Note(level, left + 40f, 300f, "\u2195 it turns Shift around until you touch another");
+            BuildCaseSwapper(level, ground, left + 420f);
+            return RightEdge(ground) + WordGap;
         }
 
         static float SkylineLiftAndStar(Transform level, float x)

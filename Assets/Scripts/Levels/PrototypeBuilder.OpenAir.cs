@@ -105,7 +105,9 @@ namespace LowercaseUppercase.Levels
         {
             WordBlock ground = Word(level, "a chain", x, Ground, 72f);
             x = HookChain(level, RightEdge(ground), 3);
+            float left = x;
             Floor(level, "of commas", ref x);
+            BuildDripUnderCeiling(level, left + 200f);
             return x;
         }
 
@@ -116,7 +118,7 @@ namespace LowercaseUppercase.Levels
 
             float left = x;
             WordBlock landing = Word(level, "someone is waiting", x, Ground, 72f);
-            BuildEnemy(level, landing, left + 300f);
+            BuildSpike(level, landing, left + 300f);
             x = RightEdge(landing) + WordGap;
 
             left = x;
@@ -218,13 +220,15 @@ namespace LowercaseUppercase.Levels
             Cloud(level, x + 200f, 140f);
             x = Lift(level, x, LiftTop);
             float left = x;
+            Note(level, left + 40f, LiftLanding - 110f, "\u00f6 it follows you, even through words. shoot it.");
             WordBlock top = Word(level, "someone up here", x, LiftLanding, 72f);
-            BuildEnemy(level, top, left + 400f);
+            BuildSpike(level, top, left + 400f);
+            BuildEye(level, left + 560f, 120f);
             x = RightEdge(top) + 80f;
 
             left = x;
             WordBlock ground = Word(level, "and below", x, Ground, 72f);
-            BuildEnemy(level, ground, left + 200f);
+            BuildHopper(level, ground, left + 200f);
             return RightEdge(ground) + WordGap;
         }
 

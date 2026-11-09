@@ -38,7 +38,7 @@ namespace LowercaseUppercase
         void Start()
         {
             float startX = transform.position.x;
-            foreach (WordBlock word in FindObjectsByType<WordBlock>(FindObjectsSortMode.None))
+            foreach (WordBlock word in FindObjectsByType<WordBlock>())
             {
                 Bounds bounds = word.GetComponent<BoxCollider2D>().bounds;
                 // The cursor stands a little way into the first word, so that word counts too.

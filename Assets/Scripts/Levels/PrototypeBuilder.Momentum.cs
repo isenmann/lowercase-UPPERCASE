@@ -150,7 +150,8 @@ namespace LowercaseUppercase.Levels
 
             // Brick one hole past the last letter: a stops there and drops into the pit, A breaks it and walks on.
             Note(level, x, 440f, "A walks where a falls");
-            float right = Kerned(level, "spaced", x, Ground);
+            Note(level, x, 300f, "\u00a1 it rises from a hole. wait for it to sink.");
+            float right = KernedWithRisers(level, "spaced", x, Ground, 2);
             HashRow(level, x + 60f, OnGround, 4);
             BrickWall(level, right + KerningHolePx);
             x = right + KerningHolePx;
@@ -165,7 +166,7 @@ namespace LowercaseUppercase.Levels
             Cloud(level, x + 200f, 300f);
             float left = x;
             WordBlock ground = Word(level, "bounce", x, Ground, 72f);
-            BuildEnemy(level, ground, left + 60f);
+            BuildSpike(level, ground, left + 60f);
             x = SpringAfter(level, RightEdge(ground));
             HashArc(level, x - 100f, x + 300f, 5, Ground - 200f, 160f);
 
@@ -198,7 +199,7 @@ namespace LowercaseUppercase.Levels
 
             left = x;
             WordBlock landing = Word(level, "and down again", x, Ground, 72f);
-            BuildEnemy(level, landing, left + 350f);
+            BuildArmour(level, landing, left + 350f);
             return RightEdge(landing) + WordGap;
         }
 
@@ -268,7 +269,8 @@ namespace LowercaseUppercase.Levels
         {
             float left = x;
             WordBlock ice = Ice(level, "slide slide slide", x);
-            BuildEnemy(level, ice, left + 500f);
+            Note(level, x, 440f, "@ land on it as A, then kick the o");
+            BuildCurl(level, ice, left + 500f);
             return RightEdge(ice) + WordGap;
         }
 
@@ -320,7 +322,7 @@ namespace LowercaseUppercase.Levels
 
             left = x;
             WordBlock ice = Ice(level, "spin spin spin", x);
-            BuildEnemy(level, ice, left + 300f);
+            BuildSpike(level, ice, left + 300f);
             x = RightEdge(ice);
             HashArc(level, x - 20f, x + WidePit + 20f, 3);
             return x + WidePit;
@@ -342,7 +344,7 @@ namespace LowercaseUppercase.Levels
         {
             float left = x;
             WordBlock ground = Word(level, "under the ice shelf", x, Ground, 72f);
-            BuildEnemy(level, ground, left + 450f);
+            BuildArmour(level, ground, left + 450f);
             WordBlock shelf = Ice(level, "ice shelf", left + 120f, LowPlatform);
             HashesOn(level, shelf, 5);
             return RightEdge(ground) + WordGap;
@@ -355,6 +357,7 @@ namespace LowercaseUppercase.Levels
             BrickWall(level, left + 260f, CeilingBrickLetters);
             BrickWall(level, left + 560f, CeilingBrickLetters);
             HashRow(level, left + 340f, OnGround, 3);
+            BuildDripUnderCeiling(level, left + 440f);
             return RightEdge(ice) + WordGap;
         }
 
@@ -415,7 +418,7 @@ namespace LowercaseUppercase.Levels
         {
             float left = x;
             WordBlock ground = Word(level, "down low", x, Ground, 72f);
-            BuildEnemy(level, ground, left + 120f);
+            BuildCurl(level, ground, left + 120f);
             PowerBlock(level, left + 180f, LowPlatform);
             x = SpringAfter(level, RightEdge(ground));
 
@@ -439,7 +442,7 @@ namespace LowercaseUppercase.Levels
         {
             float left = x;
             Floor(level, "then", ref x);
-            float right = Kerned(level, "across", x, Ground);
+            float right = KernedWithRisers(level, "across", x, Ground, 2);
             HashRow(level, x + 60f, OnGround - 30f, 4);
             x = right + WordGap;
             WordBlock ice = Ice(level, "slick", x);
@@ -460,7 +463,8 @@ namespace LowercaseUppercase.Levels
         {
             float left = x;
             WordBlock ground = Word(level, "far below", x, Ground, 72f);
-            BuildEnemy(level, ground, left + 260f);
+            Note(level, left + 20f, 300f, "! it hops on a beat. pass while it is up.");
+            BuildHopper(level, ground, left + 260f);
             x = RightEdge(ground) + WordGap;
 
             left = x;

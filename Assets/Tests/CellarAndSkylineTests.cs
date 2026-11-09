@@ -68,6 +68,9 @@ namespace LowercaseUppercase.Tests
             // The one patrolling this stretch would reach the waiting letter and restart the level.
             foreach (Enemy enemy in UnityEngine.Object.FindObjectsByType<Enemy>())
                 UnityEngine.Object.Destroy(enemy.gameObject);
+            // Launchers aren't enemies themselves, but they keep firing new ones.
+            foreach (EnemyLauncher launcher in UnityEngine.Object.FindObjectsByType<EnemyLauncher>())
+                UnityEngine.Object.Destroy(launcher);
 
             var tunnel = GameObject.Find("Word lowlowlowlow").GetComponent<BoxCollider2D>().bounds;
             float groundY = tunnel.min.y - 55f / 72f;

@@ -90,12 +90,17 @@ namespace LowercaseUppercase.Levels
         static float FlamesHop(Transform level, float x)
         {
             Note(level, x, 440f, "hop across. the air is cool.");
-            x = RightEdge(HotWord(level, "hot hot hot", x)) + WordGap;
+            Note(level, x, 300f, "\u00b0 sparks leap out of hot words");
+            float hotLeft = x;
+            WordBlock hot = HotWord(level, "hot hot hot", x);
+            BuildSpark(level, hot, hotLeft + 110f);
+            BuildSpark(level, hot, hotLeft + 330f, startDelay: 0.7f);
+            x = RightEdge(hot) + WordGap;
             HashArc(level, x - 470f, x - 30f, 4, OnGround, 120f);
 
             float left = x;
             WordBlock ground = Word(level, "cooler", x, Ground, 72f);
-            BuildEnemy(level, ground, left + 120f);
+            BuildHopper(level, ground, left + 120f);
             return RightEdge(ground) + WordGap;
         }
 
@@ -160,7 +165,10 @@ namespace LowercaseUppercase.Levels
             WordBlock shelf = Word(level, "ash", left + 260f, LowPlatform, 72f);
             HashesOn(level, shelf, 2);
             HashArc(level, left + 20f, left + 260f, 3, OnGround, 110f);
-            Floor(level, "embers", ref x);
+            left = x;
+            Floor(level, "embers still burn", ref x);
+            Note(level, left - 220f, 300f, "\u00b7 a bar of fire turns ahead. a slips under it.");
+            BuildFireBar(level, left + 290f, Ground - 160f);
             return x;
         }
 
@@ -193,7 +201,7 @@ namespace LowercaseUppercase.Levels
             x = RightEdge(HotWord(level, "hot hot", x)) + WordGap;
             left = x;
             WordBlock ground = Word(level, "smoke and ash", x, Ground, 72f);
-            BuildEnemy(level, ground, left + 300f);
+            BuildCaseSwapper(level, ground, left + 300f);
             return RightEdge(ground) + WordGap;
         }
 
@@ -239,7 +247,9 @@ namespace LowercaseUppercase.Levels
             WordBlock tar = StickyFloor(level, "sticky tar", x);
             HashRow(level, left + 120f, OnGround, 4);
             x = RightEdge(tar) + WordGap;
-            Floor(level, "dry again", ref x);
+            left = x;
+            Floor(level, "dry again at last", ref x);
+            BuildFireBar(level, left + 330f, Ground - 160f);
             return x;
         }
 
@@ -293,7 +303,7 @@ namespace LowercaseUppercase.Levels
             wall = StickyWall(level, x);
             x = RightEdge(wall) + WordGap;
             WordBlock after = StickyFloor(level, "and up again", x);
-            BuildEnemy(level, after, x + 250f);
+            BuildSpike(level, after, x + 250f);
             return RightEdge(after) + WordGap;
         }
 
@@ -301,7 +311,8 @@ namespace LowercaseUppercase.Levels
         {
             float left = x;
             WordBlock tar = StickyFloor(level, "slow going", x);
-            BuildEnemy(level, tar, left + 260f);
+            Note(level, left + 20f, 300f, "b copies your case. turn A just before you land on it.");
+            BuildMimic(level, tar, left + 260f);
             x = RightEdge(tar) + WordGap;
 
             left = x;
@@ -342,7 +353,7 @@ namespace LowercaseUppercase.Levels
         {
             float left = x;
             WordBlock ground = Word(level, "one last climb", x, Ground, 72f);
-            BuildEnemy(level, ground, left + 100f);
+            BuildHopper(level, ground, left + 100f);
             x = RightEdge(ground);
             WordBlock wall = StickyWall(level, x, "t\na\nr\nw\na\nl\nl");
             float top = TopPx(wall);
@@ -365,8 +376,12 @@ namespace LowercaseUppercase.Levels
             x = FinalUnderground(level, x);
             x = FinalIceAndHooks(level, x);
             x = FinalLock(level, x);
+            float runLeft = x;
+            Note(level, x - 400f, 440f, "| run! it erases the words behind you.");
             x = ShiftRun(level, x, true, "small words", "big words", "small words", "big words",
                 "small words", "big words", "small words");
+            // As fast as A runs, so only a letter that stops is caught; a outruns it easily.
+            BuildCursorChase(level, runLeft + 10f, x - 10f, speed: 3f);
             x = FinalEnd(level, x);
             Ceiling(level, x + 400f);
 
@@ -381,7 +396,8 @@ namespace LowercaseUppercase.Levels
         {
             float left = x;
             Floor(level, "every word at once", ref x);
-            return x;
+            WordBlock launcher = BuildLauncher(level, x, Ground, facesLeft: true, interval: 2.4f);
+            return RightEdge(launcher) + WordGap;
         }
 
         static float FinalBridgeAndBrick(Transform level, float x)
@@ -391,7 +407,7 @@ namespace LowercaseUppercase.Levels
             float left = x;
             WordBlock ground = Word(level, "across and through", x, Ground, 72f);
             BrickWall(level, left + 200f, CeilingBrickLetters);
-            BuildEnemy(level, ground, left + 400f);
+            BuildSpike(level, ground, left + 400f);
             return RightEdge(ground) + WordGap;
         }
 
@@ -426,8 +442,15 @@ namespace LowercaseUppercase.Levels
 
             WordBlock ground = Word(level, "swing", x, Ground, 72f);
             x = HookChain(level, RightEdge(ground), 2);
-            HotBetween(level, ref x, "land", "hot", "on");
-            return x;
+            Floor(level, "land", ref x);
+            float hotLeft = x;
+            WordBlock hot = HotWord(level, "hot", x);
+            BuildSpark(level, hot, hotLeft + 40f);
+            x = RightEdge(hot) + WordGap;
+            left = x;
+            WordBlock after = Word(level, "on and on", x, Ground, 72f);
+            BuildMimic(level, after, left + 250f);
+            return RightEdge(after) + WordGap;
         }
 
         // The longest lock: brick, tar and a hot word, with the key at the far end.

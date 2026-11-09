@@ -32,6 +32,9 @@ namespace LowercaseUppercase.Tests
             // A patrolling enemy could reach the letter and cause a death the test didn't ask for.
             foreach (Enemy enemy in UnityEngine.Object.FindObjectsByType<Enemy>())
                 UnityEngine.Object.Destroy(enemy.gameObject);
+            // Launchers aren't enemies themselves, but they keep firing new ones.
+            foreach (EnemyLauncher launcher in UnityEngine.Object.FindObjectsByType<EnemyLauncher>())
+                UnityEngine.Object.Destroy(launcher);
         }
 
         static IEnumerator DieAndReload(LetterController letter)
