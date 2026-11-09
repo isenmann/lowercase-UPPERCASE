@@ -30,8 +30,20 @@ namespace LowercaseUppercase
         void Awake()
         {
             home = transform.position;
-            if (followLetter) home.x = Mathf.Clamp(letter.transform.position.x, minX, maxX);
+            if (followLetter) home.x = FollowTarget();
             PlaceHud();
+        }
+
+        /// <summary>
+        /// Where the camera wants to be. A screen wider than 16:9 already shows more at each side, so it stops that much
+        /// sooner and never shows past the level's ends; a level narrower than that view stays centred.
+        /// </summary>
+        float FollowTarget()
+        {
+            float low = minX + ScreenFit.Extra.x;
+            float high = maxX - ScreenFit.Extra.x;
+            if (low > high) return (minX + maxX) * 0.5f;
+            return Mathf.Clamp(letter.transform.position.x, low, high);
         }
 
         void OnEnable()
@@ -51,7 +63,7 @@ namespace LowercaseUppercase
         {
             if (followLetter)
             {
-                float target = Mathf.Clamp(letter.transform.position.x, minX, maxX);
+                float target = FollowTarget();
                 home.x = Mathf.Lerp(home.x, target, 1f - Mathf.Exp(-followSharpness * Time.unscaledDeltaTime));
                 PlaceHud();
             }

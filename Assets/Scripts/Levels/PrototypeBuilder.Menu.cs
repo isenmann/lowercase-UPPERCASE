@@ -67,7 +67,9 @@ namespace LowercaseUppercase.Levels
             var scaler = canvasObject.AddComponent<UnityEngine.UI.CanvasScaler>();
             scaler.uiScaleMode = UnityEngine.UI.CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1280f, 720f);
-            scaler.matchWidthOrHeight = 0.5f;
+            // Expand keeps the whole 1280x720 design on screen at any aspect ratio: a 4:3 screen gets extra room above
+            // and below, an ultrawide one at the sides, and the corner pieces move out with the screen's corners.
+            scaler.screenMatchMode = UnityEngine.UI.CanvasScaler.ScreenMatchMode.Expand;
             canvasObject.AddComponent<UnityEngine.UI.GraphicRaycaster>();
             Transform ui = canvasObject.transform;
 
@@ -76,7 +78,8 @@ namespace LowercaseUppercase.Levels
                 TextAlignmentOptions.TopLeft);
             lines.characterSpacing = 7.1f;
             lines.lineSpacing = 80f;
-            Place(lines.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(48f, -40f), new Vector2(1184f, 640f));
+            // Centred like the title, so it stays behind it when the screen is taller or wider than 16:9.
+            PlaceFromTop(lines.rectTransform, 40f, 1184f, 640f);
 
             // Tagline and title.
             TextMeshProUGUI tagline = UiText(ui, "Tagline", "A ONE-LETTER PLATFORMER · GAME OFF 2026", mono, 15f, Muted,

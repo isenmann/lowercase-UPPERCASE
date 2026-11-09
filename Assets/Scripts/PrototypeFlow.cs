@@ -80,6 +80,9 @@ namespace LowercaseUppercase
 
         void Awake()
         {
+            Camera view = Camera.main;
+            if (view != null && view.GetComponent<ScreenFit>() == null)
+                view.gameObject.AddComponent<ScreenFit>().hud = timer.transform.parent;
             if (LevelRun.EnterLevel()) Sfx.Play(Sound.Respawn, RespawnSoundDelay);
             resumedAt = Checkpoint.TakeResume(checkpoints);
             if (resumedAt != null) letter.transform.position = resumedAt.respawnFeet;
