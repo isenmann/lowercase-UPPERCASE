@@ -74,6 +74,7 @@ namespace LowercaseUppercase.Levels
             BuildTar(lower, upper);
             BuildFinal(lower, upper);
             BuildRandomScene(lower, upper);
+            BuildEnemyRoom(lower, upper);
 
             SetBuildScenes();
             EditorSceneManager.OpenScene(MenuScene);
@@ -446,12 +447,37 @@ namespace LowercaseUppercase.Levels
 #endif
 
         /// <summary>Stands an enemy on top of a word. Enemies have no gravity, so the height has to be exact.</summary>
-        static void BuildEnemy(Transform parent, WordBlock ground, float leftPx)
+        /// <summary>The plain walker: dies to a stomp from UPPERCASE and to an asterisk.</summary>
+        static Enemy BuildEnemy(Transform parent, WordBlock ground, float leftPx) =>
+            BuildWalker(parent, ground, leftPx, "&", 48f, stompable: true, shootable: true);
+
+        /// <summary>
+        /// A walker that burns an UPPERCASE letter landing on it. Only an asterisk kills it.
+        /// A caret is short, so it is drawn larger than the others to stand about as tall as a lowercase letter.
+        /// </summary>
+        static Enemy BuildSpike(Transform parent, WordBlock ground, float leftPx) =>
+            BuildWalker(parent, ground, leftPx, "^", 72f, stompable: false, shootable: true);
+
+        /// <summary>A walker that asterisks pop on. Only a stomp from UPPERCASE kills it. A section sign is narrow, so it is drawn larger.</summary>
+        static Enemy BuildArmour(Transform parent, WordBlock ground, float leftPx) =>
+            BuildWalker(parent, ground, leftPx, "\u00a7", 64f, stompable: true, shootable: false);
+
+        static Enemy BuildWalker(Transform parent, WordBlock ground, float leftPx, string glyphText, float fontPx,
+            bool stompable, bool shootable)
+        {
+            Enemy enemy = BuildEnemyBody(parent, ground, leftPx, glyphText, fontPx, stompable, shootable);
+            enemy.gameObject.AddComponent<EnemyWalk>();
+            return enemy;
+        }
+
+        /// <summary>An enemy standing on a word, without a movement component. Every enemy is drawn in Danger red.</summary>
+        static Enemy BuildEnemyBody(Transform parent, WordBlock ground, float leftPx, string glyphText, float fontPx,
+            bool stompable, bool shootable)
         {
             var groundBox = ground.GetComponent<BoxCollider2D>();
             float surfaceY = ground.transform.TransformPoint(groundBox.offset).y + groundBox.size.y * 0.5f;
 
-            var go = new GameObject("Enemy &");
+            var go = new GameObject($"Enemy {glyphText}");
             go.transform.SetParent(parent, false);
             go.transform.position = new Vector3(X(leftPx), surfaceY, 0f);
             go.layer = LayerMask.NameToLayer("Enemy");
@@ -459,12 +485,15 @@ namespace LowercaseUppercase.Levels
             go.AddComponent<BoxCollider2D>();
 
             // The glyph comes first, because in the game the enemy wakes the moment it is added.
-            TextMeshPro glyph = Glyph(go.transform, "&", 48f, monoBold);
+            TextMeshPro glyph = Glyph(go.transform, glyphText, fontPx, monoBold);
             glyph.color = Danger;
             glyph.sortingOrder = 8;
             var enemy = go.AddComponent<Enemy>();
             enemy.levelMask = LayerMask.GetMask("Level");
             enemy.glyph = glyph;
+            enemy.stompable = stompable;
+            enemy.shootable = shootable;
+            return enemy;
         }
 
         static TextMeshPro Glyph(Transform parent, string content, float fontPx, TMP_FontAsset font)

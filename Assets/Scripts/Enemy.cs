@@ -4,28 +4,24 @@ using UnityEngine;
 namespace LowercaseUppercase
 {
     /// <summary>
-    /// A glyph that patrols a word, turning at walls and at the end of the word. Touching it costs the letter a life.
-    /// One asterisk kills it, and so does an UPPERCASE letter landing on it. The transform's origin is at its feet.
+    /// A glyph that costs the letter a life when touched. How it moves is up to a movement component next to it,
+    /// such as <see cref="EnemyWalk"/>. An UPPERCASE letter landing on it kills it if it is stompable,
+    /// and an asterisk kills it if it is shootable. The transform's origin is at its feet.
     /// </summary>
     [RequireComponent(typeof(Rigidbody2D), typeof(BoxCollider2D))]
     public class Enemy : MonoBehaviour
     {
-        const float LedgeProbeStart = 0.05f;
-        const float LedgeProbeLength = 0.15f;
-
         public TMP_Text glyph;
         public LayerMask levelMask;
-        [Tooltip("Units per second.")]
-        public float speed = 1.5f;
-        [Tooltip("1 starts walking right, -1 left.")]
-        public float direction = 1f;
+        [Tooltip("An UPPERCASE letter landing on it kills it. Otherwise the landing burns the letter.")]
+        public bool stompable = true;
+        [Tooltip("An asterisk kills it. Otherwise the asterisk pops on it.")]
+        public bool shootable = true;
 
-        public float TopY => rb.position.y + box.offset.y + box.size.y * 0.5f;
+        public float TopY => Body.position.y + Box.offset.y + Box.size.y * 0.5f;
+        public Rigidbody2D Body { get; private set; }
+        public BoxCollider2D Box { get; private set; }
 
-        readonly RaycastHit2D[] hits = new RaycastHit2D[1];
-        Rigidbody2D rb;
-        BoxCollider2D box;
-        ContactFilter2D solidFilter;
         Vector2 spawnPosition;
 
         void Awake()
@@ -35,51 +31,39 @@ namespace LowercaseUppercase
             if (levelMask == 0) levelMask = LayerMask.GetMask("Level");
 
             spawnPosition = transform.position;
-            rb = GetComponent<Rigidbody2D>();
-            box = GetComponent<BoxCollider2D>();
-            rb.bodyType = RigidbodyType2D.Kinematic;
-            rb.freezeRotation = true;
-            rb.interpolation = RigidbodyInterpolation2D.Interpolate;
-            box.isTrigger = true;
-
-            solidFilter = new ContactFilter2D { useTriggers = false, useLayerMask = true };
-            solidFilter.SetLayerMask(levelMask);
+            Body = GetComponent<Rigidbody2D>();
+            Box = GetComponent<BoxCollider2D>();
+            Body.bodyType = RigidbodyType2D.Kinematic;
+            Body.freezeRotation = true;
+            Body.interpolation = RigidbodyInterpolation2D.Interpolate;
+            Box.isTrigger = true;
 
             FitCollider();
         }
 
-        void FitCollider()
+        /// <summary>
+        /// Moves the glyph so its ink stands on the enemy's feet, then fits the trigger to the ink.
+        /// Glyphs such as ^ sit high in their line and would otherwise float above the word.
+        /// Call it again after changing the glyph.
+        /// </summary>
+        public void FitCollider()
         {
             glyph.ForceMeshUpdate();
             TMP_CharacterInfo ink = glyph.textInfo.characterInfo[0];
-            Vector2 min = ink.bottomLeft;
-            Vector2 max = ink.topRight;
-            box.size = max - min;
-            box.offset = (min + max) * 0.5f;
-        }
+            Vector3 lift = glyph.transform.localPosition;
+            float inkBottom = lift.y + ink.bottomLeft.y;
+            glyph.transform.localPosition = new Vector3(lift.x, lift.y - inkBottom, lift.z);
 
-        void FixedUpdate()
-        {
-            float step = speed * Time.fixedDeltaTime;
-            if (MustTurn(step)) direction = -direction;
-            rb.MovePosition(rb.position + new Vector2(direction * step, 0f));
-        }
-
-        bool MustTurn(float step)
-        {
-            float reach = box.size.x * 0.5f + step;
-            Vector2 centre = rb.position + box.offset;
-            Vector2 ahead = new Vector2(direction, 0f);
-            if (Physics2D.Raycast(centre, ahead, solidFilter, hits, reach) > 0) return true;
-
-            Vector2 groundAhead = new Vector2(centre.x + direction * reach, rb.position.y + LedgeProbeStart);
-            return Physics2D.Raycast(groundAhead, Vector2.down, solidFilter, hits, LedgeProbeLength) == 0;
+            Vector2 min = (Vector2)glyph.transform.localPosition + (Vector2)ink.bottomLeft;
+            Vector2 max = (Vector2)glyph.transform.localPosition + (Vector2)ink.topRight;
+            Box.size = max - min;
+            Box.offset = (min + max) * 0.5f;
         }
 
         public void Kill()
         {
-            if (!box.enabled) return;
-            box.enabled = false;
+            if (!Box.enabled) return;
+            Box.enabled = false;
             LevelRun.EnemyKilled(spawnPosition);
             glyph.transform.SetParent(null, true);
             glyph.gameObject.AddComponent<FlyingText>().Launch(

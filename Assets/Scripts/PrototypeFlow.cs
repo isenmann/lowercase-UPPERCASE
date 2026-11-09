@@ -22,6 +22,8 @@ namespace LowercaseUppercase
 
         public LetterController letter;
         public float killY = -6f;
+        [Tooltip("No clock and no lives, for test rooms: deaths still return to the checkpoint and cost the asterisks.")]
+        public bool practice;
         public Checkpoint[] checkpoints;
 
         [Header("Sentence")]
@@ -76,7 +78,7 @@ namespace LowercaseUppercase
         public bool IsGameOver { get; private set; }
 
         // The clock also reads zero once the time left has been banked at the exit.
-        bool RunIsLost => LevelRun.TimeIsUp && !letter.IsSlotted;
+        bool RunIsLost => !practice && LevelRun.TimeIsUp && !letter.IsSlotted;
 
         void Awake()
         {
@@ -143,7 +145,7 @@ namespace LowercaseUppercase
             }
 
             // Scaled time, so the intro doesn't use up the clock. It waits during a fall, so a death can't run it out.
-            if (!letter.IsSlotted && !letter.IsFallingOff)
+            if (!practice && !letter.IsSlotted && !letter.IsFallingOff)
             {
                 LevelRun.Tick(Time.deltaTime);
                 TickLowTime();
@@ -198,7 +200,8 @@ namespace LowercaseUppercase
         void LoseLife()
         {
             if (!letter.IsFallingOff && !fallSoundPlayed) Sfx.Play(Sound.FallOff);
-            if (RunIsLost || !LevelRun.LoseLife())
+            if (practice) LevelRun.HasAsterisks = false;
+            else if (RunIsLost || !LevelRun.LoseLife())
             {
                 ShowLives();
                 ShowGameOver();
@@ -229,7 +232,7 @@ namespace LowercaseUppercase
             SetSentence(true);
             timeAtSlot = LevelRun.TimeLeft;
             scoreAtSlot = LevelRun.Score;
-            LevelRun.BankTimeLeft();
+            if (!practice) LevelRun.BankTimeLeft();
         }
 
         /// <summary>Once the letter has slotted, the time left visibly drains into the score. The points are already banked.</summary>
@@ -244,7 +247,7 @@ namespace LowercaseUppercase
                 scoreShown = Mathf.RoundToInt(Mathf.Lerp(scoreAtSlot, LevelRun.Score, bankProgress));
             }
 
-            timer.text = $"{Mathf.CeilToInt(timeShown)}s";
+            timer.text = practice ? "" : $"{Mathf.CeilToInt(timeShown)}s";
             timer.color = !letter.IsSlotted && timeShown <= LowTimeSeconds ? lowTimeColor : timerColor;
             score.text = $"score {scoreShown}";
             ShowLives();
@@ -257,6 +260,11 @@ namespace LowercaseUppercase
         void ShowLives()
         {
             if (lives == null) return;
+            if (practice)
+            {
+                lives.text = "";
+                return;
+            }
             string on = ColorUtility.ToHtmlStringRGBA(lifeColor);
             string off = ColorUtility.ToHtmlStringRGBA(lostLifeColor);
             var text = new System.Text.StringBuilder();

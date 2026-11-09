@@ -76,8 +76,16 @@ namespace LowercaseUppercase
 
             if (Physics2D.CircleCast(transform.position, Radius, direction, enemyFilter, hits, reach) > 0)
             {
-                Sfx.Play(Sound.EnemyShot);
-                hits[0].collider.GetComponent<Enemy>().Kill();
+                var enemy = hits[0].collider.GetComponent<Enemy>();
+                if (enemy.shootable)
+                {
+                    Sfx.Play(Sound.EnemyShot);
+                    enemy.Kill();
+                }
+                else
+                {
+                    Sfx.Play(Sound.AsteriskBlocked);
+                }
                 transform.position = hits[0].centroid;
                 HasHit = true;
                 return;

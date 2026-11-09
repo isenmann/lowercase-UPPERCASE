@@ -718,6 +718,20 @@ def _(st):
     return m.render()
 
 
+# Added after the first sets were picked; kept last so the noise of the events above stays the same.
+@event("Shooting and enemies", "asterisk_blocked", "Asterisk blocked", "An asterisk bounces off an enemy it can't hurt.", "Asterisk.Fly", 0.45)
+def _(st):
+    if st == "chip":
+        return Mix().add(tone(st, 196, 0.08, dec=0.05, duty=0.5)).add(tone(st, 1568, 0.03, 0.7, duty=0.125)).render()
+    if st == "ink":
+        return Mix().add(tone(st, glide(330, 280, 0.08), 0.08, dec=0.04)).add(tone(st, 1320, 0.04, 0.5, dec=0.015)).render()
+    if st == "type":
+        m = Mix().add(key(0.7, 0.9))
+        ping = osc("sine", 1870, 0.12) + 0.5 * osc("sine", 1870 * 2.76, 0.12)
+        return m.add(ping * env(0.12, 0.0005, 0.03), 0.004, 0.35).render()
+    return Mix().add(tone(st, 1046, 0.15, dec=0.04)).add(tone(st, 1108, 0.15, 0.8, dec=0.04)).render()
+
+
 STYLES = [
     dict(id="chip", name="Chip", blurb="Square waves and stepped noise, stair-stepped at 60 fps like an 8-bit console."),
     dict(id="ink", name="Ink", blurb="Soft sine and triangle tones, smooth glides, rounded edges. Calm and modern."),

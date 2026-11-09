@@ -19,6 +19,11 @@ namespace LowercaseUppercase.Tests
 
         LetterController letter;
         Enemy enemy;
+        EnemyWalk walk;
+
+        // Several tests here cost a life, so each starts a new game: on the last life the scene doesn't reload.
+        [SetUp]
+        public void StartANewGame() => LevelRun.NewGame();
 
         IEnumerator Load()
         {
@@ -30,6 +35,7 @@ namespace LowercaseUppercase.Tests
             letter.SetInput(0f, false, false);
             enemy = UnityEngine.Object.FindAnyObjectByType<Enemy>();
             Assert.IsNotNull(enemy, "The Playground should have an enemy.");
+            walk = enemy.GetComponent<EnemyWalk>();
             yield return WaitUntil(() => letter.IsGrounded);
         }
 
@@ -57,7 +63,7 @@ namespace LowercaseUppercase.Tests
         /// <summary>Stops the enemy where nothing overhead can catch a letter dropped onto it.</summary>
         void HoldEnemyInTheOpen()
         {
-            enemy.speed = 0f;
+            walk.speed = 0f;
             var spot = new Vector2(ClearOverheadX, enemy.transform.position.y);
             enemy.GetComponent<Rigidbody2D>().position = spot;
             enemy.transform.position = spot;
@@ -74,7 +80,7 @@ namespace LowercaseUppercase.Tests
         public IEnumerator AnAsteriskKillsTheEnemy()
         {
             yield return Load();
-            enemy.speed = 0f;
+            walk.speed = 0f;
             Vector2 target = enemy.transform.position;
             PlaceLetterAt(target + new Vector2(-2f, 0f));
             yield return WaitUntil(() => letter.IsGrounded);
@@ -116,7 +122,7 @@ namespace LowercaseUppercase.Tests
         public IEnumerator WalkingIntoItAsUppercaseCostsALife()
         {
             yield return Load();
-            enemy.speed = 0f;
+            walk.speed = 0f;
             yield return GrowInPlace();
 
             PlaceLetterAt((Vector2)enemy.transform.position + Vector2.left * 1.5f);
@@ -131,9 +137,47 @@ namespace LowercaseUppercase.Tests
         public IEnumerator ItTurnsAroundAtTheEndOfItsWord()
         {
             yield return Load();
-            float startDirection = enemy.direction;
-            yield return WaitUntil(() => enemy.direction != startDirection);
+            float startDirection = walk.direction;
+            yield return WaitUntil(() => walk.direction != startDirection);
             Assert.That(enemy.transform.position.x, Is.InRange(-9f, -3.3f), "It should stay on its word.");
+        }
+
+        [UnityTest]
+        public IEnumerator LandingOnAnUnstompableEnemyAsUppercaseCostsALife()
+        {
+            yield return Load();
+            enemy.stompable = false;
+            HoldEnemyInTheOpen();
+            yield return GrowInPlace();
+
+            // The death reloads the scene, so the spike is checked at the moment the letter burns.
+            bool spikeAliveAtBurn = false;
+            letter.Burned += () => spikeAliveAtBurn = enemy != null && enemy.Box.enabled;
+            PlaceLetterAt((Vector2)enemy.transform.position + Vector2.up * DropHeight);
+            LetterController before = letter;
+            yield return WaitUntil(() => before == null);
+            Assert.IsTrue(spikeAliveAtBurn, "A spike should survive being landed on.");
+        }
+
+        [UnityTest]
+        public IEnumerator AnAsteriskPopsOnAnUnshootableEnemy()
+        {
+            yield return Load();
+            enemy.shootable = false;
+            walk.speed = 0f;
+            Vector2 target = enemy.transform.position;
+            PlaceLetterAt(target + new Vector2(-2f, 0f));
+            yield return WaitUntil(() => letter.IsGrounded);
+
+            letter.SetInput(1f, false, false);
+            yield return Steps(2);
+            letter.SetInput(0f, false, false);
+            letter.GetComponent<LetterShooter>().Fire();
+
+            yield return WaitUntil(() => UnityEngine.Object.FindAnyObjectByType<Asterisk>() != null);
+            yield return WaitUntil(() => UnityEngine.Object.FindAnyObjectByType<Asterisk>() == null);
+            Assert.IsTrue(enemy != null, "Armour should survive an asterisk.");
+            Assert.IsTrue(enemy.Box.enabled, "Armour should still be dangerous.");
         }
     }
 }

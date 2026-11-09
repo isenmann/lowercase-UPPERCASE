@@ -248,7 +248,7 @@ namespace LowercaseUppercase
         {
             if (IsSlotted) return;
 
-            if (Form == LetterForm.Uppercase && CameFromAbove(enemy))
+            if (enemy.stompable && Form == LetterForm.Uppercase && CameFromAbove(enemy))
             {
                 Sfx.Play(Sound.EnemyStomp);
                 enemy.Kill();
