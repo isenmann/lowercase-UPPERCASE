@@ -17,6 +17,8 @@ namespace LowercaseUppercase
         public bool stompable = true;
         [Tooltip("An asterisk kills it. Otherwise the asterisk pops on it.")]
         public bool shootable = true;
+        [Tooltip("Killing it adds to the score. Off for enemies that keep coming, such as arrows.")]
+        public bool paysPoints = true;
 
         public float TopY => Body.position.y + Box.offset.y + Box.size.y * 0.5f;
         public Rigidbody2D Body { get; private set; }
@@ -64,7 +66,7 @@ namespace LowercaseUppercase
         {
             if (!Box.enabled) return;
             Box.enabled = false;
-            LevelRun.EnemyKilled(spawnPosition);
+            if (paysPoints) LevelRun.EnemyKilled(spawnPosition);
             glyph.transform.SetParent(null, true);
             glyph.gameObject.AddComponent<FlyingText>().Launch(
                 new Vector2(Random.Range(-3f, 3f), Random.Range(3f, 6f)), Random.Range(-600f, 600f));

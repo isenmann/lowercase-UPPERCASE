@@ -732,6 +732,19 @@ def _(st):
     return Mix().add(tone(st, 1046, 0.15, dec=0.04)).add(tone(st, 1108, 0.15, 0.8, dec=0.04)).render()
 
 
+@event("Shooting and enemies", "arrow_fire", "Arrow fired", "A launcher word fires an arrow.", "EnemyLauncher.Fire", 0.35)
+def _(st):
+    if st == "chip":
+        return Mix().add(noise(st, 0.06, glide(1500, 4000, 0.06), dec=0.03)).add(tone(st, glide(300, 900, 0.07), 0.07, 0.7, duty=0.5)).render()
+    if st == "ink":
+        return Mix().add(noise(st, 0.08, glide(900, 3000, 0.08), dec=0.03), 0, 0.7).add(tone(st, glide(260, 700, 0.08), 0.08, dec=0.04)).render()
+    if st == "type":  # a short whoosh after a soft key, like a tab stop
+        m = Mix().add(key(1.15, 0.7))
+        m.add(svf(white(0.09), glide(1200, 3500, 0.09), 1.5, "bp") * env(0.09, 0.01, 0.03), 0.01, 0.9)
+        return m.render()
+    return Mix().add(tone(st, glide(1500, 2600, 0.08), 0.12, dec=0.04)).render()
+
+
 STYLES = [
     dict(id="chip", name="Chip", blurb="Square waves and stepped noise, stair-stepped at 60 fps like an 8-bit console."),
     dict(id="ink", name="Ink", blurb="Soft sine and triangle tones, smooth glides, rounded edges. Calm and modern."),

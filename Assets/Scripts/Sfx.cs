@@ -8,7 +8,7 @@ namespace LowercaseUppercase
     {
         MenuMove, MenuConfirm, MenuBack, MenuStart, PauseOpen, PauseClose, TypeLetter, NameSaved,
         Jump, Land, ToUpper, ToLower, BumpBlock, Bounce, Smash, WallCling, HookGrab, HookRelease, DoorOpen,
-        PowerBlock, Shoot, AsteriskPop, AsteriskBlocked, EnemyShot, EnemyStomp,
+        PowerBlock, Shoot, AsteriskPop, AsteriskBlocked, EnemyShot, EnemyStomp, ArrowFire,
         CollectHash, Checkpoint, CapsUnlock, LevelComplete, TimerTick, TimeUp,
         DeathEnemy, Burn, FallOff, Respawn, LifeLost, GameOver,
         GameFinished, HighScore,
