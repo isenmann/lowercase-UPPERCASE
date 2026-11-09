@@ -35,10 +35,12 @@ namespace LowercaseUppercase.Levels
 
         /// <summary>
         /// Builds a custom level under the level root. Pieces of an unknown type are skipped with a warning, so a level
-        /// made by a newer version still opens.
+        /// made by a newer version still opens. <paramref name="onBuilt"/> is told which of the level root's children
+        /// each piece made, which the level editor uses to find the piece under the mouse.
         /// </summary>
         public static CustomLevelLayout BuildCustomLevel(Transform level, CustomLevelData data, TMP_FontAsset monoFont,
-            TMP_FontAsset monoBoldFont, TMP_FontAsset blackFont, Sprite whiteSprite)
+            TMP_FontAsset monoBoldFont, TMP_FontAsset blackFont, Sprite whiteSprite,
+            System.Action<CustomPiece, Transform> onBuilt = null)
         {
             mono = monoFont;
             monoBold = monoBoldFont;
@@ -51,10 +53,10 @@ namespace LowercaseUppercase.Levels
             float right = 1280f;
             List<CustomPiece> pieces = data.pieces.Where(p => p != null).OrderBy(p => p.x).ToList();
             foreach (CustomPiece piece in pieces.Where(p => BuildPhase(p) == 0))
-                right = Mathf.Max(right, BuildPiece(level, piece));
+                right = Mathf.Max(right, BuildAndReport(level, piece, onBuilt));
             if (data.ceiling) Ceiling(level, right + CustomCeilingOverhangPx);
             foreach (CustomPiece piece in pieces.Where(p => BuildPhase(p) == 1))
-                right = Mathf.Max(right, BuildPiece(level, piece));
+                right = Mathf.Max(right, BuildAndReport(level, piece, onBuilt));
 
             var layout = new CustomLevelLayout
             {
@@ -65,6 +67,16 @@ namespace LowercaseUppercase.Levels
             };
             levelCheckpoints.Clear();
             return layout;
+        }
+
+        static float BuildAndReport(Transform level, CustomPiece piece, System.Action<CustomPiece, Transform> onBuilt)
+        {
+            int before = level.childCount;
+            float right = BuildPiece(level, piece);
+            if (onBuilt != null)
+                for (int i = before; i < level.childCount; i++)
+                    onBuilt(piece, level.GetChild(i));
+            return right;
         }
 
         /// <summary>Builds one piece and returns its right edge in pixels.</summary>

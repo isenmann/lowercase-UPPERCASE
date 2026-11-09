@@ -126,7 +126,8 @@ namespace LowercaseUppercase.Levels
                 new EditorBuildSettingsScene(TarScene, true),
                 new EditorBuildSettingsScene(FinalScene, true),
                 new EditorBuildSettingsScene(RandomScene, true),
-                new EditorBuildSettingsScene(CustomScene, true)
+                new EditorBuildSettingsScene(CustomScene, true),
+                new EditorBuildSettingsScene(LevelEditorScene, true)
             };
         }
 

@@ -40,6 +40,7 @@ namespace LowercaseUppercase
             { "Chip A Label", new Vector2Int(-1, -1) },
             { "Readout", new Vector2Int(-1, -1) },
             { "Controls", new Vector2Int(1, -1) },
+            { "Level Name", new Vector2Int(1, 1) },
         };
 
         /// <summary>How far the view reaches past the 16:9 frame on each side, in world units.</summary>
