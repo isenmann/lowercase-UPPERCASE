@@ -2,6 +2,7 @@ using System.Text;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
 using UnityEngine.SceneManagement;
 
 namespace LowercaseUppercase
@@ -39,6 +40,9 @@ namespace LowercaseUppercase
 
         readonly StringBuilder typed = new StringBuilder();
         Keyboard listeningTo;
+        // Some native players (the Linux one on X11) send no text input events. Until one arrives,
+        // the name is read from the key presses instead.
+        static bool textInputSeen;
         float leavesAt;
         int shownOnFrame = -1;
 
@@ -78,12 +82,42 @@ namespace LowercaseUppercase
 
         void Listen(Keyboard keyboard)
         {
-            if (listeningTo != null) listeningTo.onTextInput -= OnTextInput;
+            if (listeningTo != null)
+            {
+                listeningTo.onTextInput -= OnTextInput;
+                listeningTo.SetIMEEnabled(false);
+            }
             listeningTo = keyboard;
-            if (listeningTo != null) listeningTo.onTextInput += OnTextInput;
+            if (listeningTo != null)
+            {
+                listeningTo.SetIMEEnabled(true);
+                listeningTo.onTextInput += OnTextInput;
+            }
         }
 
-        void OnTextInput(char c) => Type(c);
+        void OnTextInput(char c)
+        {
+            textInputSeen = true;
+            Type(c);
+        }
+
+        /// <summary>Types the characters of this frame's key presses, for players that send no text input events.
+        /// Letters and digits follow the keyboard layout through the keys' display names.</summary>
+        void TypeFromKeyPresses(Keyboard keyboard)
+        {
+            bool shift = keyboard.shiftKey.isPressed;
+            foreach (KeyControl key in keyboard.allKeys)
+            {
+                if (key == null || !key.wasPressedThisFrame) continue;
+                if (key.keyCode == Key.Space) { Type(' '); continue; }
+                string label = key.displayName;
+                if (string.IsNullOrEmpty(label) || label.Length != 1) continue;
+                char c = label[0];
+                if (char.IsLetter(c)) c = shift ? char.ToUpperInvariant(c) : char.ToLowerInvariant(c);
+                else if (shift) continue;
+                Type(c);
+            }
+        }
 
         /// <summary>One typed character for the new row's name; anything not allowed in a name is ignored.</summary>
         public void Type(char c)
@@ -111,6 +145,7 @@ namespace LowercaseUppercase
 
             if (IsEnteringName)
             {
+                if (fresh && keyboard != null && !textInputSeen) TypeFromKeyPresses(keyboard);
                 if (keyboard != null && keyboard.backspaceKey.wasPressedThisFrame && typed.Length > 0)
                 {
                     typed.Length--;
