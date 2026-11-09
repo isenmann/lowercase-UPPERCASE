@@ -5,6 +5,8 @@ Cloudflare Workers with a D1 database, on the free plan. Only the code is stored
 uploaded twice. The browser works out names and previews from the code when the page opens. It follows the Shift
 Register sharing page.
 
+Live at https://lowercase-uppercase-levels.devplayrepeat.workers.dev.
+
 | Path | What it is |
 | --- | --- |
 | `public/` | The page, served as it is. `sharecode.js` is shared with the Worker. |

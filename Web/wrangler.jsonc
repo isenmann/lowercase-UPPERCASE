@@ -8,8 +8,7 @@
     {
       "binding": "DB",
       "database_name": "lowercase-uppercase-levels",
-      // Printed by "npx wrangler@4 d1 create lowercase-uppercase-levels"; see the README.
-      "database_id": "00000000-0000-0000-0000-000000000000"
+      "database_id": "8492507a-8fdb-4836-8f08-31848f90d413"
     }
   ],
   // Uploads per visitor. Periods can only be 10 or 60 seconds. The namespace id is per account, so it differs
