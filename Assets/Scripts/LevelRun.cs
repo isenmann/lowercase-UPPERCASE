@@ -52,8 +52,8 @@ namespace LowercaseUppercase
         /// <summary>How many # the letter has picked up in this level so far.</summary>
         public static int CollectedThisLevel => collected.Count;
 
-        /// <summary>Called by the flow as a level's scene loads. True if the letter is coming back after a death.</summary>
-        public static bool EnterLevel()
+        /// <summary>Called by the flow as a level's scene loads, with that level's clock. True if the letter is coming back after a death.</summary>
+        public static bool EnterLevel(float seconds = LevelSeconds)
         {
             if (continuingAfterDeath)
             {
@@ -61,7 +61,7 @@ namespace LowercaseUppercase
                 return true;
             }
 
-            TimeLeft = LevelSeconds;
+            TimeLeft = seconds;
             scoreAtLevelStart = Score;
             armedAtLevelStart = HasAsterisks;
             paidEnemies.Clear();

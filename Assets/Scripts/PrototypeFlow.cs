@@ -24,6 +24,10 @@ namespace LowercaseUppercase
         public float killY = -6f;
         [Tooltip("No clock and no lives, for test rooms: deaths still return to the checkpoint and cost the asterisks.")]
         public bool practice;
+        [Tooltip("Custom levels: a death costs no life, only the asterisks, and time running out restarts the level.")]
+        public bool endlessLives;
+        [Tooltip("The level's clock, in seconds.")]
+        public float levelSeconds = LevelRun.LevelSeconds;
         public Checkpoint[] checkpoints;
 
         [Header("Sentence")]
@@ -85,7 +89,7 @@ namespace LowercaseUppercase
             Camera view = Camera.main;
             if (view != null && view.GetComponent<ScreenFit>() == null)
                 view.gameObject.AddComponent<ScreenFit>().hud = timer.transform.parent;
-            if (LevelRun.EnterLevel()) Sfx.Play(Sound.Respawn, RespawnSoundDelay);
+            if (LevelRun.EnterLevel(levelSeconds)) Sfx.Play(Sound.Respawn, RespawnSoundDelay);
             resumedAt = Checkpoint.TakeResume(checkpoints);
             if (resumedAt != null) letter.transform.position = resumedAt.respawnFeet;
         }
@@ -201,6 +205,18 @@ namespace LowercaseUppercase
         {
             if (!letter.IsFallingOff && !fallSoundPlayed) Sfx.Play(Sound.FallOff);
             if (practice) LevelRun.HasAsterisks = false;
+            else if (endlessLives)
+            {
+                if (RunIsLost)
+                {
+                    // Out of time: a fresh attempt from the start, with the clock refilled.
+                    Sfx.Play(Sound.LifeLost);
+                    LevelRun.AbandonLevel();
+                    Restart();
+                    return;
+                }
+                LevelRun.HasAsterisks = false;
+            }
             else if (RunIsLost || !LevelRun.LoseLife())
             {
                 ShowLives();
@@ -260,7 +276,7 @@ namespace LowercaseUppercase
         void ShowLives()
         {
             if (lives == null) return;
-            if (practice)
+            if (practice || endlessLives)
             {
                 lives.text = "";
                 return;

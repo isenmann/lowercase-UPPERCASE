@@ -1,0 +1,29 @@
+{
+    "version": 1,
+    "name": "Sample",
+    "sentenceBefore": "the c",
+    "missingLetter": "a",
+    "sentenceAfter": "t made this",
+    "seconds": 60.0,
+    "ceiling": false,
+    "startX": 110.0,
+    "startY": 520.0,
+    "pieces": [
+        { "type": "word", "x": 40.0, "y": 520.0, "text": "a page of my own", "kind": "solid" },
+        { "type": "power", "x": 300.0, "y": 375.0, "text": "", "kind": "" },
+        { "type": "hash", "x": 520.0, "y": 494.0, "text": "", "kind": "" },
+        { "type": "hash", "x": 572.0, "y": 494.0, "text": "", "kind": "" },
+        { "type": "word", "x": 760.0, "y": 520.0, "text": "brick road", "kind": "solid" },
+        { "type": "brick", "x": 960.0, "y": 520.0, "text": "brickbrick", "kind": "" },
+        { "type": "word", "x": 1216.0, "y": 520.0, "text": "rest here", "kind": "solid" },
+        { "type": "checkpoint", "x": 1264.0, "y": 520.0, "text": "", "kind": "" },
+        { "type": "word", "x": 1624.0, "y": 520.0, "text": "slippery words", "kind": "ice" },
+        { "type": "word", "x": 2256.0, "y": 520.0, "text": "hot", "kind": "hot" },
+        { "type": "word", "x": 2408.0, "y": 520.0, "text": "cool again", "kind": "solid" },
+        { "type": "stickyWall", "x": 2640.0, "y": 520.0, "text": "sticky", "kind": "" },
+        { "type": "word", "x": 2848.0, "y": 520.0, "text": "--------", "kind": "plank" },
+        { "type": "hash", "x": 3024.0, "y": 440.0, "text": "", "kind": "" },
+        { "type": "word", "x": 3216.0, "y": 520.0, "text": "the end of this one", "kind": "solid" },
+        { "type": "exit", "x": 3328.0, "y": 520.0, "text": "c_t", "kind": "a" }
+    ]
+}

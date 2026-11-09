@@ -7,63 +7,66 @@ EditorBuildSettings:
   m_Scenes:
   - enabled: 1
     path: Assets/Scenes/Menu.unity
-    guid: 83ff6c37f859e9bc29126e457546547e
+    guid: 80ee3b4306812cb97a5d463e9a8bc74a
   - enabled: 1
     path: Assets/Scenes/Chapter1.unity
-    guid: eaed4e47ea9ab961cb73770c095210fa
+    guid: 96590cf814c968e6b9084811abcb60d6
   - enabled: 1
     path: Assets/Scenes/Playground.unity
-    guid: 9a8823651056c90a1a36c368bab06e11
+    guid: c2a092df69db1a0be96722ce0886f75f
   - enabled: 1
     path: Assets/Scenes/Vocabulary.unity
-    guid: 8bdcfa924b891cfeeafca36ad3ab1b82
+    guid: 1516386cad692c775a1ab511fd47a17d
   - enabled: 1
     path: Assets/Scenes/Overworld.unity
-    guid: 5786dca536a8e0537b4b6920efd449bf
+    guid: 92b24b5f1f8f2c207b93369ca84a7a94
   - enabled: 1
     path: Assets/Scenes/Cellar.unity
-    guid: b08d3f3b8d8ff983a9625437d1fb6265
+    guid: 16ab2864af632a687a738c2693cd55b7
   - enabled: 1
     path: Assets/Scenes/Skyline.unity
-    guid: cd8e5a7b7526275a0829c5592a8a83a2
+    guid: 3e8d5d5329a5cc531ac9b0267d02bf52
   - enabled: 1
     path: Assets/Scenes/Crack.unity
-    guid: 064da13b9f4beba038275dd7af15be90
+    guid: 7048d3d25e021b293ad7bb560f97b8d1
   - enabled: 1
     path: Assets/Scenes/Wall.unity
-    guid: a7583c92e3109548792159f4b8cd6473
+    guid: c070211ca5c924bb881be76cd8e93382
   - enabled: 1
     path: Assets/Scenes/Plank.unity
-    guid: 9c70a3a3513f57964b9b58a13b2d7604
+    guid: 6af8a067fcd8043549729d2c4a9d9cb6
   - enabled: 1
     path: Assets/Scenes/Gate.unity
-    guid: 67e68ffa1a30dd9dba4714ddb53e8f70
+    guid: 914177ce7dca56fbbaf49d466e3302bf
   - enabled: 1
     path: Assets/Scenes/Space.unity
-    guid: 615f6862d5fd014908ea1b2e6efd0199
+    guid: 48e8e7f05962a0f8f88f2b27ebe08610
   - enabled: 1
     path: Assets/Scenes/Skate.unity
-    guid: 10fcf8d7218072b0ca74a69e65c3d115
+    guid: 98272070f1ed0f676b1ae01b83943639
   - enabled: 1
     path: Assets/Scenes/Trail.unity
-    guid: 46d82ce46c7a20540bab061a365c8cbc
+    guid: bae7853ebfa39e6b08600b4f4359751f
   - enabled: 1
     path: Assets/Scenes/Chain.unity
-    guid: 382369962d8f76b29881b1cdac8aa33d
+    guid: f43e4020a5c17207e9720513eadab51e
   - enabled: 1
     path: Assets/Scenes/Ladder.unity
-    guid: 3ee41c5c9fe6a4c7f84d6ade57599085
+    guid: cdb5a9282e2f6416e83e5d55232cc8e4
   - enabled: 1
     path: Assets/Scenes/Flames.unity
-    guid: 41592f42f00d3b289b87f432956babda
+    guid: 1d1ab8e891e782c9c8d7a35cf66acc93
   - enabled: 1
     path: Assets/Scenes/Tar.unity
-    guid: 329d5fa42ea52f8deabc82ea50d29c66
+    guid: a241ddc54ac9bf5b1bf7d712c53d6fe5
   - enabled: 1
     path: Assets/Scenes/Final.unity
-    guid: bb2c451409fc3a468b003b36fcd8246c
+    guid: 22c8b98c8f67a186d8cd40d60383ac98
   - enabled: 1
     path: Assets/Scenes/Random.unity
-    guid: 80455aa8506c9fa19937454403e0dd4f
+    guid: 1c2bd351da97ebc07917e47180c09905
+  - enabled: 1
+    path: Assets/Scenes/CustomLevel.unity
+    guid: d5cc3c11f929eb71f842f316e21b0850
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
