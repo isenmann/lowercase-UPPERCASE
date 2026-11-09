@@ -21,7 +21,7 @@ Everything needed to fill in the itch.io "Create a new project" form for lowerca
 | Description | Paste from `description.html` (see below) |
 | Cover image | `cover.png` (630×500); `cover@2x.png` is the same at 1260×1000 |
 | Banner | `banner.png` (960×250); `banner@2x.png` at 1920×500 |
-| Screenshots | `screenshots/01-title.png` … `11-final-cursor.png`, 1920×1080, in that order |
+| Screenshots | `screenshots/01-title.png` … `15-shared-levels-page.png`, 1920×1080, in that order |
 
 ## Web build embed
 
@@ -62,5 +62,9 @@ Banner: upload `banner.png` (960×250, the width of the page column) under "Bann
 | `09-tar-mimic.png` | Tar: A above a mimic that has copied it and turned into `B` |
 | `10-skyline-eye.png` | Skyline: an `ö` eye drifting after a, with a `&` walker on the word |
 | `11-final-cursor.png` | Final: the backspace cursor `\|` chasing a and erasing the words behind it |
+| `12-editor-words.png` | Level editor: an ice word picked, with its settings in the panel and the words page of the palette |
+| `13-editor-things.png` | Level editor: a flier picked with its travel handle, the plate's link to its door, and the things page |
+| `14-my-levels.png` | My levels: the list with finished marks and the picture of the level |
+| `15-shared-levels-page.png` | The shared levels page with three levels, the first one open with its preview |
 
-`01`, `03` and `05` were taken on 2026-11-08 in the editor's Game view (2053×1155). The others were taken on 2026-11-09 at 3310×1862 (Game view 1655×931, supersize 2), staged in Play mode, and all are scaled to 1920×1080.
+`12`–`14` were taken on 2026-11-09 in Play mode (Game view at supersize 2, scaled to 1920×1080), with showcase levels in a scratch level folder. `15` is the page itself in headless Chromium at 1440×810 CSS pixels and 4/3 density, served locally with those levels. `01`, `03` and `05` were taken on 2026-11-08 in the editor's Game view (2053×1155). The others were taken on 2026-11-09 at 3310×1862 (Game view 1655×931, supersize 2), staged in Play mode, and all are scaled to 1920×1080.

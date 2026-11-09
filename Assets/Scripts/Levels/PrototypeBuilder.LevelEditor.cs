@@ -17,7 +17,13 @@ namespace LowercaseUppercase.Levels
         const string EditorControls = "P  play  ·  H  here  ·  Ctrl Z  undo  ·  G  grid";
         const float ChipPx = 40f;
         const float ChipStepPx = 44f;
-        const float FirstChipPx = 290f;
+        // Just right of the "enemies" tab, so the longest page (14 enemies) ends clear of the keys at the bottom right.
+        const float FirstChipPx = 244f;
+        // The sentence's box in the top bar: from past the readout's longest line up to the settings button.
+        const float SentenceLeftPx = 770f;
+        const float SentenceRightPx = 1060f;
+        const float SentenceFontPx = 22f;
+        const float SentenceMinFontPx = 11f; // 40 characters take 270 px at this size.
         const float PanelLeftPx = 928f;
         const float PanelTopPx = 76f;
         const float PanelWidthPx = 320f;
@@ -110,7 +116,7 @@ namespace LowercaseUppercase.Levels
 
             editor.backButton = Text(hud, "Back Button", "< my levels", 32f, 38f, 14f, mono, Interactive, order + 1);
             editor.readout = Text(hud, "Editor Readout", "", 168f, 37f, 12f, mono, Muted, order + 1);
-            editor.sentence = Text(hud, "Sentence", "", 860f, 40f, 22f, mono, Paper, order + 1);
+            editor.sentence = EditorSentence(hud, order + 1);
             editor.settingsButton = Text(hud, "Settings Button", "settings", 1080f, 38f, 14f, mono, Interactive, order + 1);
             editor.warningsText = Text(hud, "Warnings", "", 32f, 90f, 12f, mono, Danger, order + 1);
             editor.playButton = Text(hud, "Play Button", "play", 1196f, 38f, 16f, monoBold, Player, order + 1);
@@ -119,6 +125,22 @@ namespace LowercaseUppercase.Levels
             editor.palette = BuildEditorPalette(hud, order);
             editor.panel = BuildEditorPanel(hud, order);
             return hud;
+        }
+
+        /// <summary>
+        /// The level's sentence, ending just before settings. A long one shrinks to fit rather than running into it: the
+        /// editor allows 40 characters, and only about 15 fit at full size.
+        /// </summary>
+        static TextMeshPro EditorSentence(Transform hud, int order)
+        {
+            TextMeshPro sentence = Text(hud, "Sentence", "", SentenceLeftPx, 40f, SentenceFontPx, mono, Paper, order);
+            sentence.alignment = TextAlignmentOptions.BaselineRight;
+            sentence.rectTransform.sizeDelta = new Vector2(Size(SentenceRightPx - SentenceLeftPx), Size(40f));
+            sentence.enableAutoSizing = true;
+            sentence.fontSizeMin = FontSize(SentenceMinFontPx);
+            sentence.fontSizeMax = FontSize(SentenceFontPx);
+            sentence.overflowMode = TextOverflowModes.Ellipsis;
+            return sentence;
         }
 
         /// <summary>The tabs and, for each page, a row of chips showing the glyph of what each tool places.</summary>
