@@ -5,12 +5,13 @@ using UnityEngine;
 namespace LowercaseUppercase
 {
     /// <summary>
-    /// The level editor's panel for the selected piece: its name, up to <see cref="Rows"/> settings with arrows to step
-    /// them, and a delete button. Text settings are edited by clicking them, which starts typing.
+    /// The level editor's panel: a title, up to <see cref="Rows"/> settings with arrows to step them, and a delete
+    /// button. It shows the selected piece or the level's own settings. Text settings are edited by clicking them,
+    /// which starts typing.
     /// </summary>
     public class LevelEditorPanel : MonoBehaviour
     {
-        public const int Rows = 4;
+        public const int Rows = 5;
         const float HitPaddingUnits = 0.08f;
 
         public enum Hit { None, Less, More, Value, Delete }
@@ -23,28 +24,25 @@ namespace LowercaseUppercase
         public TMP_Text[] moreButtons;
         public TMP_Text deleteButton;
 
-        public CustomPiece Piece { get; private set; }
-        public IReadOnlyList<PieceProperty> Properties => properties;
+        public IReadOnlyList<PanelRow> Shown => shown;
 
-        readonly List<PieceProperty> properties = new List<PieceProperty>();
+        readonly List<PanelRow> shown = new List<PanelRow>();
 
-        /// <summary>Shows a piece's settings. A null piece shows only the title, for the letter's start.</summary>
-        public void Show(CustomPiece piece, string name)
+        /// <summary>Shows a title and its rows; only the first <see cref="Rows"/> fit.</summary>
+        public void Show(string name, IEnumerable<PanelRow> rows, bool deletable)
         {
             gameObject.SetActive(true);
-            Piece = piece;
-            properties.Clear();
-            if (piece != null) properties.AddRange(PieceProperties.For(piece));
-            if (properties.Count > Rows) properties.RemoveRange(Rows, properties.Count - Rows);
+            shown.Clear();
+            shown.AddRange(rows);
+            if (shown.Count > Rows) shown.RemoveRange(Rows, shown.Count - Rows);
             title.text = name;
-            deleteButton.gameObject.SetActive(piece != null);
+            deleteButton.gameObject.SetActive(deletable);
             Refresh();
         }
 
         public void Hide()
         {
-            Piece = null;
-            properties.Clear();
+            shown.Clear();
             gameObject.SetActive(false);
         }
 
@@ -52,10 +50,10 @@ namespace LowercaseUppercase
         {
             for (int i = 0; i < Rows; i++)
             {
-                bool used = i < properties.Count;
-                labels[i].text = used ? properties[i].Label : "";
-                values[i].text = used ? Shorten(properties[i].Show(Piece)) : "";
-                bool steps = used && !properties[i].IsText;
+                bool used = i < shown.Count;
+                labels[i].text = used ? shown[i].Label : "";
+                values[i].text = used ? Shorten(shown[i].Show()) : "";
+                bool steps = used && !shown[i].IsText;
                 lessButtons[i].text = steps ? "<" : "";
                 moreButtons[i].text = steps ? ">" : "";
             }
@@ -65,8 +63,16 @@ namespace LowercaseUppercase
 
         const int MaxValueLength = 12;
 
-        static string Shorten(string value) =>
-            value.Length <= MaxValueLength ? value : value.Substring(0, MaxValueLength - 3) + "...";
+        /// <summary>
+        /// Long values are cut with "...". A value being typed ends with the caret "|", and keeps its end instead,
+        /// where the typing is.
+        /// </summary>
+        static string Shorten(string value)
+        {
+            if (value.Length <= MaxValueLength) return value;
+            if (value.EndsWith("|")) return "..." + value.Substring(value.Length - (MaxValueLength - 3));
+            return value.Substring(0, MaxValueLength - 3) + "...";
+        }
 
         public bool Contains(Vector2 world) => gameObject.activeInHierarchy && Over(background, world);
 
@@ -76,10 +82,10 @@ namespace LowercaseUppercase
             row = -1;
             if (!gameObject.activeInHierarchy) return Hit.None;
             if (deleteButton.gameObject.activeSelf && Over(deleteButton.GetComponent<Renderer>(), world)) return Hit.Delete;
-            for (int i = 0; i < properties.Count; i++)
+            for (int i = 0; i < shown.Count; i++)
             {
                 row = i;
-                if (!properties[i].IsText)
+                if (!shown[i].IsText)
                 {
                     if (Over(lessButtons[i].GetComponent<Renderer>(), world)) return Hit.Less;
                     if (Over(moreButtons[i].GetComponent<Renderer>(), world)) return Hit.More;

@@ -47,6 +47,8 @@ namespace LowercaseUppercase.Levels
             black = blackFont;
             white = whiteSprite;
             levelCheckpoints.Clear();
+            // The editor rebuilds on every change and lists what was skipped as warnings of its own.
+            quietSkips = onBuilt != null;
 
             // Terrain first, because plates, keys and enemies find what they belong to among it. Checkpoints are
             // numbered in the order they are placed, and the letter meets them left to right.
@@ -68,6 +70,8 @@ namespace LowercaseUppercase.Levels
             levelCheckpoints.Clear();
             return layout;
         }
+
+        static bool quietSkips;
 
         static float BuildAndReport(Transform level, CustomPiece piece, System.Action<CustomPiece, Transform> onBuilt)
         {
@@ -311,7 +315,7 @@ namespace LowercaseUppercase.Levels
                     return x;
             }
 
-            Debug.LogWarning($"Custom level: skipped the {piece.kind} at {x:0}, {piece.y:0}, which has no "
+            if (!quietSkips) Debug.LogWarning($"Custom level: skipped the {piece.kind} at {x:0}, {piece.y:0}, which has no "
                 + (piece.kind == CustomPieceType.Spark ? "hot word" : "word") + " under it.");
             return x;
         }

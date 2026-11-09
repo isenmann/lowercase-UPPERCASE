@@ -12,7 +12,8 @@ namespace LowercaseUppercase
     /// The level editor. It keeps the level as <see cref="CustomLevelData"/> and shows it as a frozen preview, built by
     /// the same <see cref="PrototypeBuilder.BuildCustomLevel"/> that plays it, and rebuilt whole after every change.
     /// Clicking empty page places the palette's tool there (words start typing); clicking a piece selects it, dragging
-    /// moves it, and the panel changes its settings. Positions snap to an 8 px grid.
+    /// moves it, and the panel changes its settings, or the level's. Positions snap to an 8 px grid. Every finished
+    /// change is kept for undo, and the level is checked for likely mistakes, which are listed under the top bar.
     /// </summary>
     public class LevelEditor : MonoBehaviour
     {
@@ -40,6 +41,9 @@ namespace LowercaseUppercase
         static readonly Color KeyLinkColor = new Color(1f, 0.54f, 0.24f, 0.5f);
         static readonly Color HandleLineColor = new Color(1f, 0.82f, 0.25f, 0.6f);
         const float NoticeSeconds = 4f;
+        static readonly Color WarningColor = new Color(1f, 0.3f, 0.37f, 0.8f);
+        const float UngroundedMarkPx = 40f;
+        const int WarningsListed = 3;
 
         public Camera view;
         public Transform grid;
@@ -57,7 +61,9 @@ namespace LowercaseUppercase
         public TMP_Text playButton;
         public TMP_Text readout;
         public TMP_Text sentence;
-        public TMP_Text levelName;
+        public TMP_Text settingsButton;
+        [Tooltip("The level's warnings, under the top bar on the left. Clicking it shows the next piece warned about.")]
+        public TMP_Text warningsText;
 
         [Header("Assets the preview is built with")]
         public TMP_FontAsset mono;
@@ -74,6 +80,15 @@ namespace LowercaseUppercase
         public bool StartSelected { get; private set; }
         public Transform Preview { get; private set; }
         public bool GridShown => grid != null && grid.gameObject.activeSelf;
+        /// <summary>Whether the panel shows the level's settings.</summary>
+        public bool SettingsShown { get; private set; }
+        /// <summary>The level setting whose text is being typed, or null.</summary>
+        public LevelSetting TypingSetting { get; private set; }
+        /// <summary>Whether a piece's text or a setting is being typed.</summary>
+        public bool IsTyping => Typing != null || TypingSetting != null;
+        public EditorHistory History { get; private set; }
+        /// <summary>What looks wrong with the level, as of the last finished change.</summary>
+        public IReadOnlyList<EditorWarning> Warnings => warnings;
 
         readonly Dictionary<CustomPiece, List<Transform>> built = new Dictionary<CustomPiece, List<Transform>>();
         string typingOriginal;
@@ -95,6 +110,11 @@ namespace LowercaseUppercase
 
         string notice;
         float noticeUntil;
+
+        string typingSettingText;
+        bool changed;
+        List<EditorWarning> warnings = new List<EditorWarning>();
+        int warningCursor = -1;
 
         bool draggingHandle;
         readonly List<SpriteRenderer> lines = new List<SpriteRenderer>();
@@ -124,6 +144,7 @@ namespace LowercaseUppercase
             view.transform.position = new Vector3(CustomRun.EditorCameraX, camera.y, camera.z);
             if (CustomRun.EditorTool != null) palette.Select(CustomRun.EditorTool);
             palette.ShowPage(CustomRun.EditorPalettePage);
+            if (CustomRun.EditorHistory != null) History = CustomRun.EditorHistory;
             if (CustomRun.EditorSelected != null && Level.pieces.Contains(CustomRun.EditorSelected))
                 Select(CustomRun.EditorSelected);
             ShowNotice(CustomRun.TestFinished ? "test play: reached the exit" : "test play: stopped before the exit");
@@ -144,10 +165,11 @@ namespace LowercaseUppercase
         /// </summary>
         public void Play(Vector2? startPx = null)
         {
-            if (Typing != null) Commit();
+            if (IsTyping) Commit();
             dragging = draggingHandle = false;
+            Checkpoint();
             LevelRun.NewGame();
-            CustomRun.BeginTest(Level, startPx, view.transform.position.x, Selected, palette.Page, palette.Current);
+            CustomRun.BeginTest(Level, startPx, view.transform.position.x, Selected, palette.Page, palette.Current, History);
             LevelTransition.SkipNextIntro = true;
             SceneManager.LoadScene(CustomRun.Scene);
         }
@@ -158,10 +180,14 @@ namespace LowercaseUppercase
         public void Open(CustomLevelData level)
         {
             Typing = null;
+            TypingSetting = null;
             Listen(null);
             Level = level;
             Deselect();
             Rebuild();
+            History = new EditorHistory(level.ToJson(false));
+            changed = false;
+            FindWarnings();
         }
 
         // ---------------------------------------------------------------- pixels
@@ -204,8 +230,9 @@ namespace LowercaseUppercase
                 if (!mouse.leftButton.isPressed) dragging = draggingHandle = false;
             }
 
-            if (Typing != null) TypeKeys(keyboard);
+            if (IsTyping) TypeKeys(keyboard);
             else ShortcutKeys(keyboard);
+            if (changed && !dragging && !draggingHandle && !IsTyping) Checkpoint();
 
             ShowReadout(world, px, snapped, overHud);
             FollowCameraWithGrid();
@@ -261,7 +288,7 @@ namespace LowercaseUppercase
         {
             float screenPxPerPagePx = Screen.height / (2f * view.orthographicSize * PixelsPerUnit);
             bool overBars = screenY > Screen.height - TopBarPx * screenPxPerPagePx || screenY < BottomBarPx * screenPxPerPagePx;
-            return overBars || (panel != null && panel.Contains(world));
+            return overBars || (panel != null && panel.Contains(world)) || Over(warningsText, world);
         }
 
         // ---------------------------------------------------------------- clicks
@@ -285,7 +312,7 @@ namespace LowercaseUppercase
                 return;
             }
 
-            if (Typing != null) Commit();
+            if (IsTyping) Commit();
 
             if (HandleAt(px) != null)
             {
@@ -331,15 +358,20 @@ namespace LowercaseUppercase
 
         void PressHud(Vector2 world)
         {
-            if (playButton != null)
+            if (Over(playButton, world))
             {
-                Bounds bounds = playButton.GetComponent<Renderer>().bounds;
-                bounds.Expand(HitPaddingPx * 2f / PixelsPerUnit);
-                if (bounds.Contains(new Vector3(world.x, world.y, bounds.center.z)))
-                {
-                    Play();
-                    return;
-                }
+                Play();
+                return;
+            }
+            if (Over(settingsButton, world) || Over(sentence, world))
+            {
+                ShowSettings();
+                return;
+            }
+            if (Over(warningsText, world))
+            {
+                ShowNextWarning();
+                return;
             }
 
             if (panel != null && panel.Contains(world))
@@ -358,17 +390,24 @@ namespace LowercaseUppercase
             PaletteItem item = palette.ItemAt(world);
             if (item != null)
             {
-                if (Typing != null) Commit();
+                if (IsTyping) Commit();
                 palette.Select(item);
             }
+        }
+
+        /// <summary>Whether a world point is on a HUD text, with a little padding.</summary>
+        static bool Over(TMP_Text text, Vector2 world)
+        {
+            if (text == null || !text.gameObject.activeInHierarchy || text.text.Length == 0) return false;
+            Bounds bounds = text.GetComponent<Renderer>().bounds;
+            if (bounds.size == Vector3.zero) return false;
+            bounds.Expand(HitPaddingPx * 2f / PixelsPerUnit);
+            return bounds.Contains(new Vector3(world.x, world.y, bounds.center.z));
         }
 
         void PressPanel(Vector2 world)
         {
             LevelEditorPanel.Hit hit = panel.HitAt(world, out int row);
-            CustomPiece piece = panel.Piece;
-            if (piece == null) return;
-
             switch (hit)
             {
                 case LevelEditorPanel.Hit.Delete:
@@ -377,15 +416,12 @@ namespace LowercaseUppercase
                 case LevelEditorPanel.Hit.Less:
                 case LevelEditorPanel.Hit.More:
                 case LevelEditorPanel.Hit.Value:
-                    PieceProperty property = panel.Properties[row];
-                    if (property.IsText)
-                    {
-                        if (Typing != piece) BeginTyping(piece, isNew: false);
-                    }
+                    PanelRow shown = panel.Shown[row];
+                    if (shown.IsText) shown.Edit?.Invoke();
                     else
                     {
-                        if (Typing != null) Commit();
-                        property.Step(piece, hit == LevelEditorPanel.Hit.Less ? -1 : 1);
+                        if (IsTyping) Commit();
+                        shown.Step(hit == LevelEditorPanel.Hit.Less ? -1 : 1);
                         Rebuild();
                     }
                     break;
@@ -483,6 +519,9 @@ namespace LowercaseUppercase
                         DrawLine(Centre(key.transform), Centre(key.zone.label.transform), KeyLinkColor);
             }
 
+            foreach (EditorWarning warning in warnings)
+                if (warning.Piece != null && Level.pieces.Contains(warning.Piece)) DrawBox(WarningBounds(warning.Piece), WarningColor);
+
             PieceHandle handle = Selected != null ? PieceHandles.For(Selected) : null;
             if (handle != null)
             {
@@ -492,6 +531,24 @@ namespace LowercaseUppercase
             if (handleMark != null) handleMark.enabled = handle != null;
 
             for (int i = linesUsed; i < lines.Count; i++) lines[i].enabled = false;
+        }
+
+        /// <summary>What a warned piece built, or a box where it stands if it built nothing, like an enemy in the air.</summary>
+        Bounds WarningBounds(CustomPiece piece)
+        {
+            if (built.TryGetValue(piece, out List<Transform> parts) && TryGetBounds(parts, out Bounds bounds)) return bounds;
+            float size = UngroundedMarkPx / PixelsPerUnit;
+            return new Bounds(World(new Vector2(piece.x, piece.y - UngroundedMarkPx * 0.5f)), new Vector3(size, size, 0f));
+        }
+
+        void DrawBox(Bounds bounds, Color color)
+        {
+            Vector2 min = bounds.min;
+            Vector2 max = bounds.max;
+            DrawLine(new Vector2(min.x, min.y), new Vector2(max.x, min.y), color);
+            DrawLine(new Vector2(min.x, max.y), new Vector2(max.x, max.y), color);
+            DrawLine(new Vector2(min.x, min.y), new Vector2(min.x, max.y), color);
+            DrawLine(new Vector2(max.x, min.y), new Vector2(max.x, max.y), color);
         }
 
         static Vector2 Centre(Transform part)
@@ -526,18 +583,56 @@ namespace LowercaseUppercase
         {
             Selected = piece;
             StartSelected = false;
+            SettingsShown = false;
             if (panel != null)
             {
-                if (piece != null) panel.Show(piece, EditorPalette.NameOf(piece));
+                if (piece != null) panel.Show(EditorPalette.NameOf(piece), RowsFor(piece), deletable: true);
                 else panel.Hide();
             }
+        }
+
+        List<PanelRow> RowsFor(CustomPiece piece)
+        {
+            var rows = new List<PanelRow>();
+            foreach (PieceProperty property in PieceProperties.For(piece))
+            {
+                PieceProperty p = property;
+                rows.Add(p.IsText
+                    ? new PanelRow(p.Label, () => p.Show(piece), null, () =>
+                    {
+                        if (Typing != piece) BeginTyping(piece, isNew: false);
+                    })
+                    : new PanelRow(p.Label, () => p.Show(piece), direction => p.Step(piece, direction)));
+            }
+            return rows;
         }
 
         void SelectStart()
         {
             Select(null);
             StartSelected = true;
-            if (panel != null) panel.Show(null, "letter start");
+            if (panel != null) panel.Show("letter start", new PanelRow[0], deletable: false);
+        }
+
+        /// <summary>Shows the level's own settings in the panel instead of a piece's.</summary>
+        public void ShowSettings()
+        {
+            if (IsTyping) Commit();
+            Deselect();
+            SettingsShown = true;
+            if (panel == null) return;
+            var rows = new List<PanelRow>();
+            foreach (LevelSetting setting in LevelSettings.All)
+            {
+                LevelSetting s = setting;
+                rows.Add(s.IsText
+                    ? new PanelRow(s.Label, () => TypingSetting == s ? typingSettingText + "|" : s.Show(Level), null, () =>
+                    {
+                        if (TypingSetting != s) BeginTypingSetting(s);
+                    })
+                    : new PanelRow(s.Label, () => s.Show(Level), direction => s.Step(Level, direction)));
+            }
+            panel.Show("level settings", rows, deletable: false);
         }
 
         public void Deselect()
@@ -554,6 +649,7 @@ namespace LowercaseUppercase
                 Typing = null;
                 Listen(null);
             }
+            warningCursor = -1;
             Level.pieces.Remove(Selected);
             Deselect();
             Rebuild();
@@ -677,11 +773,119 @@ namespace LowercaseUppercase
             line.transform.localScale = new Vector3(size.x, size.y, 1f);
         }
 
+        // ---------------------------------------------------------------- undo and warnings
+
+        /// <summary>
+        /// Keeps the level as it is now for undo, if it changed, and checks it again. The editor calls it once a change
+        /// is finished: after a drag, not during it, and after typing is placed.
+        /// </summary>
+        public void Checkpoint()
+        {
+            changed = false;
+            if (History != null && History.Record(Level.ToJson(false))) FindWarnings();
+        }
+
+        public void Undo() => GoTo(() => History.Undo());
+
+        public void Redo() => GoTo(() => History.Redo());
+
+        /// <summary>
+        /// Swaps the level for one from the history. A piece at the same place in the list stays selected, so undoing a
+        /// move keeps the moved piece picked.
+        /// </summary>
+        void GoTo(System.Func<string> step)
+        {
+            if (dragging || draggingHandle) return;
+            if (IsTyping) Commit();
+            Checkpoint();
+            string json = step();
+            if (json == null) return;
+
+            int index = Selected != null ? Level.pieces.IndexOf(Selected) : -1;
+            string type = Selected?.type;
+            bool settings = SettingsShown;
+            bool start = StartSelected;
+
+            Level = CustomLevelData.FromJson(json);
+            Rebuild();
+            changed = false;
+            FindWarnings();
+
+            if (settings) ShowSettings();
+            else if (start) SelectStart();
+            else if (index >= 0 && index < Level.pieces.Count && Level.pieces[index].type == type) Select(Level.pieces[index]);
+            else Deselect();
+        }
+
+        void FindWarnings()
+        {
+            warnings = EditorWarnings.Find(Level, built);
+            warningCursor = -1;
+            ShowWarnings();
+        }
+
+        /// <summary>The warnings, the same ones counted together: "pieces overlap (2) · no exit word".</summary>
+        void ShowWarnings()
+        {
+            if (warningsText == null) return;
+            var groups = new List<string>();
+            var counts = new Dictionary<string, int>();
+            foreach (EditorWarning warning in warnings)
+            {
+                if (!counts.ContainsKey(warning.Text))
+                {
+                    counts[warning.Text] = 0;
+                    groups.Add(warning.Text);
+                }
+                counts[warning.Text]++;
+            }
+            var parts = new List<string>();
+            for (int i = 0; i < groups.Count && i < WarningsListed; i++)
+                parts.Add(counts[groups[i]] > 1 ? $"{groups[i]} ({counts[groups[i]]})" : groups[i]);
+            if (groups.Count > WarningsListed) parts.Add($"{groups.Count - WarningsListed} more");
+            warningsText.text = parts.Count == 0 ? "" : "! " + string.Join("  ·  ", parts);
+            warningsText.ForceMeshUpdate();
+        }
+
+        /// <summary>Selects the next piece a warning is about, and scrolls to it.</summary>
+        public void ShowNextWarning()
+        {
+            var pieces = new List<CustomPiece>();
+            foreach (EditorWarning warning in warnings)
+                if (warning.Piece != null && !pieces.Contains(warning.Piece)) pieces.Add(warning.Piece);
+            if (pieces.Count == 0)
+            {
+                if (warnings.Count > 0) ShowNotice(warnings[0].Text);
+                return;
+            }
+            warningCursor = (warningCursor + 1) % pieces.Count;
+            CustomPiece piece = pieces[warningCursor];
+            if (IsTyping) Commit();
+            Select(piece);
+            Vector3 camera = view.transform.position;
+            view.transform.position = new Vector3(Mathf.Max(0f, WorldX(piece.x)), camera.y, camera.z);
+            foreach (EditorWarning warning in warnings)
+                if (warning.Piece == piece)
+                {
+                    ShowNotice(warning.Text);
+                    break;
+                }
+        }
+
         // ---------------------------------------------------------------- keys
 
         void ShortcutKeys(Keyboard keyboard)
         {
             if (keyboard == null) return;
+            bool command = keyboard.ctrlKey.isPressed || keyboard.leftMetaKey.isPressed || keyboard.rightMetaKey.isPressed;
+            if (command)
+            {
+                bool redo = keyboard.yKey.wasPressedThisFrame || (keyboard.zKey.wasPressedThisFrame && keyboard.shiftKey.isPressed);
+                if (redo) Redo();
+                else if (keyboard.zKey.wasPressedThisFrame) Undo();
+                // Ctrl with a letter is never a tool shortcut.
+                return;
+            }
             if (keyboard.pKey.wasPressedThisFrame)
             {
                 Play();
@@ -715,9 +919,19 @@ namespace LowercaseUppercase
             Rebuild();
         }
 
-        /// <summary>Places the text being typed and keeps the piece selected. An emptied piece is removed.</summary>
+        /// <summary>
+        /// Places the text being typed and keeps the piece selected. An emptied piece is removed. A setting that
+        /// can't take the text keeps what it had, and says why.
+        /// </summary>
         public void Commit()
         {
+            if (TypingSetting != null)
+            {
+                string problem = TypingSetting.Apply(Level, typingSettingText);
+                if (problem != null) ShowNotice(problem);
+                EndTypingSetting();
+                return;
+            }
             if (Typing == null) return;
             CustomPiece piece = Typing;
             if (piece.text.Trim().Length == 0)
@@ -731,6 +945,11 @@ namespace LowercaseUppercase
         /// <summary>Drops the typing: a new piece goes, an edited one gets its old text back.</summary>
         public void Cancel()
         {
+            if (TypingSetting != null)
+            {
+                EndTypingSetting();
+                return;
+            }
             if (Typing == null) return;
             if (typingIsNew)
             {
@@ -748,12 +967,36 @@ namespace LowercaseUppercase
             Rebuild();
         }
 
+        void BeginTypingSetting(LevelSetting setting)
+        {
+            if (IsTyping) Commit();
+            TypingSetting = setting;
+            typingSettingText = setting.Show(Level);
+            Listen(Keyboard.current);
+            panel.Refresh();
+        }
+
+        void EndTypingSetting()
+        {
+            TypingSetting = null;
+            typingSettingText = null;
+            Listen(null);
+            Rebuild();
+        }
+
         /// <summary>
         /// One typed character for the text being typed. Control characters are ignored. In loose letters, "!" marks a
         /// riser's hole.
         /// </summary>
         public void Type(char c)
         {
+            if (TypingSetting != null)
+            {
+                if (char.IsControl(c) || typingSettingText.Length >= TypingSetting.MaxLength) return;
+                typingSettingText += c;
+                panel.Refresh();
+                return;
+            }
             if (Typing == null || char.IsControl(c) || Typing.text.Length >= MaxWordLength) return;
             // Text doesn't start with a space.
             if (c == ' ' && Typing.text.Length == 0) return;
@@ -764,6 +1007,13 @@ namespace LowercaseUppercase
 
         public void Backspace()
         {
+            if (TypingSetting != null)
+            {
+                if (typingSettingText.Length == 0) return;
+                typingSettingText = typingSettingText.Substring(0, typingSettingText.Length - 1);
+                panel.Refresh();
+                return;
+            }
             if (Typing == null || Typing.text.Length == 0) return;
             Typing.text = Typing.text.Substring(0, Typing.text.Length - 1);
             Rebuild();
@@ -828,6 +1078,7 @@ namespace LowercaseUppercase
             if (Preview != null) Destroy(Preview.gameObject);
             Preview = new GameObject("Preview").transform;
             built.Clear();
+            changed = true;
 
             PrototypeBuilder.BuildCustomLevel(Preview, Level, mono, monoBold, black, white, (piece, part) =>
             {
@@ -845,7 +1096,6 @@ namespace LowercaseUppercase
             }
             if (sentence != null)
                 sentence.text = $"{Level.sentenceBefore}<color=#FFD23F>_</color>{Level.sentenceAfter}";
-            if (levelName != null) levelName.text = Level.name;
             if (panel != null && panel.gameObject.activeSelf) panel.Refresh();
         }
 
@@ -896,11 +1146,12 @@ namespace LowercaseUppercase
             string what;
             PaletteItem hovered = overHud ? palette.ItemAt(world) : null;
             if (Time.unscaledTime < noticeUntil) what = notice;
-            else if (Typing != null) what = "typing  ·  Enter places  ·  Esc cancels";
+            else if (IsTyping) what = "typing  ·  Enter places  ·  Esc cancels";
             else if (hovered != null) what = hovered.Name;
             else if (Selected != null && PieceHandles.For(Selected) != null)
                 what = $"{EditorPalette.NameOf(Selected)}  ·  drag to move  ·  the square stretches  ·  Del removes";
             else if (Selected != null) what = $"{EditorPalette.NameOf(Selected)}  ·  drag to move  ·  Del removes";
+            else if (SettingsShown) what = "level settings  ·  click a value to change it";
             else if (palette.Current.Typed) what = $"click: type a {palette.Current.Name}  ·  click a word to pick it";
             else what = $"click: place a {palette.Current.Name}";
             readout.text = $"{where}   {what}";

@@ -26,6 +26,8 @@ namespace LowercaseUppercase
         public static CustomPiece EditorSelected { get; private set; }
         public static int EditorPalettePage { get; private set; }
         public static PaletteItem EditorTool { get; private set; }
+        /// <summary>The editor's undo history, so a test play doesn't forget it.</summary>
+        public static EditorHistory EditorHistory { get; private set; }
 
         // Domain reload is off in this project's Play mode settings, so statics survive from one session to the next.
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -37,7 +39,7 @@ namespace LowercaseUppercase
 
         /// <summary>Remembers the editor's state and the level to try out. Load <see cref="Scene"/> after this.</summary>
         public static void BeginTest(CustomLevelData level, Vector2? startPx, float cameraX, CustomPiece selected,
-            int palettePage, PaletteItem tool)
+            int palettePage, PaletteItem tool, EditorHistory history = null)
         {
             Level = level;
             Testing = true;
@@ -47,6 +49,7 @@ namespace LowercaseUppercase
             EditorSelected = selected;
             EditorPalettePage = palettePage;
             EditorTool = tool;
+            EditorHistory = history;
         }
 
         /// <summary>Called by the editor once it has taken back its state.</summary>
@@ -56,6 +59,7 @@ namespace LowercaseUppercase
             TestStartPx = null;
             EditorSelected = null;
             EditorTool = null;
+            EditorHistory = null;
         }
     }
 }

@@ -176,10 +176,10 @@ namespace LowercaseUppercase.Tests
             TypeWord("----");
             editor.Commit();
 
-            Assert.That(editor.panel.Piece, Is.SameAs(editor.Selected));
-            Assert.That(editor.panel.Properties[1].Label, Is.EqualTo("kind"));
+            Assert.That(editor.panel.title.text, Is.EqualTo(EditorPalette.NameOf(editor.Selected)));
+            Assert.That(editor.panel.Shown[1].Label, Is.EqualTo("kind"));
             Assert.That(editor.Selected.kind, Is.EqualTo(CustomPieceType.Plank));
-            editor.panel.Properties[1].Step(editor.Selected, 1);
+            editor.panel.Shown[1].Step(1);
             Assert.That(editor.Selected.kind, Is.EqualTo(CustomPieceType.Solid));
         }
 
@@ -305,6 +305,143 @@ namespace LowercaseUppercase.Tests
             yield return WaitFor<CustomLevel>();
             var letter = Object.FindAnyObjectByType<LetterController>();
             Assert.That(letter.transform.position.x, Is.EqualTo(LevelEditor.WorldX(400f)).Within(0.05f));
+        }
+    
+        // ---------------------------------------------------------------- settings, undo, warnings (step 5)
+
+        PanelRow SettingRow(string label) => editor.panel.Shown.First(r => r.Label == label);
+
+        void ClickRowValue(string label)
+        {
+            int row = editor.panel.Shown.ToList().FindIndex(r => r.Label == label);
+            editor.ClickHud(editor.panel.values[row].GetComponent<Renderer>().bounds.center);
+        }
+
+        [Test]
+        public void TheSettingsButtonShowsTheLevelsSettings()
+        {
+            editor.ClickHud(editor.settingsButton.GetComponent<Renderer>().bounds.center);
+            Assert.That(editor.SettingsShown, Is.True);
+            Assert.That(editor.panel.Shown.Select(r => r.Label),
+                Is.EqualTo(new[] { "name", "sentence", "letter", "time", "ceiling" }));
+        }
+
+        [Test]
+        public void TheSentenceIsTypedWithABlankForTheLetter()
+        {
+            editor.ShowSettings();
+            ClickRowValue("sentence");
+            Assert.That(editor.TypingSetting, Is.Not.Null);
+            for (int i = 0; i < 10; i++) editor.Backspace();
+            TypeWord("a b_g dog");
+            editor.Commit();
+
+            Assert.That(editor.Level.sentenceBefore, Is.EqualTo("a b"));
+            Assert.That(editor.Level.sentenceAfter, Is.EqualTo("g dog"));
+        }
+
+        [Test]
+        public void ASentenceWithoutABlankIsRefused()
+        {
+            editor.ShowSettings();
+            ClickRowValue("sentence");
+            for (int i = 0; i < 10; i++) editor.Backspace();
+            TypeWord("no blank");
+            editor.Commit();
+
+            Assert.That(LevelSettings.Sentence(editor.Level), Is.EqualTo("the c_t"));
+        }
+
+        [Test]
+        public void TheTimeLimitStepsByFiveSeconds()
+        {
+            editor.ShowSettings();
+            SettingRow("time").Step(1);
+            Assert.That(editor.Level.seconds, Is.EqualTo(65f));
+            SettingRow("ceiling").Step(1);
+            Assert.That(editor.Level.ceiling, Is.True);
+        }
+
+        [Test]
+        public void UndoTakesAPlacedPieceBackAndRedoBringsItAgain()
+        {
+            editor.palette.Select(Tool("checkpoint"));
+            editor.ClickAt(new Vector2(400f, 520f));
+            editor.Checkpoint();
+            Assert.That(editor.Level.pieces.Count, Is.EqualTo(2));
+
+            editor.Undo();
+            Assert.That(editor.Level.pieces.Count, Is.EqualTo(1));
+            editor.Redo();
+            Assert.That(editor.Level.pieces.Count, Is.EqualTo(2));
+            Assert.That(editor.Level.pieces[1].type, Is.EqualTo(CustomPieceType.Checkpoint));
+        }
+
+        [Test]
+        public void UndoingAMoveKeepsThePieceSelected()
+        {
+            editor.palette.Select(Tool("comma hooks"));
+            editor.ClickAt(new Vector2(800f, 300f));
+            editor.Checkpoint();
+            editor.MoveSelectedBy(new Vector2(80f, 0f));
+            editor.Checkpoint();
+
+            editor.Undo();
+            Assert.That(editor.Selected, Is.Not.Null);
+            Assert.That(editor.Selected.x, Is.EqualTo(800f));
+        }
+
+        [Test]
+        public void ANewLevelWarnsThatItHasNoExit()
+        {
+            Assert.That(editor.Warnings.Select(w => w.Text), Does.Contain(EditorWarnings.NoExit));
+            Assert.That(editor.warningsText.text, Does.Contain(EditorWarnings.NoExit));
+
+            editor.palette.Select(Tool("exit word"));
+            editor.ClickAt(new Vector2(400f, 520f));
+            editor.Checkpoint();
+            Assert.That(editor.Warnings.Select(w => w.Text), Does.Not.Contain(EditorWarnings.NoExit));
+        }
+
+        [Test]
+        public void AnEnemyInTheAirIsWarnedAbout()
+        {
+            editor.palette.Select(Tool("walker"));
+            editor.ClickAt(new Vector2(800f, 200f));
+            editor.Checkpoint();
+            EditorWarning warning = editor.Warnings.FirstOrDefault(w => w.Text == EditorWarnings.NoGround);
+            Assert.That(warning, Is.Not.Null);
+            Assert.That(warning.Piece, Is.SameAs(editor.Level.pieces[1]));
+        }
+
+        [Test]
+        public void OverlappingWordsAreWarnedAbout()
+        {
+            editor.Open(new CustomLevelData
+            {
+                pieces =
+                {
+                    new CustomPiece(CustomPieceType.Word, 40f, 520f, "first", CustomPieceType.Solid),
+                    new CustomPiece(CustomPieceType.Word, 80f, 520f, "second", CustomPieceType.Solid),
+                    new CustomPiece(CustomPieceType.Word, 800f, 520f, "apart", CustomPieceType.Solid),
+                },
+            });
+            Assert.That(editor.Warnings.Count(w => w.Text == EditorWarnings.Overlap), Is.EqualTo(2));
+        }
+
+        [Test]
+        public void ASpringUnderAWordIsWarnedAbout()
+        {
+            editor.Open(new CustomLevelData
+            {
+                pieces =
+                {
+                    new CustomPiece(CustomPieceType.Word, 40f, 520f, "the ground here", CustomPieceType.Solid),
+                    new CustomPiece(CustomPieceType.Word, 40f, 440f, "a low roof", CustomPieceType.Solid),
+                    new CustomPiece(CustomPieceType.Spring, 120f, 520f),
+                },
+            });
+            Assert.That(editor.Warnings.Select(w => w.Text), Does.Contain(EditorWarnings.NoRoom));
         }
     }
 }

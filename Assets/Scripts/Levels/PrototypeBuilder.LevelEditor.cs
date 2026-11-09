@@ -14,14 +14,14 @@ namespace LowercaseUppercase.Levels
     {
         const string LevelEditorScene = SceneFolder + "/LevelEditor.unity";
         const float EditorGridPx = 40f;
-        const string EditorControls = "P  play  ·  H  play here  ·  G  grid  ·  1 2 3  pages";
+        const string EditorControls = "P  play  ·  H  here  ·  Ctrl Z  undo  ·  G  grid";
         const float ChipPx = 40f;
         const float ChipStepPx = 44f;
         const float FirstChipPx = 290f;
         const float PanelLeftPx = 928f;
         const float PanelTopPx = 76f;
         const float PanelWidthPx = 320f;
-        const float PanelHeightPx = 200f;
+        const float PanelHeightPx = 230f;
         const float PanelRowPx = 30f;
         static readonly Color ChipColor = new Color32(0x1A, 0x1D, 0x24, 0xFF);
         static readonly Color ActiveChipColor = new Color32(0x3A, 0x40, 0x50, 0xFF);
@@ -111,7 +111,8 @@ namespace LowercaseUppercase.Levels
             Text(hud, "Title", "Level editor", 32f, 38f, 14f, mono, Muted, order + 1);
             editor.readout = Text(hud, "Editor Readout", "", 168f, 37f, 12f, mono, Muted, order + 1);
             editor.sentence = Text(hud, "Sentence", "", 860f, 40f, 22f, mono, Paper, order + 1);
-            editor.levelName = Text(hud, "Level Name", "", 1080f, 38f, 14f, mono, Muted, order + 1);
+            editor.settingsButton = Text(hud, "Settings Button", "settings", 1080f, 38f, 14f, mono, Interactive, order + 1);
+            editor.warningsText = Text(hud, "Warnings", "", 32f, 90f, 12f, mono, Danger, order + 1);
             editor.playButton = Text(hud, "Play Button", "play", 1196f, 38f, 16f, monoBold, Player, order + 1);
             Text(hud, "Controls", EditorControls, 900f, 690f, 12f, mono, Muted, order + 1);
 
