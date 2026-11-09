@@ -70,6 +70,7 @@ namespace LowercaseUppercase
         float moveInput;
         bool jumpHeld;
         bool shiftHeld;
+        bool caseSwapped; // Set by touching a case swapper: Shift works the other way round, like Caps Lock.
         float jumpBufferTimer;
         float coyoteTimer;
         bool risingFromJump;
@@ -98,6 +99,9 @@ namespace LowercaseUppercase
             jumpHeld = jump;
             shiftHeld = shift;
         }
+
+        /// <summary>Turns Shift around until the next swap or the next life, as if Caps Lock had been pressed.</summary>
+        public void SwapCase() => caseSwapped = !caseSwapped;
 
         public void PressJump() => jumpBufferTimer = Current.jumpBuffer;
 
@@ -169,7 +173,7 @@ namespace LowercaseUppercase
             Vector2 velocity = rb.linearVelocity;
             float dt = Time.fixedDeltaTime;
 
-            IsCapsLocked = pendingCapsZone != null && pendingCapsZone.IsActive;
+            IsCapsLocked = (pendingCapsZone != null && pendingCapsZone.IsActive) != caseSwapped;
             pendingCapsZone = null;
             WordBlock lift = pendingLift;
             pendingLift = null;
@@ -248,17 +252,17 @@ namespace LowercaseUppercase
         {
             if (IsSlotted) return;
 
-            if (enemy.stompable && Form == LetterForm.Uppercase && CameFromAbove(enemy))
+            switch (enemy.Touch(this, CameFromAbove(enemy)))
             {
-                Sfx.Play(Sound.EnemyStomp);
-                enemy.Kill();
-                BounceOffEnemy();
-                Smashed?.Invoke();
-            }
-            else
-            {
-                if (!IsFallingOff) Sfx.Play(Sound.DeathEnemy);
-                Burn();
+                case EnemyTouch.Stomped:
+                    Sfx.Play(Sound.EnemyStomp);
+                    BounceOffEnemy();
+                    Smashed?.Invoke();
+                    break;
+                case EnemyTouch.Hurts:
+                    if (!IsFallingOff) Sfx.Play(Sound.DeathEnemy);
+                    Burn();
+                    break;
             }
         }
 

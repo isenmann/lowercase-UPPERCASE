@@ -215,6 +215,76 @@ namespace LowercaseUppercase.Tests
             yield return WaitUntil(() => Vector2.Distance(bar.dots[bar.dots.Length - 1].transform.position, tip) > 1f);
         }
 
+        IEnumerator GrowInPlace()
+        {
+            letter.SetInput(0f, false, true);
+            yield return WaitUntil(() => letter.Form == LetterForm.Uppercase);
+        }
+
+        [UnityTest]
+        public IEnumerator StompingACurlTurnsItIntoAStillO()
+        {
+            yield return Load();
+            EnemyCurl curl = UnityEngine.Object.FindAnyObjectByType<EnemyCurl>();
+            curl.walkSpeed = 0f;
+            yield return GrowInPlace();
+
+            PlaceLetterAt((Vector2)curl.transform.position + Vector2.up * 1.2f);
+            yield return WaitUntil(() => curl.IsCurled);
+            Assert.AreEqual("o", curl.GetComponent<Enemy>().glyph.text);
+            Assert.IsTrue(letter != null, "The stomp shouldn't hurt the letter.");
+        }
+
+        [UnityTest]
+        public IEnumerator WalkingIntoAStillOKicksIt()
+        {
+            yield return Load();
+            EnemyCurl curl = UnityEngine.Object.FindAnyObjectByType<EnemyCurl>();
+            curl.walkSpeed = 0f;
+            yield return GrowInPlace();
+            PlaceLetterAt((Vector2)curl.transform.position + Vector2.up * 1.2f);
+            yield return WaitUntil(() => curl.IsCurled);
+
+            // Off to the side at once, before the bounce comes down on the o and kicks it.
+            PlaceLetterAt((Vector2)curl.transform.position + Vector2.left * 2f);
+            letter.SetInput(0f, false, false);
+            yield return WaitUntil(() => letter.Form == LetterForm.Lowercase && letter.IsGrounded);
+            Assert.IsFalse(curl.IsRolling, "The o should lie still until it is kicked.");
+
+            letter.SetInput(1f, false, false);
+            yield return WaitUntil(() => curl.IsRolling);
+            Assert.IsTrue(letter != null, "Kicking a still o shouldn't hurt the letter.");
+        }
+
+        [UnityTest]
+        public IEnumerator TouchingACaseSwapperTurnsShiftAround()
+        {
+            yield return Load();
+            EnemyCaseSwap swapper = UnityEngine.Object.FindAnyObjectByType<EnemyCaseSwap>();
+            swapper.GetComponent<EnemyWalk>().speed = 0f;
+            PlaceLetterAt((Vector2)swapper.transform.position + Vector2.left * 1.5f);
+            yield return WaitUntil(() => letter.IsGrounded);
+
+            letter.SetInput(1f, false, false);
+            yield return WaitUntil(() => letter.IsCapsLocked);
+            letter.SetInput(0f, false, false);
+            yield return WaitUntil(() => letter.Form == LetterForm.Uppercase);
+            Assert.IsTrue(letter != null, "A case swapper shouldn't hurt.");
+        }
+
+        [UnityTest]
+        public IEnumerator TheEyeWakesAndDriftsTowardTheLetter()
+        {
+            yield return Load();
+            EnemyFollow eye = UnityEngine.Object.FindAnyObjectByType<EnemyFollow>();
+            float startDistance = 6f;
+            PlaceLetterAt(new Vector2(eye.transform.position.x - startDistance, letter.transform.position.y));
+            yield return WaitUntil(() => eye.IsAwake);
+            Vector2 woke = eye.transform.position;
+            yield return WaitUntil(() => Vector2.Distance(eye.transform.position, woke) > 1f);
+            Assert.That(eye.transform.position.x, Is.LessThan(woke.x), "It should drift toward the letter.");
+        }
+
         [UnityTest]
         public IEnumerator ShootingAnArrowPaysNothing()
         {

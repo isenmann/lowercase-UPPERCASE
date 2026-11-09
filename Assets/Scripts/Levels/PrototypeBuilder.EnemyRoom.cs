@@ -45,6 +45,10 @@ namespace LowercaseUppercase.Levels
             x = DripPen(level, x);
             PowerBlock(level, x - 120f, LowPlatform);
             x = FirePen(level, x);
+            x = CurlPen(level, x);
+            x = CaseSwapPen(level, x);
+            PowerBlock(level, x - 120f, LowPlatform);
+            x = EyePen(level, x);
             x = Exit(level, x, "the end of the room", "the", "nd");
 
             FinishScene(EnemyRoomScene, level, "Enemy room", lower, upper, new Vector2(110f, Ground),
@@ -139,6 +143,43 @@ namespace LowercaseUppercase.Levels
             x = RightEdge(ground) + WordGap;
             BuildFireBar(level, left + 380f, Ground - 160f);
             PlaceCheckpoint(level, x - 60f, Ground);
+            return x;
+        }
+
+        /// <summary>A curl and a walker on one word, with brick at its end for a rolling o to smash.</summary>
+        static float CurlPen(Transform level, float x)
+        {
+            float left = x;
+            WordBlock ground = Word(level, "curls roll when you kick them", x, Ground, 72f);
+            x = RightEdge(ground);
+            Note(level, left + 40f, 300f, "@ stomp it as A, then kick the o into the &");
+            BuildCurl(level, ground, left + 260f);
+            BuildEnemy(level, ground, left + 760f);
+            Cracked(level, "b\nr\ni\nc\nk", x - 60f, Ground);
+            Floor(level, "and on", ref x);
+            PlaceCheckpoint(level, x - 60f, Ground);
+            return x;
+        }
+
+        /// <summary>A case swapper walking a word. After a touch the HUD shows CAPS LOCK until the next one.</summary>
+        static float CaseSwapPen(Transform level, float x)
+        {
+            float left = x;
+            WordBlock ground = Word(level, "swappers turn your shift around", x, Ground, 72f);
+            x = RightEdge(ground) + WordGap;
+            Note(level, left + 40f, 300f, "\u2195 touch it and Shift works the other way");
+            BuildCaseSwapper(level, ground, left + 400f);
+            PlaceCheckpoint(level, x - 60f, Ground);
+            return x;
+        }
+
+        /// <summary>An eye waiting above a long word. It follows the letter once it is near, so it comes last.</summary>
+        static float EyePen(Transform level, float x)
+        {
+            float left = x;
+            Floor(level, "an eye is watching you so keep moving", ref x);
+            Note(level, left + 40f, 300f, "\u00f6 it follows you through words: shoot it");
+            BuildEye(level, left + 700f, 260f);
             return x;
         }
 #endif

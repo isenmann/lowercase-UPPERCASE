@@ -25,6 +25,8 @@ namespace LowercaseUppercase
         public BoxCollider2D Box { get; private set; }
 
         Vector2 spawnPosition;
+        IEnemyTouchRule touchRule;
+        bool lookedForTouchRule;
 
         void Awake()
         {
@@ -60,6 +62,28 @@ namespace LowercaseUppercase
             Vector2 max = (Vector2)glyph.transform.localPosition + (Vector2)ink.topRight;
             Box.size = max - min;
             Box.offset = (min + max) * 0.5f;
+        }
+
+        /// <summary>
+        /// Decides what the letter touching it leads to. By default an UPPERCASE letter landing on a stompable enemy
+        /// kills it, and any other touch hurts. A movement component can take this over with <see cref="IEnemyTouchRule"/>.
+        /// </summary>
+        public EnemyTouch Touch(LetterController letter, bool fromAbove)
+        {
+            // Looked up on first touch, because a random level adds the movement component after this one wakes.
+            if (!lookedForTouchRule)
+            {
+                touchRule = GetComponent<IEnemyTouchRule>();
+                lookedForTouchRule = true;
+            }
+            if (touchRule != null) return touchRule.Touch(letter, fromAbove);
+
+            if (stompable && fromAbove && letter.Form == LetterForm.Uppercase)
+            {
+                Kill();
+                return EnemyTouch.Stomped;
+            }
+            return EnemyTouch.Hurts;
         }
 
         public void Kill()

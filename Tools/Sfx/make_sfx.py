@@ -769,6 +769,29 @@ def _(st):
     return tone(st, glide(2600, 1200, 0.1), 0.16, dec=0.05)
 
 
+@event("Shooting and enemies", "shell_kick", "Kick a curled enemy", "The letter kicks a curled-up o and it rolls away.", "EnemyCurl.Kick", 0.5)
+def _(st):
+    if st == "chip":
+        return Mix().add(noise(st, 0.03, 2000)).add(tone(st, glide(260, 130, 0.08), 0.08, dec=0.05, duty=0.5), 0.01).render()
+    if st == "ink":
+        return Mix().add(tone(st, glide(240, 120, 0.09), 0.09, dec=0.04)).add(noise(st, 0.04, 1800, dec=0.015), 0, 0.6).render()
+    if st == "type":  # a heavy key hit hard: deep thunk and clack
+        m = Mix().add(osc("sine", glide(110, 55, 0.08), 0.08) * env(0.08, 0.001, 0.025), 0, 1.0)
+        return m.add(key(0.75, 1.0)).render()
+    return Mix().add(tone(st, 392, 0.14, dec=0.04)).add(noise(st, 0.05, 2500, dec=0.015), 0, 0.5).render()
+
+
+@event("Shooting and enemies", "case_swap", "Case swapped", "A case swapper turns Shift around, like Caps Lock.", "EnemyCaseSwap.Touch", 0.45)
+def _(st):
+    if st == "chip":
+        return seq(st, [72, 79, 72, 79], 0.04, 0.05).render()
+    if st == "ink":
+        return seq(st, [67, 74, 67, 74], 0.045, 0.07, dec=0.04).render()
+    if st == "type":  # the Caps Lock key: a firm clack with a click on release
+        return Mix().add(key(0.95, 1.0)).add(key(1.3, 0.5), 0.07).render()
+    return seq(st, [84, 91, 84, 91], 0.045, 0.12, dec=0.04).render()
+
+
 STYLES = [
     dict(id="chip", name="Chip", blurb="Square waves and stepped noise, stair-stepped at 60 fps like an 8-bit console."),
     dict(id="ink", name="Ink", blurb="Soft sine and triangle tones, smooth glides, rounded edges. Calm and modern."),

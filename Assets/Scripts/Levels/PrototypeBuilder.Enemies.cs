@@ -186,6 +186,30 @@ namespace LowercaseUppercase.Levels
             return fire;
         }
 
+        // ---------------------------------------------------------------- eye, curl and case swapper
+
+        /// <summary>An eye that drifts toward the letter through words once the letter comes near. Shoot it; it can't be stomped.</summary>
+        static EnemyFollow BuildEye(Transform parent, float leftPx, float bottomPx)
+        {
+            Enemy enemy = BuildEnemyAt(parent, new Vector3(X(leftPx), Y(bottomPx), 0f), "\u00f6", 64f,
+                stompable: false, shootable: true);
+            return enemy.gameObject.AddComponent<EnemyFollow>();
+        }
+
+        /// <summary>An @ that walks, curls into an o under a stomp, and rolls when kicked.</summary>
+        static EnemyCurl BuildCurl(Transform parent, WordBlock ground, float leftPx)
+        {
+            Enemy enemy = BuildEnemyBody(parent, ground, leftPx, "@", 56f, stompable: true, shootable: true);
+            return enemy.gameObject.AddComponent<EnemyCurl>();
+        }
+
+        /// <summary>A walking up-down arrow that turns Shift around when touched, like Caps Lock.</summary>
+        static EnemyCaseSwap BuildCaseSwapper(Transform parent, WordBlock ground, float leftPx)
+        {
+            Enemy enemy = BuildWalker(parent, ground, leftPx, "\u2195", 64f, stompable: true, shootable: true);
+            return enemy.gameObject.AddComponent<EnemyCaseSwap>();
+        }
+
         static float LeftEdge(WordBlock block)
         {
             var box = block.GetComponent<BoxCollider2D>();
