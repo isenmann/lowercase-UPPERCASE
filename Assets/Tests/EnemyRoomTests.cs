@@ -139,6 +139,82 @@ namespace LowercaseUppercase.Tests
             yield return WaitUntil(() => standing == null);
         }
 
+        static T Leftmost<T>() where T : Component =>
+            All<T>().OrderBy(c => c.transform.position.x).First();
+
+        void PlaceLetterAt(Vector2 feet)
+        {
+            letter.Respawn(feet);
+            letter.transform.position = feet;
+        }
+
+        [UnityTest]
+        public IEnumerator ARiserComesUpAndGoesBackDown()
+        {
+            yield return Load();
+            Enemy riser = Leftmost<EnemyRise>().GetComponent<Enemy>();
+            Assert.IsFalse(riser.Box.enabled, "It should start hidden.");
+            yield return WaitUntil(() => riser.Box.enabled);
+            yield return WaitUntil(() => !riser.Box.enabled);
+        }
+
+        [UnityTest]
+        public IEnumerator ARiserStaysDownWhileTheLetterStandsBesideItsHole()
+        {
+            yield return Load();
+            EnemyRise riser = Leftmost<EnemyRise>();
+            float holeX = riser.transform.position.x;
+            WordBlock beside = UnityEngine.Object.FindObjectsByType<WordBlock>()
+                .Where(w => w.transform.parent != null && w.transform.parent.name.StartsWith("Kerning"))
+                .OrderBy(w => Mathf.Abs(w.GetComponent<BoxCollider2D>().bounds.center.x - holeX))
+                .First();
+            Bounds top = beside.GetComponent<BoxCollider2D>().bounds;
+            PlaceLetterAt(new Vector2(top.center.x, top.max.y + 0.01f));
+
+            float start = Time.time;
+            yield return WaitUntil(() => Time.time - start > riser.downSeconds + riser.startDelay + 1f);
+            Assert.IsFalse(riser.GetComponent<Enemy>().Box.enabled, "It shouldn't rise next to the letter.");
+        }
+
+        [UnityTest]
+        public IEnumerator ADripFallsWhenTheLetterPassesUnderAndGrowsBack()
+        {
+            yield return Load();
+            EnemyDrip drip = Leftmost<EnemyDrip>();
+            Enemy body = drip.GetComponent<Enemy>();
+            float hangY = drip.transform.position.y;
+            // Beside it rather than under it, so the drip lands on the floor instead of the letter.
+            PlaceLetterAt(new Vector2(drip.transform.position.x + drip.triggerHalfWidth * 0.8f, letter.transform.position.y));
+
+            yield return WaitUntil(() => drip.transform.position.y < hangY - 0.5f);
+            yield return WaitUntil(() => !body.Box.enabled);
+            Assert.IsTrue(letter != null, "A drip that misses should splash on the floor.");
+            yield return WaitUntil(() => body.Box.enabled);
+            Assert.AreEqual(hangY, drip.transform.position.y, 0.01f, "It should grow back on its ceiling.");
+        }
+
+        [UnityTest]
+        public IEnumerator SparksLeapAndCannotBeShot()
+        {
+            yield return Load();
+            EnemySpark spark = Leftmost<EnemySpark>();
+            Enemy body = spark.GetComponent<Enemy>();
+            Assert.IsFalse(body.stompable || body.shootable, "Fire can't be stomped or shot.");
+            float restY = spark.transform.position.y;
+            yield return WaitUntil(() => spark.IsLeaping && spark.transform.position.y > restY + 1f);
+            yield return WaitUntil(() => !spark.IsLeaping);
+            Assert.IsFalse(body.Box.enabled, "It should hide in its hot word between leaps.");
+        }
+
+        [UnityTest]
+        public IEnumerator TheFireBarTurns()
+        {
+            yield return Load();
+            EnemyFireBar bar = UnityEngine.Object.FindAnyObjectByType<EnemyFireBar>();
+            Vector2 tip = bar.dots[bar.dots.Length - 1].transform.position;
+            yield return WaitUntil(() => Vector2.Distance(bar.dots[bar.dots.Length - 1].transform.position, tip) > 1f);
+        }
+
         [UnityTest]
         public IEnumerator ShootingAnArrowPaysNothing()
         {

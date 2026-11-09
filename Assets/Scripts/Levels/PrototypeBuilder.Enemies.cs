@@ -111,6 +111,88 @@ namespace LowercaseUppercase.Levels
             return launcher;
         }
 
+        // ---------------------------------------------------------------- riser and drip
+
+        /// <summary>
+        /// Loose letters like <see cref="Kerned"/>, with a riser hidden in each of the given holes
+        /// (0 is the hole after the first letter). Neighbouring risers come up out of step. Returns the right edge.
+        /// </summary>
+        static float KernedWithRisers(Transform level, string letters, float leftPx, float surfacePx, params int[] holes)
+        {
+            var group = new GameObject($"Kerning {letters}").transform;
+            group.SetParent(level, false);
+            var blocks = new WordBlock[letters.Length];
+            for (int i = 0; i < letters.Length; i++)
+                blocks[i] = Word(group, letters[i].ToString(), leftPx + i * KerningStepPx, surfacePx, 72f);
+
+            for (int n = 0; n < holes.Length; n++)
+            {
+                int hole = holes[n];
+                float holeCentre = (RightEdge(blocks[hole]) + LeftEdge(blocks[hole + 1])) * 0.5f;
+                Enemy enemy = BuildEnemyBody(level, blocks[hole], holeCentre, "¡", 64f, stompable: false,
+                    shootable: true);
+                enemy.gameObject.AddComponent<EnemyRise>().startDelay = 0.5f + n * 0.8f;
+            }
+            return RightEdge(blocks[letters.Length - 1]);
+        }
+
+        /// <summary>A drip hanging under a ceiling word. It finds the ceiling itself as the level starts.</summary>
+        static EnemyDrip BuildDrip(Transform parent, WordBlock ceiling, float leftPx)
+        {
+            var box = ceiling.GetComponent<BoxCollider2D>();
+            float bottomY = ceiling.transform.TransformPoint(box.offset).y - box.size.y * 0.5f;
+            Enemy enemy = BuildEnemyAt(parent, new Vector3(X(leftPx), bottomY - 0.5f, 0f), "'", 72f, stompable: false,
+                shootable: true);
+            return enemy.gameObject.AddComponent<EnemyDrip>();
+        }
+
+        // ---------------------------------------------------------------- fire
+
+        /// <summary>A spark that leaps out of a hot word. Fire can't be stomped or shot, and it is drawn in hot-word orange.</summary>
+        static EnemySpark BuildSpark(Transform parent, WordBlock hotWord, float leftPx, float startDelay = 0f)
+        {
+            Enemy enemy = BuildEnemyBody(parent, hotWord, leftPx, "°", 72f, stompable: false, shootable: false);
+            enemy.glyph.color = Hot;
+            var spark = enemy.gameObject.AddComponent<EnemySpark>();
+            spark.startDelay = startDelay;
+            return spark;
+        }
+
+        /// <summary>
+        /// A hot o with a row of dots turning around it. The o is a hot word, so it burns too.
+        /// The dots are fire: they can't be stomped or shot.
+        /// </summary>
+        static EnemyFireBar BuildFireBar(Transform level, float leftPx, float surfacePx, int dotCount = 4,
+            float degreesPerSecond = -90f)
+        {
+            WordBlock centre = Word(level, "o", leftPx, surfacePx, 72f, WordKind.Hot, Hot);
+            var box = centre.GetComponent<BoxCollider2D>();
+            Vector3 middle = centre.transform.TransformPoint(box.offset);
+
+            var bar = new GameObject("Fire Bar");
+            bar.transform.SetParent(level, false);
+            bar.transform.position = new Vector3(middle.x, middle.y, 0f);
+            var fire = bar.AddComponent<EnemyFireBar>();
+            fire.degreesPerSecond = degreesPerSecond;
+            fire.dots = new Enemy[dotCount];
+            for (int i = 0; i < dotCount; i++)
+            {
+                Enemy dot = BuildEnemyAt(bar.transform, bar.transform.position, "·", 72f, stompable: false,
+                    shootable: false);
+                dot.glyph.color = Hot;
+                dot.name = $"Fire Dot {i + 1}";
+                fire.dots[i] = dot;
+            }
+            return fire;
+        }
+
+        static float LeftEdge(WordBlock block)
+        {
+            var box = block.GetComponent<BoxCollider2D>();
+            float world = block.transform.position.x + box.offset.x - box.size.x * 0.5f;
+            return world * PixelsPerUnit + 640f;
+        }
+
         // ---------------------------------------------------------------- bodies
 
         /// <summary>An enemy standing on a word, without a movement component.</summary>

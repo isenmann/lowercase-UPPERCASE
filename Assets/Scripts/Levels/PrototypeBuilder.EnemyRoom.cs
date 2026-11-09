@@ -41,6 +41,10 @@ namespace LowercaseUppercase.Levels
             PowerBlock(level, x - 120f, LowPlatform);
             x = FlierPen(level, x);
             x = LauncherPen(level, x);
+            x = RiserPen(level, x);
+            x = DripPen(level, x);
+            PowerBlock(level, x - 120f, LowPlatform);
+            x = FirePen(level, x);
             x = Exit(level, x, "the end of the room", "the", "nd");
 
             FinishScene(EnemyRoomScene, level, "Enemy room", lower, upper, new Vector2(110f, Ground),
@@ -89,6 +93,51 @@ namespace LowercaseUppercase.Levels
             WordBlock launcher = BuildLauncher(level, x + WordGap, Ground, facesLeft: true);
             x = RightEdge(launcher) + WordGap;
             Floor(level, "past the launcher", ref x);
+            PlaceCheckpoint(level, x - 60f, Ground);
+            return x;
+        }
+
+        /// <summary>Loose letters over a pit, with risers in two of the holes.</summary>
+        static float RiserPen(Transform level, float x)
+        {
+            Note(level, x + 40f, 300f, "\u00a1 they rise from the holes, not while you stand by one");
+            float right = KernedWithRisers(level, "between", x, Ground, 1, 4);
+            x = right + WordGap;
+            Floor(level, "the holes", ref x);
+            PlaceCheckpoint(level, x - 60f, Ground);
+            return x;
+        }
+
+        /// <summary>A ceiling word with drips under it, high enough that a jumping a just touches it.</summary>
+        static float DripPen(Transform level, float x)
+        {
+            float left = x;
+            WordBlock ground = Word(level, "drips fall when you pass below", x, Ground, 72f);
+            x = RightEdge(ground) + WordGap;
+            WordBlock ceiling = Word(level, "a dripping ceiling", left + 160f, Ground - 190f, 72f);
+            Note(level, left + 40f, 230f, "' they fall when you pass under");
+            BuildDrip(level, ceiling, left + 260f);
+            BuildDrip(level, ceiling, left + 460f);
+            BuildDrip(level, ceiling, left + 620f);
+            PlaceCheckpoint(level, x - 60f, Ground);
+            return x;
+        }
+
+        /// <summary>Sparks leaping out of a hot word, then a fire bar sweeping the ground.</summary>
+        static float FirePen(Transform level, float x)
+        {
+            float left = x;
+            Floor(level, "fire", ref x);
+            WordBlock hot = HotWord(level, "hot hot", x);
+            Note(level, left + 40f, 260f, "\u00b0 sparks leap out of hot words");
+            BuildSpark(level, hot, x + 70f);
+            BuildSpark(level, hot, x + 230f, startDelay: 0.7f);
+            x = RightEdge(hot) + WordGap;
+
+            left = x;
+            WordBlock ground = Word(level, "and a turning bar of fire", x, Ground, 72f);
+            x = RightEdge(ground) + WordGap;
+            BuildFireBar(level, left + 380f, Ground - 160f);
             PlaceCheckpoint(level, x - 60f, Ground);
             return x;
         }

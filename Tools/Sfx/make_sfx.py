@@ -745,6 +745,30 @@ def _(st):
     return Mix().add(tone(st, glide(1500, 2600, 0.08), 0.12, dec=0.04)).render()
 
 
+@event("Shooting and enemies", "riser_up", "Riser rises", "A riser comes up out of a hole between loose letters.", "EnemyRise", 0.35)
+def _(st):
+    if st == "chip":
+        return tone(st, glide(180, 520, 0.12, 0.7), 0.13, dec=0.08, duty=0.5)
+    if st == "ink":
+        return tone(st, glide(200, 480, 0.14, 0.7), 0.15, dec=0.07)
+    if st == "type":  # a key pushed up from below: low knock rising into a click
+        m = Mix().add(osc("sine", glide(90, 220, 0.1), 0.1) * env(0.1, 0.004, 0.04), 0, 0.9)
+        return m.add(key(1.05, 0.6), 0.07).render()
+    return tone(st, glide(700, 1400, 0.14), 0.18, dec=0.06)
+
+
+@event("Shooting and enemies", "drip_fall", "Drip falls", "A drip lets go of its ceiling.", "EnemyDrip", 0.35)
+def _(st):
+    if st == "chip":
+        return tone(st, glide(1800, 500, 0.12, 0.5), 0.12, dec=0.08, duty=0.25)
+    if st == "ink":
+        return tone(st, glide(1500, 600, 0.1, 0.5), 0.12, dec=0.05)
+    if st == "type":  # an ink drop: a quick falling plink
+        ph = osc("sine", glide(1600, 700, 0.09, 0.4), 0.09)
+        return Mix().add(ph * env(0.09, 0.001, 0.03), 0, 0.8).add(key(1.4, 0.3)).render()
+    return tone(st, glide(2600, 1200, 0.1), 0.16, dec=0.05)
+
+
 STYLES = [
     dict(id="chip", name="Chip", blurb="Square waves and stepped noise, stair-stepped at 60 fps like an 8-bit console."),
     dict(id="ink", name="Ink", blurb="Soft sine and triangle tones, smooth glides, rounded edges. Calm and modern."),
