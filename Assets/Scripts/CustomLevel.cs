@@ -41,6 +41,27 @@ namespace LowercaseUppercase
             flow.letter.transform.position = layout.StartFeet;
             feedback.maxX = layout.CameraMaxX;
             title.text = Data.name;
+
+            if (CustomRun.Testing)
+            {
+                if (CustomRun.TestStartPx is Vector2 start)
+                    flow.letter.transform.position = new Vector3(LevelEditor.WorldX(start.x), LevelEditor.WorldY(start.y), 0f);
+                flow.leaveScene = CustomRun.EditorScene;
+                var transition = flow.GetComponent<LevelTransition>();
+                if (transition != null) transition.nextScene = CustomRun.EditorScene;
+                title.text = $"testing  {Data.name}  ·  Esc back to the editor";
+            }
         }
+
+        void OnEnable() => flow.letter.Slotted += OnSlotted;
+        void OnDisable() => flow.letter.Slotted -= OnSlotted;
+
+        void OnSlotted()
+        {
+            if (CustomRun.Testing) CustomRun.TestFinished = true;
+        }
+
+        /// <summary>Leaves a test play for the editor, as Esc does.</summary>
+        public static void BackToEditor() => UnityEngine.SceneManagement.SceneManager.LoadScene(CustomRun.EditorScene);
     }
 }

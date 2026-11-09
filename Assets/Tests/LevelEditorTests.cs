@@ -20,6 +20,24 @@ namespace LowercaseUppercase.Tests
             editor = Object.FindAnyObjectByType<LevelEditor>();
         }
 
+        [TearDown]
+        public void ForgetTheTest()
+        {
+            CustomRun.EndTest();
+            CustomRun.Level = null;
+        }
+
+        static IEnumerator WaitFor<T>() where T : Object
+        {
+            float start = Time.realtimeSinceStartup;
+            while (Object.FindAnyObjectByType<T>() == null)
+            {
+                if (Time.realtimeSinceStartup - start > 10f) Assert.Fail($"Timed out waiting for a {typeof(T).Name}.");
+                yield return null;
+            }
+            yield return null;
+        }
+
         void TypeWord(string word)
         {
             foreach (char c in word) editor.Type(c);
@@ -255,6 +273,38 @@ namespace LowercaseUppercase.Tests
             Assert.That(lift.x, Is.EqualTo(1680f));
             Assert.That(lift.y, Is.EqualTo(480f));
             Assert.That(lift.y - lift.y2, Is.EqualTo(height));
+        }
+
+        [UnityTest]
+        public IEnumerator ATestPlayComesBackToTheSameLevel()
+        {
+            CustomPiece walker = editor.Place(Tool("walker"), new Vector2(300f, 480f));
+            CustomLevelData level = editor.Level;
+            editor.view.transform.position = new Vector3(3f, 0f, -10f);
+
+            editor.Play();
+            yield return WaitFor<CustomLevel>();
+            var custom = Object.FindAnyObjectByType<CustomLevel>();
+            Assert.That(custom.Data, Is.SameAs(level));
+            Assert.That(custom.flow.leaveScene, Is.EqualTo(CustomRun.EditorScene));
+            Assert.That(custom.flow.GetComponent<LevelTransition>().nextScene, Is.EqualTo(CustomRun.EditorScene));
+
+            CustomLevel.BackToEditor();
+            yield return WaitFor<LevelEditor>();
+            editor = Object.FindAnyObjectByType<LevelEditor>();
+            Assert.That(editor.Level, Is.SameAs(level));
+            Assert.That(editor.Selected, Is.SameAs(walker));
+            Assert.That(editor.view.transform.position.x, Is.EqualTo(3f).Within(0.001f));
+            Assert.That(CustomRun.Testing, Is.False);
+        }
+
+        [UnityTest]
+        public IEnumerator PlayHereStartsTheLetterThere()
+        {
+            editor.Play(new Vector2(400f, 400f));
+            yield return WaitFor<CustomLevel>();
+            var letter = Object.FindAnyObjectByType<LetterController>();
+            Assert.That(letter.transform.position.x, Is.EqualTo(LevelEditor.WorldX(400f)).Within(0.05f));
         }
     }
 }

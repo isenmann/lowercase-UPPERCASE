@@ -4,6 +4,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
+using UnityEngine.SceneManagement;
 
 namespace LowercaseUppercase
 {
@@ -38,6 +39,7 @@ namespace LowercaseUppercase
         static readonly Color DoorLinkColor = new Color(0.36f, 0.83f, 0.96f, 0.5f);
         static readonly Color KeyLinkColor = new Color(1f, 0.54f, 0.24f, 0.5f);
         static readonly Color HandleLineColor = new Color(1f, 0.82f, 0.25f, 0.6f);
+        const float NoticeSeconds = 4f;
 
         public Camera view;
         public Transform grid;
@@ -52,6 +54,7 @@ namespace LowercaseUppercase
         public SpriteRenderer handleMark;
 
         [Header("HUD")]
+        public TMP_Text playButton;
         public TMP_Text readout;
         public TMP_Text sentence;
         public TMP_Text levelName;
@@ -90,6 +93,9 @@ namespace LowercaseUppercase
         CustomPiece lastClicked;
         float lastClickTime = -1f;
 
+        string notice;
+        float noticeUntil;
+
         bool draggingHandle;
         readonly List<SpriteRenderer> lines = new List<SpriteRenderer>();
         int linesUsed;
@@ -105,7 +111,45 @@ namespace LowercaseUppercase
 
         void Awake()
         {
-            Open(NewLevel());
+            // A level transition or a pause can leave the clock stopped on the way here.
+            Time.timeScale = 1f;
+            Open(CustomRun.Testing && CustomRun.Level != null ? CustomRun.Level : NewLevel());
+        }
+
+        /// <summary>Back from a test play: the camera, the selection and the tool as they were.</summary>
+        void Start()
+        {
+            if (!CustomRun.Testing) return;
+            Vector3 camera = view.transform.position;
+            view.transform.position = new Vector3(CustomRun.EditorCameraX, camera.y, camera.z);
+            if (CustomRun.EditorTool != null) palette.Select(CustomRun.EditorTool);
+            palette.ShowPage(CustomRun.EditorPalettePage);
+            if (CustomRun.EditorSelected != null && Level.pieces.Contains(CustomRun.EditorSelected))
+                Select(CustomRun.EditorSelected);
+            ShowNotice(CustomRun.TestFinished ? "test play: reached the exit" : "test play: stopped before the exit");
+            CustomRun.EndTest();
+        }
+
+        void ShowNotice(string text)
+        {
+            notice = text;
+            noticeUntil = Time.unscaledTime + NoticeSeconds;
+        }
+
+        // ---------------------------------------------------------------- test play
+
+        /// <summary>
+        /// Tries the level out in the custom level scene, from its start or from a page position. Esc there, or
+        /// reaching the exit, comes back here as things were.
+        /// </summary>
+        public void Play(Vector2? startPx = null)
+        {
+            if (Typing != null) Commit();
+            dragging = draggingHandle = false;
+            LevelRun.NewGame();
+            CustomRun.BeginTest(Level, startPx, view.transform.position.x, Selected, palette.Page, palette.Current);
+            LevelTransition.SkipNextIntro = true;
+            SceneManager.LoadScene(CustomRun.Scene);
         }
 
         void OnDisable() => Listen(null);
@@ -287,6 +331,17 @@ namespace LowercaseUppercase
 
         void PressHud(Vector2 world)
         {
+            if (playButton != null)
+            {
+                Bounds bounds = playButton.GetComponent<Renderer>().bounds;
+                bounds.Expand(HitPaddingPx * 2f / PixelsPerUnit);
+                if (bounds.Contains(new Vector3(world.x, world.y, bounds.center.z)))
+                {
+                    Play();
+                    return;
+                }
+            }
+
             if (panel != null && panel.Contains(world))
             {
                 PressPanel(world);
@@ -627,6 +682,17 @@ namespace LowercaseUppercase
         void ShortcutKeys(Keyboard keyboard)
         {
             if (keyboard == null) return;
+            if (keyboard.pKey.wasPressedThisFrame)
+            {
+                Play();
+                return;
+            }
+            if (keyboard.hKey.wasPressedThisFrame)
+            {
+                Vector2 world = MouseWorld(Mouse.current);
+                Play(new Vector2(Snap(PxX(world.x)), Snap(PxY(world.y))));
+                return;
+            }
             if (keyboard.gKey.wasPressedThisFrame) grid.gameObject.SetActive(!GridShown);
             if (keyboard.digit1Key.wasPressedThisFrame) palette.ShowPage(0);
             if (keyboard.digit2Key.wasPressedThisFrame) palette.ShowPage(1);
@@ -829,7 +895,8 @@ namespace LowercaseUppercase
             string where = $"x {snapped.x:0}  y {snapped.y:0}";
             string what;
             PaletteItem hovered = overHud ? palette.ItemAt(world) : null;
-            if (Typing != null) what = "typing  ·  Enter places  ·  Esc cancels";
+            if (Time.unscaledTime < noticeUntil) what = notice;
+            else if (Typing != null) what = "typing  ·  Enter places  ·  Esc cancels";
             else if (hovered != null) what = hovered.Name;
             else if (Selected != null && PieceHandles.For(Selected) != null)
                 what = $"{EditorPalette.NameOf(Selected)}  ·  drag to move  ·  the square stretches  ·  Del removes";

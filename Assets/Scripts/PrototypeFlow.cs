@@ -28,6 +28,8 @@ namespace LowercaseUppercase
         public bool endlessLives;
         [Tooltip("The level's clock, in seconds.")]
         public float levelSeconds = LevelRun.LevelSeconds;
+        [Tooltip("When set, Esc goes straight to this scene instead of opening the pause popup: a test play from the level editor goes back to it.")]
+        public string leaveScene = "";
         public Checkpoint[] checkpoints;
 
         [Header("Sentence")]
@@ -131,6 +133,11 @@ namespace LowercaseUppercase
                 || (Gamepad.current != null && Gamepad.current.startButton.wasPressedThisFrame);
             if (pausePressed)
             {
+                if (!string.IsNullOrEmpty(leaveScene))
+                {
+                    SceneManager.LoadScene(leaveScene);
+                    return;
+                }
                 if (pauseMenu == null) LoadScene(MenuBuildIndex);
                 else if (CanPause(inTransition))
                 {

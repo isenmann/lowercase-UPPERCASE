@@ -44,6 +44,7 @@ namespace LowercaseUppercase
             { "Editor Readout", new Vector2Int(-1, 1) },
             { "Palette", new Vector2Int(-1, -1) },
             { "Panel", new Vector2Int(1, 1) },
+            { "Play Button", new Vector2Int(1, 1) },
         };
 
         /// <summary>How far the view reaches past the 16:9 frame on each side, in world units.</summary>

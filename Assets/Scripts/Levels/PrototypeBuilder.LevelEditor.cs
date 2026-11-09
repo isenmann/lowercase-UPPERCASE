@@ -14,7 +14,7 @@ namespace LowercaseUppercase.Levels
     {
         const string LevelEditorScene = SceneFolder + "/LevelEditor.unity";
         const float EditorGridPx = 40f;
-        const string EditorControls = "1 2 3  pages  ·  ← → wheel  scroll  ·  G  grid";
+        const string EditorControls = "P  play  ·  H  play here  ·  G  grid  ·  1 2 3  pages";
         const float ChipPx = 40f;
         const float ChipStepPx = 44f;
         const float FirstChipPx = 290f;
@@ -111,8 +111,9 @@ namespace LowercaseUppercase.Levels
             Text(hud, "Title", "Level editor", 32f, 38f, 14f, mono, Muted, order + 1);
             editor.readout = Text(hud, "Editor Readout", "", 168f, 37f, 12f, mono, Muted, order + 1);
             editor.sentence = Text(hud, "Sentence", "", 860f, 40f, 22f, mono, Paper, order + 1);
-            editor.levelName = Text(hud, "Level Name", "", 1120f, 38f, 14f, mono, Muted, order + 1);
-            Text(hud, "Controls", EditorControls, 940f, 690f, 12f, mono, Muted, order + 1);
+            editor.levelName = Text(hud, "Level Name", "", 1080f, 38f, 14f, mono, Muted, order + 1);
+            editor.playButton = Text(hud, "Play Button", "play", 1196f, 38f, 16f, monoBold, Player, order + 1);
+            Text(hud, "Controls", EditorControls, 900f, 690f, 12f, mono, Muted, order + 1);
 
             editor.palette = BuildEditorPalette(hud, order);
             editor.panel = BuildEditorPanel(hud, order);
