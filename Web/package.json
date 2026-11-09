@@ -1,0 +1,13 @@
+{
+  "name": "lowercase-uppercase-web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test \"test/*.test.js\"",
+    "fonts": "node scripts/fonts.js",
+    "predev": "node scripts/fonts.js",
+    "dev": "npx wrangler@4 d1 execute lowercase-uppercase-levels --local --file=schema.sql && npx wrangler@4 dev",
+    "predeploy": "node scripts/fonts.js",
+    "deploy": "npx wrangler@4 deploy"
+  }
+}

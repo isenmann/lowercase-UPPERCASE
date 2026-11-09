@@ -80,3 +80,8 @@ crashlytics-build.properties
 # OS files
 .DS_Store
 Thumbs.db
+
+# The shared levels page: Wrangler state, and the fonts copied from Assets/Fonts by Web/scripts/fonts.js
+/Web/.wrangler/
+/Web/node_modules/
+/Web/public/fonts/
