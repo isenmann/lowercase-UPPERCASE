@@ -44,7 +44,7 @@ namespace LowercaseUppercase
         [Tooltip("Switches between borderless fullscreen and a window.")]
         public UnityEngine.UI.Button fullscreenButton;
         public TMP_Text fullscreenLabel;
-        [Tooltip("Steps through the monitor's resolutions.")]
+        [Tooltip("Opens the list of the monitor's resolutions.")]
         public UnityEngine.UI.Button resolutionButton;
         public TMP_Text resolutionLabel;
         [Tooltip("Switches between the Chip and Type sound sets.")]
@@ -57,6 +57,21 @@ namespace LowercaseUppercase
         public string resetConfirmText = "Really reset?";
         public string resetDoneText = "Progress reset";
         public UnityEngine.UI.Button optionsBack;
+
+        [Header("Resolutions")]
+        [Tooltip("Covers the whole menu while open. Lists every resolution; clicking one applies it and goes back to Options.")]
+        public GameObject resolutionPanel;
+        [Tooltip("Inactive button inside the list's grid, copied once per resolution when the list opens.")]
+        public UnityEngine.UI.Button resolutionOption;
+        [Tooltip("Scrolls the grid when there are more resolutions than fit on the screen.")]
+        public UnityEngine.UI.ScrollRect resolutionScroll;
+        public UnityEngine.UI.Button resolutionBack;
+        [Tooltip("Canvas units kept clear round the list on every side.")]
+        public float resolutionMargin = 40f;
+        [Tooltip("Canvas units the heading, Back and the gaps between them take from the list's height.")]
+        public float resolutionReservedHeight = 132f;
+        [Tooltip("Most columns the list uses, however wide the screen.")]
+        public int maxResolutionColumns = 8;
 
         [Header("How to play")]
         public UnityEngine.UI.Button guideButton;
@@ -83,6 +98,7 @@ namespace LowercaseUppercase
         GameObject lastSelected;
         bool loading;
         bool resetArmed;
+        Vector2 resolutionArea;
 
         void Awake()
         {
@@ -112,7 +128,8 @@ namespace LowercaseUppercase
             else
             {
                 fullscreenButton.onClick.AddListener(() => Confirm(DisplaySettings.ToggleFullscreen));
-                if (resolutionButton != null) resolutionButton.onClick.AddListener(() => Confirm(DisplaySettings.NextResolution));
+                if (resolutionButton != null) resolutionButton.onClick.AddListener(() => Confirm(OpenResolutions));
+                if (resolutionBack != null) resolutionBack.onClick.AddListener(Back);
             }
             if (soundButton != null) soundButton.onClick.AddListener(SwitchSoundSet);
             if (resetProgressButton != null) resetProgressButton.onClick.AddListener(ResetProgress);
@@ -201,6 +218,7 @@ namespace LowercaseUppercase
             }
 
             if (openPanel == guidePanel) FollowGuideTabs(selected);
+            if (openPanel == resolutionPanel) UpdateResolutionList(selected);
 
             // Moving off the button or leaving Options takes the question back.
             if (resetProgressButton != null && selected != resetProgressButton.gameObject
@@ -219,7 +237,8 @@ namespace LowercaseUppercase
         void Back()
         {
             Sfx.Play(Sound.MenuBack);
-            ShowMain();
+            if (openPanel == resolutionPanel) Open(optionsPanel, resolutionButton);
+            else ShowMain();
         }
 
         static void Confirm(System.Action action)
@@ -241,11 +260,145 @@ namespace LowercaseUppercase
             chaptersPanel.SetActive(panel == chaptersPanel);
             optionsPanel.SetActive(panel == optionsPanel);
             if (guidePanel != null) guidePanel.SetActive(panel == guidePanel);
+            if (resolutionPanel != null) resolutionPanel.SetActive(panel == resolutionPanel);
             openPanel = panel;
             firstButton = first;
             // Opening a panel selects its first button; that isn't a move.
             lastSelected = first.gameObject;
             if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(first.gameObject);
+        }
+
+        /// <summary>
+        /// Fills the list with one button per resolution, the current one highlighted and selected, so keys and the
+        /// d-pad start from it. The list is made fresh each time, as the monitor or window size may have changed.
+        /// </summary>
+        void OpenResolutions()
+        {
+            Transform grid = resolutionOption.transform.parent;
+            foreach (Transform child in grid)
+            {
+                if (child == resolutionOption.transform) continue;
+                child.gameObject.SetActive(false); // Destroy waits for the frame's end; this keeps it out of the layout now.
+                Destroy(child.gameObject);
+            }
+
+            Vector2Int current = DisplaySettings.Current;
+            UnityEngine.UI.Button selected = null;
+            foreach (Vector2Int size in DisplaySettings.Sizes())
+            {
+                UnityEngine.UI.Button option = Instantiate(resolutionOption, grid);
+                option.name = $"Resolution {DisplaySettings.Label(size)}";
+                option.gameObject.SetActive(true);
+                TMP_Text label = option.GetComponentInChildren<TMP_Text>();
+                label.text = DisplaySettings.Label(size);
+                if (size == current)
+                {
+                    label.color = currentTabColor;
+                    selected = option;
+                }
+                Vector2Int chosen = size;
+                option.onClick.AddListener(() => ChooseResolution(chosen));
+            }
+
+            Open(resolutionPanel, selected != null ? selected : resolutionBack);
+            LayoutResolutions();
+            resolutionScroll.content.anchoredPosition = Vector2.zero;
+            ShowResolution(selected);
+        }
+
+        /// <summary>
+        /// Fits the list to the screen: as many columns as the width allows, up to maxResolutionColumns, and as tall as
+        /// the rows need, or as the screen allows, with the rest reached by scrolling. Done again if the window is resized.
+        /// </summary>
+        void LayoutResolutions()
+        {
+            var panel = (RectTransform)resolutionPanel.transform;
+            Vector2 area = panel.rect.size;
+            resolutionArea = area;
+
+            RectTransform content = resolutionScroll.content;
+            var grid = content.GetComponent<UnityEngine.UI.GridLayoutGroup>();
+            int count = 0;
+            foreach (Transform child in content)
+                if (child.gameObject.activeSelf) count++;
+
+            float cellWidth = grid.cellSize.x, cellHeight = grid.cellSize.y;
+            float gapX = grid.spacing.x, gapY = grid.spacing.y;
+            // The scrollbar sits outside the list on the right, so a second margin's worth keeps it on screen.
+            float usableWidth = area.x - 3f * resolutionMargin;
+            int columns = Mathf.FloorToInt((usableWidth + gapX) / (cellWidth + gapX));
+            columns = Mathf.Clamp(columns, 1, Mathf.Max(1, maxResolutionColumns));
+            columns = Mathf.Min(columns, Mathf.Max(1, count));
+            int rows = Mathf.Max(1, Mathf.CeilToInt(count / (float)columns));
+            grid.constraintCount = columns;
+
+            float width = columns * cellWidth + (columns - 1) * gapX;
+            float contentHeight = rows * cellHeight + (rows - 1) * gapY;
+            // At least one row shows, even on a screen too short for everything else.
+            float usableHeight = Mathf.Max(cellHeight, area.y - 2f * resolutionMargin - resolutionReservedHeight);
+            float height = Mathf.Min(contentHeight, usableHeight);
+
+            var list = (RectTransform)resolutionScroll.transform;
+            list.sizeDelta = new Vector2(width, height);
+            var element = list.GetComponent<UnityEngine.UI.LayoutElement>();
+            element.preferredWidth = width;
+            element.preferredHeight = height;
+            element.minHeight = height;
+            content.sizeDelta = new Vector2(width, contentHeight);
+
+            UnityEngine.UI.LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)list.parent);
+        }
+
+        GameObject shownResolution;
+
+        void UpdateResolutionList(GameObject selected)
+        {
+            var panel = (RectTransform)resolutionPanel.transform;
+            if (panel.rect.size != resolutionArea)
+            {
+                LayoutResolutions();
+                shownResolution = null;
+            }
+            if (selected != shownResolution && selected != null
+                && selected.transform.parent == resolutionScroll.content)
+                ShowResolution(selected.GetComponent<UnityEngine.UI.Button>());
+        }
+
+        /// <summary>
+        /// Scrolls just enough to show the given button, so keys and the d-pad never move onto a hidden one, and points
+        /// Back's up at it, so leaving Back returns to the same place in the list.
+        /// </summary>
+        void ShowResolution(UnityEngine.UI.Button option)
+        {
+            if (option == null) return;
+            shownResolution = option.gameObject;
+
+            UnityEngine.UI.Navigation backNavigation = resolutionBack.navigation;
+            backNavigation.mode = UnityEngine.UI.Navigation.Mode.Explicit;
+            backNavigation.selectOnUp = option;
+            resolutionBack.navigation = backNavigation;
+
+            RectTransform viewport = resolutionScroll.viewport;
+            RectTransform content = resolutionScroll.content;
+            Bounds bounds = RectTransformUtility.CalculateRelativeRectTransformBounds(viewport, option.transform);
+            Rect view = viewport.rect;
+            float shift = 0f;
+            if (bounds.max.y > view.yMax) shift = bounds.max.y - view.yMax;
+            else if (bounds.min.y < view.yMin) shift = bounds.min.y - view.yMin;
+            if (shift == 0f) return;
+
+            resolutionScroll.StopMovement();
+            float limit = Mathf.Max(0f, content.rect.height - view.height);
+            Vector2 position = content.anchoredPosition;
+            position.y = Mathf.Clamp(position.y - shift, 0f, limit);
+            content.anchoredPosition = position;
+        }
+
+        void ChooseResolution(Vector2Int size)
+        {
+            Sfx.Play(Sound.MenuConfirm);
+            DisplaySettings.SetResolution(size);
+            Open(optionsPanel, resolutionButton);
         }
 
         void OpenGuide()

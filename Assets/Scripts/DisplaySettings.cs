@@ -16,7 +16,7 @@ namespace LowercaseUppercase
 
         public static string ModeLabel => Fullscreen ? "Fullscreen" : "Windowed";
 
-        public static string ResolutionLabel => $"{Screen.width}×{Screen.height}";
+        public static string ResolutionLabel => Label(Current);
 
         public static void ToggleFullscreen()
         {
@@ -32,17 +32,18 @@ namespace LowercaseUppercase
             }
         }
 
-        /// <summary>Steps to the next larger resolution, wrapping round to the smallest.</summary>
-        public static void NextResolution()
+        public static Vector2Int Current => new Vector2Int(Screen.width, Screen.height);
+
+        public static string Label(Vector2Int size) => $"{size.x}×{size.y}";
+
+        /// <summary>Keeps the window mode; Unity applies the new size on the next frame.</summary>
+        public static void SetResolution(Vector2Int size)
         {
-            List<Vector2Int> sizes = Sizes();
-            int index = sizes.IndexOf(new Vector2Int(Screen.width, Screen.height));
-            Vector2Int next = sizes[(index + 1) % sizes.Count];
-            Screen.SetResolution(next.x, next.y, Screen.fullScreenMode);
+            Screen.SetResolution(size.x, size.y, Screen.fullScreenMode);
         }
 
-        /// <summary>The monitor's modes without duplicate refresh rates, smallest first.</summary>
-        static List<Vector2Int> Sizes()
+        /// <summary>The monitor's modes without duplicate refresh rates, smallest first, always including the current size.</summary>
+        public static List<Vector2Int> Sizes()
         {
             var sizes = new List<Vector2Int>();
             foreach (Resolution resolution in Screen.resolutions)
@@ -51,8 +52,7 @@ namespace LowercaseUppercase
                 if (size.x >= MinWidth && !sizes.Contains(size)) sizes.Add(size);
             }
 
-            Vector2Int current = new Vector2Int(Screen.width, Screen.height);
-            if (!sizes.Contains(current)) sizes.Add(current);
+            if (!sizes.Contains(Current)) sizes.Add(Current);
 
             sizes.Sort((a, b) => a.x != b.x ? a.x.CompareTo(b.x) : a.y.CompareTo(b.y));
             return sizes;

@@ -18,7 +18,11 @@ namespace LowercaseUppercase.Levels
         const float MenuColumnWidth = 280f;
         const int ButtonRadius = 10;
         const int KeycapRadius = 8;
-        const int SpriteScale = 2; // Sprites hold twice the canvas's pixels, so they stay sharp above 720p.
+        const float ResolutionHeadingHeight = 36f;
+        const float ResolutionBackHeight = 48f;
+        const float ResolutionStackSpacing = 24f;
+        const float ResolutionMargin = 40f; // Kept clear round the resolution panel's column on every side.
+                const int SpriteScale = 2; // Sprites hold twice the canvas's pixels, so they stay sharp above 720p.
 
         static readonly Color MenuOutline = new Color32(0x3A, 0x3F, 0x4B, 0xFF);
         static readonly Color MenuBackgroundText = new Color32(0x22, 0x25, 0x2D, 0xFF);
@@ -138,6 +142,8 @@ namespace LowercaseUppercase.Levels
             RectTransform guidePanel = BuildGuide(ui, filled, outline, keycap, shiftArrow, regular, medium, bold,
                 out UnityEngine.UI.Button[] guideTabs, out TextMeshProUGUI[] guideTabLabels, out GameObject[] guidePages,
                 out UnityEngine.UI.Button guideBack);
+            RectTransform resolutionPanel = BuildResolutionList(ui, outline, medium, out UnityEngine.UI.Button resolutionOption,
+                out UnityEngine.UI.ScrollRect resolutionScroll, out UnityEngine.UI.Button resolutionBack);
 
             UnityEngine.UI.Image fade = UiImage(ui, "Fade", white, Color.black);
             fade.raycastTarget = false;
@@ -163,6 +169,12 @@ namespace LowercaseUppercase.Levels
             menu.fullscreenLabel = fullscreenLabel;
             menu.resolutionButton = resolution;
             menu.resolutionLabel = resolutionLabel;
+            menu.resolutionPanel = resolutionPanel.gameObject;
+            menu.resolutionOption = resolutionOption;
+            menu.resolutionBack = resolutionBack;
+            menu.resolutionScroll = resolutionScroll;
+            menu.resolutionMargin = ResolutionMargin;
+            menu.resolutionReservedHeight = ResolutionHeadingHeight + ResolutionBackHeight + 2f * ResolutionStackSpacing;
             menu.soundButton = sound;
             menu.soundLabel = soundLabel;
             menu.resetProgressButton = resetProgress;
@@ -230,6 +242,137 @@ namespace LowercaseUppercase.Levels
                 Muted, TextAlignmentOptions.BottomRight);
             Place(version.rectTransform, bottomRight, bottomRight, new Vector2(-64f, 14f), new Vector2(320f, 18f));
             return version;
+        }
+
+        /// <summary>
+        /// A full-screen panel listing the monitor's resolutions, which the menu fills in when it opens: a heading, a
+        /// scrolling grid of buttons copied from an inactive template, and Back. The menu sets the grid's columns and the
+        /// list's height to fit the screen (see MainMenu.LayoutResolutions); the sizes here only show in the editor.
+        /// </summary>
+        static RectTransform BuildResolutionList(Transform ui, Sprite outline, TMP_FontAsset medium,
+            out UnityEngine.UI.Button option, out UnityEngine.UI.ScrollRect scroll, out UnityEngine.UI.Button back)
+        {
+            const int columns = 6;
+            const float spacing = 8f;
+            const float cellWidth = 160f;
+            const float cellHeight = 36f;
+            const float scrollbarWidth = 4f;
+            const float scrollbarGap = 12f;
+            float gridWidth = columns * cellWidth + (columns - 1) * spacing;
+
+            UnityEngine.UI.Image cover = UiImage(ui, "ResolutionPanel", white, Background);
+            cover.raycastTarget = true; // Keeps clicks off the hidden menu behind it.
+            RectTransform panel = cover.rectTransform;
+            Stretch(panel);
+
+            var columnObject = new GameObject("Column", typeof(RectTransform));
+            columnObject.transform.SetParent(panel, false);
+            var column = (RectTransform)columnObject.transform;
+            Stretch(column);
+            var stack = columnObject.AddComponent<UnityEngine.UI.VerticalLayoutGroup>();
+            stack.spacing = ResolutionStackSpacing;
+            stack.childAlignment = TextAnchor.MiddleCenter;
+            stack.childControlWidth = false;
+            stack.childControlHeight = true; // Heights come from the LayoutElements, the list's set by the menu.
+            stack.childForceExpandWidth = false;
+            stack.childForceExpandHeight = false;
+
+            TextMeshProUGUI heading = UiText(column, "Heading", "Resolution", medium, 28f, Paper, TextAlignmentOptions.Center);
+            heading.rectTransform.sizeDelta = new Vector2(MenuColumnWidth, ResolutionHeadingHeight);
+            Fixed(heading.gameObject, MenuColumnWidth, ResolutionHeadingHeight);
+
+            // The list holds the masked viewport and, just right of it and outside the mask, the scrollbar.
+            var listObject = new GameObject("ResolutionList", typeof(RectTransform));
+            listObject.transform.SetParent(column, false);
+            var list = (RectTransform)listObject.transform;
+            list.sizeDelta = new Vector2(gridWidth, cellHeight);
+            Fixed(listObject, gridWidth, cellHeight);
+
+            UnityEngine.UI.Image viewportImage = UiImage(list, "Viewport", white, Color.clear);
+            viewportImage.raycastTarget = true; // So the wheel and drags work between the buttons too.
+            RectTransform viewport = viewportImage.rectTransform;
+            Stretch(viewport);
+            viewport.gameObject.AddComponent<UnityEngine.UI.RectMask2D>();
+
+            var gridObject = new GameObject("ResolutionGrid", typeof(RectTransform));
+            gridObject.transform.SetParent(viewport, false);
+            var content = (RectTransform)gridObject.transform;
+            var top = new Vector2(0.5f, 1f);
+            Place(content, top, top, Vector2.zero, new Vector2(gridWidth, cellHeight));
+            var grid = gridObject.AddComponent<UnityEngine.UI.GridLayoutGroup>();
+            grid.cellSize = new Vector2(cellWidth, cellHeight);
+            grid.spacing = new Vector2(spacing, spacing);
+            grid.constraint = UnityEngine.UI.GridLayoutGroup.Constraint.FixedColumnCount;
+            grid.constraintCount = columns;
+            grid.childAlignment = TextAnchor.UpperCenter;
+            var fitter = gridObject.AddComponent<UnityEngine.UI.ContentSizeFitter>();
+            fitter.verticalFit = UnityEngine.UI.ContentSizeFitter.FitMode.PreferredSize;
+
+            option = OutlineButton(content, "ResolutionOption", "1920×1080", outline, medium, out TextMeshProUGUI optionLabel);
+            // Room for sizes with more digits than the usual monitor's.
+            optionLabel.enableAutoSizing = true;
+            optionLabel.fontSizeMin = 11f;
+            optionLabel.fontSizeMax = optionLabel.fontSize;
+            optionLabel.margin = new Vector4(6f, 0f, 6f, 0f);
+            option.gameObject.SetActive(false);
+
+            UnityEngine.UI.Image track = UiImage(list, "Scrollbar", white, MenuOutline);
+            track.raycastTarget = true;
+            RectTransform trackRect = track.rectTransform;
+            trackRect.anchorMin = new Vector2(1f, 0f);
+            trackRect.anchorMax = Vector2.one;
+            trackRect.pivot = new Vector2(0f, 0.5f);
+            trackRect.anchoredPosition = new Vector2(scrollbarGap, 0f);
+            trackRect.sizeDelta = new Vector2(scrollbarWidth, 0f);
+            var slidingObject = new GameObject("SlidingArea", typeof(RectTransform));
+            slidingObject.transform.SetParent(trackRect, false);
+            Stretch((RectTransform)slidingObject.transform);
+            UnityEngine.UI.Image handle = UiImage(slidingObject.transform, "Handle", white, Muted);
+            handle.raycastTarget = true;
+            Stretch(handle.rectTransform);
+            var scrollbar = track.gameObject.AddComponent<UnityEngine.UI.Scrollbar>();
+            scrollbar.handleRect = handle.rectTransform;
+            scrollbar.targetGraphic = handle;
+            scrollbar.direction = UnityEngine.UI.Scrollbar.Direction.BottomToTop;
+            scrollbar.navigation = new UnityEngine.UI.Navigation { mode = UnityEngine.UI.Navigation.Mode.None };
+            SetSelectableColors(scrollbar, Muted, Paper, Paper);
+
+            scroll = listObject.AddComponent<UnityEngine.UI.ScrollRect>();
+            scroll.viewport = viewport;
+            scroll.content = content;
+            scroll.horizontal = false;
+            scroll.vertical = true;
+            scroll.movementType = UnityEngine.UI.ScrollRect.MovementType.Clamped;
+            scroll.inertia = false;
+            scroll.scrollSensitivity = cellHeight + spacing; // One row per wheel notch.
+            scroll.verticalScrollbar = scrollbar;
+            scroll.verticalScrollbarVisibility = UnityEngine.UI.ScrollRect.ScrollbarVisibility.AutoHide;
+
+            back = OutlineButton(column, "BackButton", "Back", outline, medium, out _);
+            Fixed(back.gameObject, MenuColumnWidth, ResolutionBackHeight);
+
+            panel.gameObject.SetActive(false);
+            return panel;
+        }
+
+        static void SetSelectableColors(UnityEngine.UI.Selectable selectable, Color normal, Color active, Color pressed)
+        {
+            UnityEngine.UI.ColorBlock colors = selectable.colors;
+            colors.normalColor = normal;
+            colors.highlightedColor = active;
+            colors.selectedColor = active;
+            colors.pressedColor = pressed;
+            colors.colorMultiplier = 1f;
+            colors.fadeDuration = 0.08f;
+            selectable.colors = colors;
+        }
+
+        static void Fixed(GameObject go, float width, float height)
+        {
+            var element = go.AddComponent<UnityEngine.UI.LayoutElement>();
+            element.preferredWidth = width;
+            element.preferredHeight = height;
+            element.minHeight = height;
         }
 
         // ---------------------------------------------------------------- ui pieces
@@ -339,17 +482,8 @@ namespace LowercaseUppercase.Levels
             return button;
         }
 
-        static void SetButtonColors(UnityEngine.UI.Button button, Color normal, Color active, Color pressed)
-        {
-            UnityEngine.UI.ColorBlock colors = button.colors;
-            colors.normalColor = normal;
-            colors.highlightedColor = active;
-            colors.selectedColor = active;
-            colors.pressedColor = pressed;
-            colors.colorMultiplier = 1f;
-            colors.fadeDuration = 0.08f;
-            button.colors = colors;
-        }
+        static void SetButtonColors(UnityEngine.UI.Button button, Color normal, Color active, Color pressed) =>
+            SetSelectableColors(button, normal, active, pressed);
 
         static UnityEngine.UI.Image UiImage(Transform parent, string name, Sprite sprite, Color color)
         {
