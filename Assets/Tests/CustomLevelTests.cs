@@ -157,5 +157,109 @@ namespace LowercaseUppercase.Tests
                 UnityEngine.Object.DestroyImmediate(root.gameObject);
             }
         }
+
+        /// <summary>One of every piece from step 0b, laid out along open ground with a high word for the drip.</summary>
+        static CustomLevelData EveryPiece()
+        {
+            var data = new CustomLevelData { name = "Every piece" };
+            var p = data.pieces;
+            p.Add(new CustomPiece(CustomPieceType.Word, 0f, 520f, "the long floor that carries every single piece of the level along with it as far as it goes and further still"));
+            p.Add(new CustomPiece(CustomPieceType.Word, 1400f, 300f, "a high shelf"));
+            p.Add(new CustomPiece(CustomPieceType.Word, 4800f, 520f, "a hot word", CustomPieceType.Hot));
+            p.Add(new CustomPiece(CustomPieceType.Tube, 300f, 520f, "tube") { count = 2 });
+            p.Add(new CustomPiece(CustomPieceType.Spring, 500f, 520f));
+            p.Add(new CustomPiece(CustomPieceType.Door, 900f, 520f));
+            p.Add(new CustomPiece(CustomPieceType.Plate, 700f, 520f));
+            p.Add(new CustomPiece(CustomPieceType.Hooks, 1000f, 250f) { count = 3 });
+            p.Add(new CustomPiece(CustomPieceType.CapsLock, 1800f, 0f) { x2 = 2400f });
+            p.Add(new CustomPiece(CustomPieceType.CapsKey, 2300f, 500f));
+            p.Add(new CustomPiece(CustomPieceType.Hill, 100f, 0f));
+            p.Add(new CustomPiece(CustomPieceType.Cloud, 400f, 150f));
+            p.Add(new CustomPiece(CustomPieceType.Kerned, 5400f, 520f, "b\u00a1etwe\u00a1en"));
+            p.Add(new CustomPiece(CustomPieceType.Lift, 6100f, 520f) { y2 = 250f });
+            string[] walkers =
+            {
+                CustomPieceType.Walker, CustomPieceType.Spike, CustomPieceType.Armour, CustomPieceType.Swapper,
+                CustomPieceType.Mimic, CustomPieceType.Curl, CustomPieceType.Hopper
+            };
+            for (int i = 0; i < walkers.Length; i++)
+                p.Add(new CustomPiece(CustomPieceType.Enemy, 2600f + i * 150f, 200f, "", walkers[i]));
+            p.Add(new CustomPiece(CustomPieceType.Enemy, 1500f, 520f, "", CustomPieceType.Drip));
+            p.Add(new CustomPiece(CustomPieceType.Enemy, 4900f, 400f, "", CustomPieceType.Spark));
+            p.Add(new CustomPiece(CustomPieceType.Enemy, 3800f, 400f, "", CustomPieceType.Flier) { value = 100f });
+            p.Add(new CustomPiece(CustomPieceType.Enemy, 4000f, 520f, "", CustomPieceType.Launcher) { flip = true });
+            p.Add(new CustomPiece(CustomPieceType.Enemy, 4300f, 520f, "", CustomPieceType.FireBar));
+            p.Add(new CustomPiece(CustomPieceType.Enemy, 4500f, 400f, "", CustomPieceType.Eye));
+            p.Add(new CustomPiece(CustomPieceType.Enemy, 200f, 520f, "", CustomPieceType.Cursor) { x2 = 600f });
+            return data;
+        }
+
+        static T[] All<T>() where T : UnityEngine.Object => UnityEngine.Object.FindObjectsByType<T>(FindObjectsInactive.Include);
+
+        [UnityTest]
+        public IEnumerator EveryPieceIsBuilt()
+        {
+            yield return Load(EveryPiece());
+
+            WordBlock[] words = All<WordBlock>();
+            Assert.That(words.Count(w => w.kind == WordKind.Spring), Is.EqualTo(1), "spring");
+            Assert.That(words.Count(w => w.kind == WordKind.Comma), Is.EqualTo(3), "hooks");
+            Assert.That(words.Count(w => w.kind == WordKind.Up), Is.EqualTo(1), "lift");
+            Assert.That(words.Single(w => w.kind == WordKind.Period).linkedDoor,
+                Is.SameAs(words.Single(w => w.kind == WordKind.Door)), "plate opens the door");
+            Assert.That(All<CapsLockKey>().Single().zone, Is.SameAs(All<CapsLockZone>().Single()), "key");
+            Assert.That(All<EnemyRise>().Length, Is.EqualTo(2), "risers");
+            Assert.That(All<EnemyDrip>().Length, Is.EqualTo(1), "drip");
+            Assert.That(All<EnemySpark>().Length, Is.EqualTo(1), "spark");
+            Assert.That(All<EnemyWave>().Length, Is.EqualTo(1), "flier");
+            Assert.That(All<EnemyLauncher>().Length, Is.EqualTo(1), "launcher");
+            Assert.That(All<EnemyFireBar>().Length, Is.EqualTo(1), "fire bar");
+            Assert.That(All<EnemyFollow>().Length, Is.EqualTo(1), "eye");
+            Assert.That(All<EnemyCursor>().Length, Is.EqualTo(1), "cursor");
+            Assert.That(All<EnemyCurl>().Length, Is.EqualTo(1), "curl");
+            Assert.That(All<EnemyHop>().Length, Is.EqualTo(1), "hopper");
+            Assert.That(All<EnemyCaseSwap>().Length, Is.EqualTo(1), "swapper");
+            Assert.That(All<EnemyMimic>().Length, Is.EqualTo(1), "mimic");
+            // & ^ § and the swapper and mimic walk.
+            Assert.That(All<EnemyWalk>().Length, Is.EqualTo(5), "walkers");
+        }
+
+        [Test]
+        public void EnemiesDropOntoTheWordBelowThem()
+        {
+            var data = new CustomLevelData();
+            data.pieces.Add(new CustomPiece(CustomPieceType.Word, 0f, 520f, "the ground"));
+            data.pieces.Add(new CustomPiece(CustomPieceType.Enemy, 100f, 100f, "", CustomPieceType.Walker));
+            var root = new GameObject("Level").transform;
+            try
+            {
+                Levels.PrototypeBuilder.BuildCustomLevel(root, data, null, null, null, null);
+                Enemy enemy = root.GetComponentInChildren<Enemy>();
+                Assert.That(enemy, Is.Not.Null);
+                Assert.That(enemy.transform.position.y, Is.EqualTo((360f - 520f) / 72f).Within(0.05f));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(root.gameObject);
+            }
+        }
+
+        [Test]
+        public void AWalkerWithNoGroundIsSkipped()
+        {
+            var data = new CustomLevelData();
+            data.pieces.Add(new CustomPiece(CustomPieceType.Enemy, 100f, 100f, "", CustomPieceType.Walker));
+            var root = new GameObject("Level").transform;
+            try
+            {
+                LogAssert.Expect(LogType.Warning, new System.Text.RegularExpressions.Regex("skipped the walker"));
+                Levels.PrototypeBuilder.BuildCustomLevel(root, data, null, null, null, null);
+                Assert.That(root.GetComponentInChildren<Enemy>(), Is.Null);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(root.gameObject);
+            }
+        }
     }
 }

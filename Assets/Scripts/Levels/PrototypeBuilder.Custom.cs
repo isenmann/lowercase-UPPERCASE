@@ -46,16 +46,15 @@ namespace LowercaseUppercase.Levels
             white = whiteSprite;
             levelCheckpoints.Clear();
 
-            // Checkpoints are numbered in the order they are placed, and the letter meets them left to right.
+            // Terrain first, because plates, keys and enemies find what they belong to among it. Checkpoints are
+            // numbered in the order they are placed, and the letter meets them left to right.
             float right = 1280f;
-            IEnumerable<CustomPiece> ordered = data.pieces
-                .Where(p => p != null)
-                .OrderBy(p => p.type == CustomPieceType.Checkpoint ? 1 : 0)
-                .ThenBy(p => p.x);
-            foreach (CustomPiece piece in ordered)
+            List<CustomPiece> pieces = data.pieces.Where(p => p != null).OrderBy(p => p.x).ToList();
+            foreach (CustomPiece piece in pieces.Where(p => BuildPhase(p) == 0))
                 right = Mathf.Max(right, BuildPiece(level, piece));
-
             if (data.ceiling) Ceiling(level, right + CustomCeilingOverhangPx);
+            foreach (CustomPiece piece in pieces.Where(p => BuildPhase(p) == 1))
+                right = Mathf.Max(right, BuildPiece(level, piece));
 
             var layout = new CustomLevelLayout
             {
@@ -100,6 +99,54 @@ namespace LowercaseUppercase.Levels
                 case CustomPieceType.Exit:
                     return CustomExit(level, text, piece.x, piece.y, piece.kind);
 
+                case CustomPieceType.Tube:
+                    Stacked(level, text.Trim().Length > 0 ? text.Trim() : "tube", piece.x, Count(piece, 3), piece.y);
+                    return piece.x + Mathf.Max(4, text.Trim().Length) * TubeFontPx * 0.6f;
+
+                case CustomPieceType.Kerned:
+                    return CustomKerned(level, text, piece.x, piece.y);
+
+                case CustomPieceType.Spring:
+                    Spring(level, piece.x, piece.y, Value(piece, 80f));
+                    return piece.x + 40f;
+
+                case CustomPieceType.Door:
+                    return RightEdge(Door(level, piece.x, piece.y));
+
+                case CustomPieceType.Plate:
+                    WordBlock plate = Plate(level, piece.x, piece.y);
+                    plate.linkedDoor = Nearest(level, piece.x, piece.y, w => w.kind == WordKind.Door);
+                    return piece.x + 40f;
+
+                case CustomPieceType.Lift:
+                    float top = piece.y2 != 0f ? piece.y2 : piece.y - 300f;
+                    return Lift(level, piece.x, top, piece.y);
+
+                case CustomPieceType.Hooks:
+                    int hooks = Count(piece, 1);
+                    for (int i = 0; i < hooks; i++)
+                        Hook(level, $"Hook {i + 1}", piece.x + i * HookSpacingPx, piece.y);
+                    return piece.x + (hooks - 1) * HookSpacingPx + 60f;
+
+                case CustomPieceType.CapsLock:
+                    CustomCapsLock(level, piece.x, piece.x2 > piece.x ? piece.x2 : piece.x + 800f);
+                    return Mathf.Max(piece.x, piece.x2);
+
+                case CustomPieceType.CapsKey:
+                    CustomCapsKey(level, piece.x, piece.y);
+                    return piece.x + 90f;
+
+                case CustomPieceType.Hill:
+                    Hill(level, piece.x, Count(piece, 3));
+                    return piece.x;
+
+                case CustomPieceType.Cloud:
+                    Cloud(level, piece.x, piece.y);
+                    return piece.x;
+
+                case CustomPieceType.Enemy:
+                    return CustomEnemy(level, piece);
+
                 default:
                     Debug.LogWarning($"Custom level: skipped a piece of unknown type '{piece.type}'.");
                     return piece.x;
@@ -107,6 +154,194 @@ namespace LowercaseUppercase.Levels
         }
 
         const float ColumnWidthPx = 46f * 0.6f;
+        const string RiserMark = "\u00a1";
+
+        /// <summary>0: terrain and things, built first. 1: pieces that find terrain built before them.</summary>
+        static int BuildPhase(CustomPiece piece)
+        {
+            switch (piece.type)
+            {
+                case CustomPieceType.Plate:
+                case CustomPieceType.CapsKey:
+                case CustomPieceType.Enemy:
+                    return 1;
+                default:
+                    return 0;
+            }
+        }
+
+        static int Count(CustomPiece piece, int fallback) => piece.count > 0 ? piece.count : fallback;
+        static float Value(CustomPiece piece, float fallback) => piece.value != 0f ? piece.value : fallback;
+
+        /// <summary>Loose letters, with a riser in every hole marked by an inverted exclamation mark.</summary>
+        static float CustomKerned(Transform level, string text, float leftPx, float surfacePx)
+        {
+            var holes = new List<int>();
+            var letters = new System.Text.StringBuilder();
+            foreach (char c in text.Replace(" ", ""))
+            {
+                if (c.ToString() == RiserMark)
+                {
+                    if (letters.Length > 0) holes.Add(letters.Length - 1);
+                }
+                else letters.Append(c);
+            }
+            if (letters.Length == 0) return leftPx;
+            // A mark after the last letter has no hole to sit in.
+            holes.RemoveAll(h => h >= letters.Length - 1);
+            return KernedWithRisers(level, letters.ToString(), leftPx, surfacePx, holes.Distinct().ToArray());
+        }
+
+        /// <summary>The Caps Lock stretch without its key, which is a piece of its own.</summary>
+        static void CustomCapsLock(Transform level, float leftPx, float rightPx)
+        {
+            var zoneObject = new GameObject("Caps Lock Zone");
+            zoneObject.transform.SetParent(level, false);
+            zoneObject.layer = LayerMask.NameToLayer("Level");
+            float widthPx = rightPx - leftPx;
+            zoneObject.transform.position = new Vector3(X(leftPx + widthPx * 0.5f), Y(352f), 0f);
+            var trigger = zoneObject.AddComponent<BoxCollider2D>();
+            trigger.isTrigger = true;
+            trigger.size = new Vector2(Size(widthPx), Size(576f));
+
+            var zone = zoneObject.AddComponent<CapsLockZone>();
+            zone.tint = Rect(zoneObject.transform, "Tint", Vector2.zero, trigger.size,
+                new Color(Hot.r, Hot.g, Hot.b, 0.03f), -5);
+            zone.label = Text(level, "LOCK", "LOCK", leftPx + 20f, 300f, 96f, black,
+                new Color(Hot.r, Hot.g, Hot.b, 0.3f), -4);
+        }
+
+        /// <summary>The key, switching off the Caps Lock stretch nearest to it.</summary>
+        static void CustomCapsKey(Transform level, float leftPx, float baselinePx)
+        {
+            TextMeshPro key = Text(level, "Key", "key", leftPx, baselinePx, 40f, monoBold, Player, 5);
+            key.gameObject.layer = LayerMask.NameToLayer("Level");
+            var keyTrigger = key.gameObject.AddComponent<BoxCollider2D>();
+            keyTrigger.isTrigger = true;
+            keyTrigger.size = new Vector2(Size(90f), Size(70f));
+            keyTrigger.offset = new Vector2(Size(36f), Size(10f));
+
+            CapsLockZone nearest = null;
+            float best = float.MaxValue;
+            foreach (CapsLockZone zone in level.GetComponentsInChildren<CapsLockZone>())
+            {
+                float distance = Mathf.Abs(zone.transform.position.x - X(leftPx));
+                if (distance < best)
+                {
+                    best = distance;
+                    nearest = zone;
+                }
+            }
+            key.gameObject.AddComponent<CapsLockKey>().zone = nearest;
+        }
+
+        static float CustomEnemy(Transform level, CustomPiece piece)
+        {
+            float x = piece.x;
+            float direction = piece.flip ? -1f : 1f;
+            WordBlock ground = GroundUnder(level, x, piece.y);
+            switch (piece.kind)
+            {
+                case CustomPieceType.Walker:
+                    if (ground == null) break;
+                    BuildEnemy(level, ground, x).GetComponent<EnemyWalk>().direction = direction;
+                    return x + 40f;
+                case CustomPieceType.Spike:
+                    if (ground == null) break;
+                    BuildSpike(level, ground, x).GetComponent<EnemyWalk>().direction = direction;
+                    return x + 40f;
+                case CustomPieceType.Armour:
+                    if (ground == null) break;
+                    BuildArmour(level, ground, x).GetComponent<EnemyWalk>().direction = direction;
+                    return x + 40f;
+                case CustomPieceType.Swapper:
+                    if (ground == null) break;
+                    BuildCaseSwapper(level, ground, x).GetComponent<EnemyWalk>().direction = direction;
+                    return x + 40f;
+                case CustomPieceType.Mimic:
+                    if (ground == null) break;
+                    BuildMimic(level, ground, x).GetComponent<EnemyWalk>().direction = direction;
+                    return x + 40f;
+                case CustomPieceType.Curl:
+                    if (ground == null) break;
+                    BuildCurl(level, ground, x);
+                    return x + 40f;
+                case CustomPieceType.Hopper:
+                    if (ground == null) break;
+                    BuildHopper(level, ground, x, piece.value * (piece.flip ? -1f : 1f), piece.delay);
+                    return x + 40f;
+                case CustomPieceType.Spark:
+                    WordBlock hot = Nearest(level, x, piece.y, w => w.kind == WordKind.Hot, below: true);
+                    if (hot == null) break;
+                    BuildSpark(level, hot, x, piece.delay);
+                    return x + 40f;
+                case CustomPieceType.Flier:
+                    BuildFlier(level, x, piece.y, piece.value).direction = direction;
+                    return x + Mathf.Max(0f, piece.value) + 40f;
+                case CustomPieceType.Launcher:
+                    return RightEdge(BuildLauncher(level, x, piece.y, piece.flip, Count(piece, 2), Value(piece, 2f)));
+                case CustomPieceType.Drip:
+                    BuildEnemyAt(level, new Vector3(X(x), Y(piece.y), 0f), "'", 72f, stompable: false, shootable: true)
+                        .gameObject.AddComponent<EnemyDrip>();
+                    return x + 40f;
+                case CustomPieceType.FireBar:
+                    BuildFireBar(level, x, piece.y, Count(piece, 4), Value(piece, -90f));
+                    return x + 60f;
+                case CustomPieceType.Eye:
+                    BuildEye(level, x, piece.y);
+                    return x + 40f;
+                case CustomPieceType.Cursor:
+                    float end = piece.x2 > x ? piece.x2 : x + 1500f;
+                    BuildCursorChase(level, x, end, piece.y, Value(piece, 3.5f));
+                    return end;
+                default:
+                    Debug.LogWarning($"Custom level: skipped an enemy of unknown kind '{piece.kind}'.");
+                    return x;
+            }
+
+            Debug.LogWarning($"Custom level: skipped the {piece.kind} at {x:0}, {piece.y:0}, which has no "
+                + (piece.kind == CustomPieceType.Spark ? "hot word" : "word") + " under it.");
+            return x;
+        }
+
+        /// <summary>The word whose top is nearest below a point (or a little above it), with the point over it.</summary>
+        static WordBlock GroundUnder(Transform level, float xPx, float feetPx) =>
+            Nearest(level, xPx, feetPx, w => w.kind != WordKind.Door, below: true);
+
+        /// <summary>
+        /// The nearest word that matches. Below: only words under the point (tops at most 16 px above it), by how far
+        /// down their top is. Otherwise any such word, by distance across.
+        /// </summary>
+        static WordBlock Nearest(Transform level, float xPx, float yPx, System.Func<WordBlock, bool> match,
+            bool below = false)
+        {
+            WordBlock best = null;
+            float bestDistance = float.MaxValue;
+            foreach (WordBlock word in level.GetComponentsInChildren<WordBlock>())
+            {
+                if (!match(word)) continue;
+                var box = word.GetComponent<BoxCollider2D>();
+                if (box == null || box.isTrigger) continue;
+                float left = LeftEdge(word);
+                float right = RightEdge(word);
+                float topPx = 360f - (word.transform.TransformPoint(box.offset).y + box.size.y * 0.5f) * PixelsPerUnit;
+
+                float distance;
+                if (below)
+                {
+                    if (xPx < left || xPx > right || topPx < yPx - 16f) continue;
+                    distance = topPx - yPx;
+                }
+                else distance = Mathf.Abs((left + right) * 0.5f - xPx);
+
+                if (distance < bestDistance)
+                {
+                    bestDistance = distance;
+                    best = word;
+                }
+            }
+            return best;
+        }
 
         static WordBlock CustomWord(Transform level, string text, float leftPx, float surfacePx, string kind)
         {

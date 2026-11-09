@@ -105,9 +105,9 @@ namespace LowercaseUppercase.Levels
             return wall;
         }
 
-        static WordBlock Door(Transform level, float leftPx)
+        static WordBlock Door(Transform level, float leftPx, float bottomPx = Ground)
         {
-            WordBlock door = Column(level, "d\no\no\nr\nd\no\no\nr", leftPx, Ground, 72f, WordKind.Door, Hot);
+            WordBlock door = Column(level, "d\no\no\nr\nd\no\no\nr", leftPx, bottomPx, 72f, WordKind.Door, Hot);
             door.gameObject.name = "Word door";
             return door;
         }
