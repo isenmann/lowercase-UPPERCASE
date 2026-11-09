@@ -110,8 +110,9 @@ namespace LowercaseUppercase.Tests
         [Test]
         public void ClickingAWordEditsItAndEscapeRestoresIt()
         {
-            editor.ClickAt(new Vector2(120f, 505f));
-            editor.ClickAt(new Vector2(120f, 505f));
+            // On "here": the letter's start marker sits on the start of the word.
+            editor.ClickAt(new Vector2(350f, 505f));
+            editor.ClickAt(new Vector2(350f, 505f));
             Assert.That(editor.Typing, Is.SameAs(editor.Level.pieces[0]));
 
             editor.Backspace();
@@ -212,10 +213,10 @@ namespace LowercaseUppercase.Tests
         [Test]
         public void DoubleClickingAWordEditsIt()
         {
-            editor.ClickAt(new Vector2(120f, 505f));
+            editor.ClickAt(new Vector2(350f, 505f));
             Assert.That(editor.Typing, Is.Null);
             Assert.That(editor.Selected, Is.SameAs(editor.Level.pieces[0]));
-            editor.ClickAt(new Vector2(120f, 505f));
+            editor.ClickAt(new Vector2(350f, 505f));
             Assert.That(editor.Typing, Is.SameAs(editor.Level.pieces[0]));
         }
 

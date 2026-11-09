@@ -6,7 +6,7 @@ namespace LowercaseUppercase.Levels
 {
     /// <summary>
     /// The menu's "How to play" popup: pages taken from the design canvas's "The two forms" and "Level vocabulary"
-    /// boards, rewritten to match what the game does now, plus a page listing every enemy. Positions are CSS pixels from the top left of a 1280x720 board.
+    /// boards, rewritten to match what the game does now, plus a page listing every enemy and one on the level editor. Positions are CSS pixels from the top left of a 1280x720 board.
     /// </summary>
     public static partial class PrototypeBuilder
     {
@@ -118,13 +118,14 @@ namespace LowercaseUppercase.Levels
             {
                 FormsPage(board, filled, outline, keycap, shiftArrow, regular, bold).gameObject,
                 VocabularyPage(board, filled, outline, keycap, regular, bold).gameObject,
-                EnemiesPage(board, filled, outline, keycap, regular, bold).gameObject
+                EnemiesPage(board, filled, outline, keycap, regular, bold).gameObject,
+                EditorPage(board, filled, outline, keycap, regular, bold).gameObject
             };
 
             var rowObject = new GameObject("GuideTabs", typeof(RectTransform));
             rowObject.transform.SetParent(board, false);
             var row = (RectTransform)rowObject.transform;
-            Place(row, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 28f), new Vector2(4 * 210f + 3 * 12f, 44f));
+            Place(row, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 28f), new Vector2(5 * 210f + 4 * 12f, 44f));
             var layout = rowObject.AddComponent<UnityEngine.UI.HorizontalLayoutGroup>();
             layout.spacing = 12f;
             layout.childControlWidth = true;
@@ -132,11 +133,12 @@ namespace LowercaseUppercase.Levels
             layout.childForceExpandWidth = true;
             layout.childForceExpandHeight = true;
 
-            tabs = new UnityEngine.UI.Button[3];
-            tabLabels = new TextMeshProUGUI[3];
+            tabs = new UnityEngine.UI.Button[4];
+            tabLabels = new TextMeshProUGUI[4];
             tabs[0] = OutlineButton(row, "FormsTab", "The two forms", outline, medium, out tabLabels[0]);
             tabs[1] = OutlineButton(row, "VocabularyTab", "Level vocabulary", outline, medium, out tabLabels[1]);
             tabs[2] = OutlineButton(row, "EnemiesTab", "Enemies", outline, medium, out tabLabels[2]);
+            tabs[3] = OutlineButton(row, "EditorTab", "Level editor", outline, medium, out tabLabels[3]);
             back = OutlineButton(row, "BackButton", "Back", outline, medium, out _);
 
             panel.gameObject.SetActive(false);
@@ -295,6 +297,49 @@ namespace LowercaseUppercase.Levels
                 "<color=#FFD23F><b>A</b></color>  land on it as UPPERCASE      " +
                 "<color=#FFD23F>*</color>  shoot it with Ctrl      " +
                 "<color=#9AA0AE>avoid</color>  nothing stops it: get past",
+                regular, 16f, GuideBody, TextAlignmentOptions.Center);
+            Stretch(text.rectTransform);
+            return page;
+        }
+
+        // ---------------------------------------------------------------- level editor
+
+        // Tags say how each is done: the mouse, a key, or the My levels menu.
+        static GuideTile[] EditorTiles() => new[]
+        {
+            new GuideTile("abc", Paper, "mouse", "Place",
+                "Pick a piece in the bar at the bottom, then click the page. Words start typing; Enter places them."),
+            new GuideTile("[ ]", Player, "mouse", "Pick and move",
+                "Click a piece to pick it and drag to move it. Double-click a word to retype it. Del removes."),
+            new GuideTile("up", Interactive, "mouse", "Stretch",
+                "Lifts, hooks, Caps Lock, fliers and cursors have a yellow square. Drag it to size them."),
+            new GuideTile("< >", Paper, "mouse", "Settings",
+                "The panel changes the picked piece. settings, top right, sets the name, sentence, time and ceiling."),
+            new GuideTile("play", Player, "P H", "Test play",
+                "P plays from the start, H from the mouse, and Esc comes back. Reach the exit from the start to finish it."),
+            new GuideTile("!", Danger, "mouse", "Warnings",
+                "Red notes under the top bar point at likely mistakes. Click them to find the piece."),
+            new GuideTile("Ctrl Z", Paper, "keys", "Undo",
+                "Ctrl Z undoes and Ctrl Y redoes. Every change is saved as you go; there is no save button."),
+            new GuideTile("luc1:", Interactive, "menu", "Share",
+                "Share in My levels copies a level as a code. Import there turns a code into a new level."),
+        };
+
+        static RectTransform EditorPage(RectTransform board, Sprite filled, Sprite outline, Sprite keycap,
+            TMP_FontAsset regular, TMP_FontAsset bold)
+        {
+            RectTransform page = GuidePage(board, "EditorPage", "Level editor",
+                "Editor in the menu opens My levels. Build a sentence of your own.", regular, bold);
+
+            TileGrid(page, EditorTiles(), 4, filled, outline, keycap, regular, bold);
+
+            RectTransform keys = Strip(page, "Keys", 576f, 52f, filled, GuideCard);
+            UnityEngine.UI.Image keysLine = UiImage(keys, "Outline", outline, BarLine);
+            keysLine.type = UnityEngine.UI.Image.Type.Sliced;
+            Stretch(keysLine.rectTransform);
+
+            TextMeshProUGUI text = UiText(keys, "Text",
+                "Arrows, wheel or right drag  pan      G  grid      1 2 3  palette pages      Esc  back to My levels",
                 regular, 16f, GuideBody, TextAlignmentOptions.Center);
             Stretch(text.rectTransform);
             return page;

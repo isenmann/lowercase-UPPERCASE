@@ -121,7 +121,7 @@ namespace LowercaseUppercase.Tests
             yield return WaitUntil(() => GameObject.Find("Letter") != null);
 
             Assert.That(LevelRun.Lives, Is.EqualTo(lives));
-            Assert.That(UnityEngine.Object.FindAnyObjectByType<GameOverScreen>().IsShowing, Is.False);
+            Assert.That(UnityEngine.Object.FindAnyObjectByType<GameOverScreen>(FindObjectsInactive.Include).IsShowing, Is.False);
         }
 
         [UnityTest]
@@ -136,7 +136,7 @@ namespace LowercaseUppercase.Tests
             yield return null;
 
             Assert.That(LevelRun.TimeLeft, Is.InRange(29f, 30f));
-            Assert.That(UnityEngine.Object.FindAnyObjectByType<GameOverScreen>().IsShowing, Is.False);
+            Assert.That(UnityEngine.Object.FindAnyObjectByType<GameOverScreen>(FindObjectsInactive.Include).IsShowing, Is.False);
         }
 
         [Test]
