@@ -5,27 +5,67 @@ using System.Linq;
 using System.Text;
 using LowercaseUppercase.Levels;
 using TMPro;
+using UnityEngine.TextCore;
+using UnityEngine.TextCore.LowLevel;
 using UnityEditor;
-using UnityEditor.SceneManagement;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 namespace LowercaseUppercase.Editor
 {
     /// <summary>
-    /// Writes Web/test/vectors.json for the shared levels page: level codes with what this game makes of them, and
-    /// what every piece of a few levels looks like once built. The page's JavaScript is tested against it, so the
-    /// game's C# code stays the reference. Rerun it after changing level codes, CustomLevelData or how pieces are built.
-    /// From the command line: Unity -batchmode -quit -projectPath . -executeMethod LowercaseUppercase.Editor.SharedLevelVectors.Write
+    /// Writes Web/test/vectors.json for the shared levels page: level codes with what this game makes of them, what
+    /// every piece of a few levels looks like once built, and the font measurements the page lays text out with. The
+    /// page's JavaScript is tested against it, so the game's C# code stays the reference. Rerun it after changing
+    /// level codes, CustomLevelData or how pieces are built.
+    /// It works in Play mode, entering it if need be and leaving it again: enemies lift their glyphs as they wake, and
+    /// components only wake in Play mode, as they do when the game builds a level or its picture.
     /// </summary>
+    [InitializeOnLoad]
     public static class SharedLevelVectors
     {
         const string OutputPath = "Web/test/vectors.json";
         const string SampleLevelPath = "Assets/Levels/SampleCustomLevel.json";
+        const string PendingKey = "LowercaseUppercase.SharedLevelVectors.Pending";
         const float PixelsPerUnit = 72f;
+        const float MeasureFontPx = 100f;
+        static readonly string[] FontNames = { "SpaceMono-Regular", "SpaceMono-Bold", "ArchivoBlack-Regular" };
+
+        // Characters measured beyond those in the levels: everything a maker is likely to type.
+        const string CommonCharacters =
+            " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~" +
+            "\u00a1\u00a7\u00ab\u00b0\u00b7\u00bb\u00c4\u00d6\u00dc\u00df\u00e4\u00f6\u00fc\u2195";
+
+        static SharedLevelVectors()
+        {
+            EditorApplication.playModeStateChanged += state =>
+            {
+                if (state != PlayModeStateChange.EnteredPlayMode || !SessionState.GetBool(PendingKey, false)) return;
+                SessionState.EraseBool(PendingKey);
+                try
+                {
+                    WriteNow();
+                }
+                finally
+                {
+                    EditorApplication.ExitPlaymode();
+                }
+            };
+        }
 
         [MenuItem("lowercase UPPERCASE/Shared Levels/Write Test Vectors")]
         public static void Write()
+        {
+            if (EditorApplication.isPlaying)
+            {
+                WriteNow();
+                return;
+            }
+
+            SessionState.SetBool(PendingKey, true);
+            EditorApplication.EnterPlaymode();
+        }
+
+        static void WriteNow()
         {
             CustomLevelData sample = CustomLevelData.FromJson(File.ReadAllText(SampleLevelPath));
             sample.name = "Sample";
@@ -49,20 +89,18 @@ namespace LowercaseUppercase.Editor
                 layouts = new List<LayoutVector>()
             };
 
-            Scene scratch = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
-            try
-            {
-                foreach ((string label, CustomLevelData level) in new[]
-                         { ("sample", sample), ("every piece", everyPiece), ("awkward text", awkward) })
-                    file.layouts.Add(Layout(label, level, scratch));
-            }
-            finally
-            {
-                EditorSceneManager.CloseScene(scratch, true);
-            }
+            foreach ((string label, CustomLevelData level) in new[]
+                     { ("sample", sample), ("every piece", everyPiece), ("awkward text", awkward) })
+                file.layouts.Add(Layout(label, level));
+
+            var characters = new HashSet<char>(CommonCharacters);
+            foreach (LayoutVector layout in file.layouts)
+                foreach (PartVector part in layout.pieces.SelectMany(piece => piece.parts).Concat(layout.others))
+                    characters.UnionWith(StripTags(part.text).Where(c => c != '\n'));
+            file.fonts = FontNames.Select(name => Measure(name, characters)).ToList();
 
             File.WriteAllText(OutputPath, JsonUtility.ToJson(file, true) + "\n", new UTF8Encoding(false));
-            Debug.Log($"Wrote {file.codes.Count} codes and {file.layouts.Count} layouts to {OutputPath}.");
+            Debug.Log($"Wrote {file.codes.Count} codes, {file.layouts.Count} layouts and {file.fonts.Count} fonts to {OutputPath}.");
         }
 
         // ------------------------------------------------ the levels
@@ -171,10 +209,9 @@ namespace LowercaseUppercase.Editor
 
         // ------------------------------------------------ layouts
 
-        static LayoutVector Layout(string label, CustomLevelData level, Scene scene)
+        static LayoutVector Layout(string label, CustomLevelData level)
         {
             var root = new GameObject("Vector Level");
-            SceneManager.MoveGameObjectToScene(root, scene);
             try
             {
                 var builtBy = new Dictionary<Transform, CustomPiece>();
@@ -208,6 +245,89 @@ namespace LowercaseUppercase.Editor
             }
         }
 
+        /// <summary>
+        /// A font's lines and every character's advance and ink box, per pixel of font size, y upwards from the
+        /// baseline. The ink box is TextMesh Pro's own character box, which is what words and enemies are fitted to.
+        /// </summary>
+        static FontVector Measure(string name, HashSet<char> characters)
+        {
+            TMP_FontAsset font = Font(name);
+            FaceInfo face = font.faceInfo;
+            float perPx = face.scale / face.pointSize;
+            var vector = new FontVector
+            {
+                name = name,
+                ascentLine = Round4(face.ascentLine * perPx),
+                descentLine = Round4(face.descentLine * perPx),
+                meanLine = Round4(face.meanLine * perPx),
+                capLine = Round4(face.capLine * perPx),
+                lineHeight = Round4(face.lineHeight * perPx),
+                characters = new List<CharacterVector>()
+            };
+
+            var go = new GameObject("Measure");
+            try
+            {
+                var text = go.AddComponent<TextMeshPro>();
+                text.font = font;
+                text.fontSize = MeasureFontPx / PixelsPerUnit * 10f;
+                text.alignment = TextAlignmentOptions.BaselineLeft;
+                text.textWrappingMode = TextWrappingModes.NoWrap;
+                float scale = PixelsPerUnit / MeasureFontPx; // world units to pixels, per pixel of font size
+                foreach (char c in characters.OrderBy(c => c))
+                {
+                    if (!font.HasCharacter(c, false, true)) continue;
+                    text.text = c.ToString();
+                    text.ForceMeshUpdate();
+                    if (text.textInfo.characterCount == 0) continue;
+                    TMP_CharacterInfo info = text.textInfo.characterInfo[0];
+                    vector.characters.Add(new CharacterVector
+                    {
+                        character = c.ToString(),
+                        advance = Round4((info.xAdvance - info.origin) * scale),
+                        preferred = Round4(text.GetPreferredValues(text.text).x * scale),
+                        visible = info.isVisible,
+                        inkLeft = Round4((info.bottomLeft.x - info.origin) * scale),
+                        inkRight = Round4((info.topRight.x - info.origin) * scale),
+                        inkBottom = Round4((info.bottomLeft.y - info.baseLine) * scale),
+                        inkTop = Round4((info.topRight.y - info.baseLine) * scale)
+                    });
+                }
+
+                // Kerning between the measured characters: what the pair adds to the first one's advance.
+                var glyphCharacters = new Dictionary<uint, string>();
+                foreach (TMP_Character known in font.characterTable)
+                    if (known.unicode <= char.MaxValue && characters.Contains((char)known.unicode))
+                        glyphCharacters[known.glyphIndex] = ((char)known.unicode).ToString();
+                vector.kerning = new List<KerningVector>();
+                foreach (GlyphPairAdjustmentRecord pair in font.fontFeatureTable.glyphPairAdjustmentRecords)
+                {
+                    if (!glyphCharacters.TryGetValue(pair.firstAdjustmentRecord.glyphIndex, out string first) ||
+                        !glyphCharacters.TryGetValue(pair.secondAdjustmentRecord.glyphIndex, out string second)) continue;
+                    float advance = pair.firstAdjustmentRecord.glyphValueRecord.xAdvance +
+                                    pair.secondAdjustmentRecord.glyphValueRecord.xAdvance;
+                    if (advance == 0f) continue;
+                    vector.kerning.Add(new KerningVector { pair = first + second, advance = Round4(advance * perPx) });
+                }
+                vector.kerning.Sort((a, b) => string.CompareOrdinal(a.pair, b.pair));
+
+                // Whole words, to check how the page adds characters up into a preferred width.
+                vector.samples = new List<SampleVector>();
+                foreach (string sample in new[] { "ct", "solid word", "NK", "a \"quoted\" back\\slash", "gr\u00fc\u00dfe" })
+                    vector.samples.Add(new SampleVector
+                        { text = sample, preferred = Round4(text.GetPreferredValues(sample).x * scale) });
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(go);
+            }
+            return vector;
+        }
+
+        static string StripTags(string text) => System.Text.RegularExpressions.Regex.Replace(text ?? "", "<[^>]*>", "");
+
+        static double Round4(float value) => Math.Round(value, 4);
+
         static TMP_FontAsset Font(string name) =>
             AssetDatabase.LoadAssetAtPath<TMP_FontAsset>($"Assets/Fonts/{name} SDF.asset");
 
@@ -216,7 +336,7 @@ namespace LowercaseUppercase.Editor
         {
             foreach (Renderer renderer in built.GetComponentsInChildren<Renderer>(false))
             {
-                if (!renderer.enabled) continue;
+                if (!renderer.enabled || !renderer.gameObject.activeInHierarchy) continue;
                 Transform transform = renderer.transform;
                 var part = new PartVector
                 {
@@ -232,7 +352,7 @@ namespace LowercaseUppercase.Editor
                 var text = renderer.GetComponent<TMP_Text>();
                 if (text != null)
                 {
-                    // Nothing laid out (an arrow waiting in its launcher's pool) leaves textBounds meaningless.
+                    // Text with nothing laid out leaves textBounds meaningless.
                     if (text.text.Length == 0 || text.textInfo.characterCount == 0 ||
                         text.textBounds.size.x <= 0f || text.textBounds.size.x > 100000f) continue;
                     part.shape = "text";
@@ -284,6 +404,52 @@ namespace LowercaseUppercase.Editor
             public Limits limits;
             public List<CodeVector> codes;
             public List<LayoutVector> layouts;
+            public List<FontVector> fonts;
+        }
+
+        [Serializable]
+        class FontVector
+        {
+            public string name;
+            /// <summary>Lines per pixel of font size, y upwards from the baseline.</summary>
+            public double ascentLine;
+            public double descentLine;
+            public double meanLine;
+            public double capLine;
+            public double lineHeight;
+            public List<CharacterVector> characters;
+            public List<SampleVector> samples;
+            public List<KerningVector> kerning;
+        }
+
+        [Serializable]
+        class KerningVector
+        {
+            public string pair;
+            /// <summary>Added to the first character's advance, per pixel of font size.</summary>
+            public double advance;
+        }
+
+        [Serializable]
+        class SampleVector
+        {
+            public string text;
+            /// <summary>TextMesh Pro's preferred width, per pixel of font size.</summary>
+            public double preferred;
+        }
+
+        [Serializable]
+        class CharacterVector
+        {
+            public string character;
+            public double advance;
+            /// <summary>TextMesh Pro's preferred width of the character alone.</summary>
+            public double preferred;
+            public bool visible;
+            public double inkLeft;
+            public double inkRight;
+            public double inkBottom;
+            public double inkTop;
         }
 
         [Serializable]
