@@ -82,6 +82,7 @@ namespace LowercaseUppercase.Tests
         public void ClickingAWordEditsItAndEscapeRestoresIt()
         {
             editor.ClickAt(new Vector2(120f, 505f));
+            editor.ClickAt(new Vector2(120f, 505f));
             Assert.That(editor.Typing, Is.SameAs(editor.Level.pieces[0]));
 
             editor.Backspace();
@@ -113,6 +114,99 @@ namespace LowercaseUppercase.Tests
 
             Assert.That(enemy.transform.position, Is.EqualTo(start));
             Assert.That(enemy.GetComponent<EnemyWalk>().enabled, Is.False);
+        }
+
+        static PaletteItem Tool(string name) => EditorPalette.All.First(i => i.Name == name);
+
+        [Test]
+        public void ThingsDropOntoTheWordTheyArePutOn()
+        {
+            editor.palette.Select(Tool("checkpoint"));
+            CustomPiece checkpoint = editor.Place(Tool("checkpoint"), new Vector2(200f, 480f));
+            Assert.That(checkpoint.y, Is.EqualTo(520f));
+        }
+
+        [Test]
+        public void WithAThingToolAClickOnAWordPlacesTheThing()
+        {
+            editor.palette.Select(Tool("walker"));
+            editor.ClickAt(new Vector2(200f, 525f));
+
+            Assert.That(editor.Level.pieces.Count, Is.EqualTo(2));
+            Assert.That(editor.Selected.kind, Is.EqualTo(CustomPieceType.Walker));
+            Assert.That(editor.Selected.y, Is.EqualTo(520f));
+        }
+
+        [Test]
+        public void WithAThingToolAClickOnAThingSelectsIt()
+        {
+            editor.palette.Select(Tool("walker"));
+            editor.ClickAt(new Vector2(200f, 480f));
+            CustomPiece walker = editor.Selected;
+            editor.Deselect();
+
+            editor.ClickAt(new Vector2(204f, 505f));
+            Assert.That(editor.Selected, Is.SameAs(walker));
+            Assert.That(editor.Level.pieces.Count, Is.EqualTo(2));
+        }
+
+        [Test]
+        public void ThePanelStepsTheSelectedPiece()
+        {
+            editor.palette.Select(Tool("hyphen bridge"));
+            editor.ClickAt(new Vector2(800f, 520f));
+            TypeWord("----");
+            editor.Commit();
+
+            Assert.That(editor.panel.Piece, Is.SameAs(editor.Selected));
+            Assert.That(editor.panel.Properties[1].Label, Is.EqualTo("kind"));
+            Assert.That(editor.Selected.kind, Is.EqualTo(CustomPieceType.Plank));
+            editor.panel.Properties[1].Step(editor.Selected, 1);
+            Assert.That(editor.Selected.kind, Is.EqualTo(CustomPieceType.Solid));
+        }
+
+        [Test]
+        public void ThePanelsButtonsCanBeClicked()
+        {
+            editor.palette.Select(Tool("comma hooks"));
+            editor.ClickAt(new Vector2(800f, 300f));
+            Assert.That(editor.Selected.count, Is.EqualTo(3));
+
+            editor.ClickHud(editor.panel.moreButtons[0].GetComponent<Renderer>().bounds.center);
+            Assert.That(editor.Selected.count, Is.EqualTo(4));
+
+            editor.ClickHud(editor.panel.deleteButton.GetComponent<Renderer>().bounds.center);
+            Assert.That(editor.Selected, Is.Null);
+            Assert.That(editor.Level.pieces.Count, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void DoubleClickingAWordEditsIt()
+        {
+            editor.ClickAt(new Vector2(120f, 505f));
+            Assert.That(editor.Typing, Is.Null);
+            Assert.That(editor.Selected, Is.SameAs(editor.Level.pieces[0]));
+            editor.ClickAt(new Vector2(120f, 505f));
+            Assert.That(editor.Typing, Is.SameAs(editor.Level.pieces[0]));
+        }
+
+        [Test]
+        public void AnExclamationMarkInLooseLettersHidesARiser()
+        {
+            editor.palette.Select(Tool("loose letters (! marks a riser)"));
+            editor.ClickAt(new Vector2(800f, 520f));
+            TypeWord("ab!c");
+            editor.Commit();
+            Assert.That(editor.Level.pieces.Last().text, Is.EqualTo("ab\u00a1c"));
+            Assert.That(editor.Preview.GetComponentsInChildren<EnemyRise>(true).Length, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void TheStartCanBeSelected()
+        {
+            editor.ClickAt(new Vector2(110f, 500f));
+            Assert.That(editor.StartSelected, Is.True);
+            Assert.That(editor.panel.title.text, Is.EqualTo("letter start"));
         }
     }
 }

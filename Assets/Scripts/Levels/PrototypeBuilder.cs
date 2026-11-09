@@ -350,8 +350,14 @@ namespace LowercaseUppercase.Levels
         static Transform BeginScene(string path, string levelName, bool ruledLines = true)
         {
             levelCheckpoints.Clear(); // In case an earlier build stopped part way.
-            AssetDatabase.DeleteAsset(path);
-            AssetDatabase.CopyAsset(TemplateScene, path);
+            // An existing scene is overwritten in place, so it keeps its .meta and guid, which the build settings
+            // refer to. Deleting and copying would give it a new guid on every rebuild.
+            if (System.IO.File.Exists(path))
+            {
+                System.IO.File.Copy(TemplateScene, path, overwrite: true);
+                AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
+            }
+            else AssetDatabase.CopyAsset(TemplateScene, path);
             EditorSceneManager.OpenScene(path);
 
             Camera camera = Camera.main;
