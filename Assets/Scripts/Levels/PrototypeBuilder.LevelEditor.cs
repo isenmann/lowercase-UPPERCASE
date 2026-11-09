@@ -74,6 +74,9 @@ namespace LowercaseUppercase.Levels
             };
             foreach (SpriteRenderer line in editor.selectionLines) line.enabled = false;
 
+            editor.handleMark = Rect(selection, "Handle", Vector2.zero, Vector2.one * Size(12f), Player, 23);
+            editor.handleMark.enabled = false;
+
             Transform hud = BuildEditorHud(editor);
             hud.SetParent(camera.transform, true);
             camera.gameObject.AddComponent<ScreenFit>().hud = hud;

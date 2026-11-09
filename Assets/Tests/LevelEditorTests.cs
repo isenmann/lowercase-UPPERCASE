@@ -208,5 +208,53 @@ namespace LowercaseUppercase.Tests
             Assert.That(editor.StartSelected, Is.True);
             Assert.That(editor.panel.title.text, Is.EqualTo("letter start"));
         }
+
+        [Test]
+        public void ALiftsTopIsDraggedByItsHandle()
+        {
+            CustomPiece lift = editor.Place(Tool("lift"), new Vector2(1600f, 520f));
+            Assert.That(editor.HandleAt(new Vector2(1663f, 220f)), Is.Not.Null);
+
+            editor.DragHandleTo(new Vector2(1663f, 304f));
+            Assert.That(lift.y2, Is.EqualTo(304f));
+            // Never lower than the shortest lift, never above the page.
+            editor.DragHandleTo(new Vector2(1663f, 500f));
+            Assert.That(lift.y2, Is.EqualTo(520f - PieceHandles.MinLiftPx));
+            editor.DragHandleTo(new Vector2(1663f, 0f));
+            Assert.That(lift.y2, Is.EqualTo(PieceHandles.HighestLiftTopPx));
+        }
+
+        [Test]
+        public void AHookRowGrowsByItsHandle()
+        {
+            CustomPiece hooks = editor.Place(Tool("comma hooks"), new Vector2(800f, 240f));
+            editor.DragHandleTo(new Vector2(800f + 4f * PieceHandles.HookSpacingPx + 40f, 240f));
+            Assert.That(hooks.count, Is.EqualTo(5));
+            Assert.That(editor.Preview.GetComponentsInChildren<WordBlock>().Count(w => w.kind == WordKind.Comma),
+                Is.EqualTo(5));
+        }
+
+        [Test]
+        public void StretchesAndFliersAreSizedByTheirHandles()
+        {
+            CustomPiece caps = editor.Place(Tool("Caps Lock stretch"), new Vector2(1000f, 300f));
+            editor.DragHandleTo(new Vector2(1400f, 352f));
+            Assert.That(caps.x2, Is.EqualTo(1400f));
+
+            CustomPiece flier = editor.Place(Tool("flier"), new Vector2(600f, 300f));
+            editor.DragHandleTo(new Vector2(840f, 300f));
+            Assert.That(flier.value, Is.EqualTo(240f));
+        }
+
+        [Test]
+        public void MovingALiftKeepsItsHeight()
+        {
+            CustomPiece lift = editor.Place(Tool("lift"), new Vector2(1600f, 520f));
+            float height = lift.y - lift.y2;
+            editor.MoveSelectedBy(new Vector2(80f, -40f));
+            Assert.That(lift.x, Is.EqualTo(1680f));
+            Assert.That(lift.y, Is.EqualTo(480f));
+            Assert.That(lift.y - lift.y2, Is.EqualTo(height));
+        }
     }
 }

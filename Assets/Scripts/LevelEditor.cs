@@ -33,6 +33,11 @@ namespace LowercaseUppercase
         const float DoubleClickSeconds = 0.35f;
         // Faint see-through parts, such as the Caps Lock stretch's tint, don't count for clicking.
         const float FaintAlpha = 0.1f;
+        const float HandleReachPx = 14f;
+        const float LinkLinePx = 2f;
+        static readonly Color DoorLinkColor = new Color(0.36f, 0.83f, 0.96f, 0.5f);
+        static readonly Color KeyLinkColor = new Color(1f, 0.54f, 0.24f, 0.5f);
+        static readonly Color HandleLineColor = new Color(1f, 0.82f, 0.25f, 0.6f);
 
         public Camera view;
         public Transform grid;
@@ -43,6 +48,8 @@ namespace LowercaseUppercase
         public SpriteRenderer[] selectionLines;
         public LevelEditorPalette palette;
         public LevelEditorPanel panel;
+        [Tooltip("The square drawn on the selected piece's handle.")]
+        public SpriteRenderer handleMark;
 
         [Header("HUD")]
         public TMP_Text readout;
@@ -82,6 +89,10 @@ namespace LowercaseUppercase
 
         CustomPiece lastClicked;
         float lastClickTime = -1f;
+
+        bool draggingHandle;
+        readonly List<SpriteRenderer> lines = new List<SpriteRenderer>();
+        int linesUsed;
 
         /// <summary>A fresh level: one word to stand on where the letter starts.</summary>
         public static CustomLevelData NewLevel()
@@ -145,7 +156,8 @@ namespace LowercaseUppercase
             {
                 if (mouse.leftButton.wasPressedThisFrame) Press(world, px, snapped, overHud);
                 if (dragging && mouse.leftButton.isPressed) DragTo(snapped);
-                if (!mouse.leftButton.isPressed) dragging = false;
+                if (draggingHandle && mouse.leftButton.isPressed) DragHandleTo(snapped);
+                if (!mouse.leftButton.isPressed) dragging = draggingHandle = false;
             }
 
             if (Typing != null) TypeKeys(keyboard);
@@ -155,6 +167,7 @@ namespace LowercaseUppercase
             FollowCameraWithGrid();
             PlaceCaret();
             DrawSelection();
+            DrawMarks();
         }
 
         void Pan(Keyboard keyboard, Mouse mouse)
@@ -214,7 +227,7 @@ namespace LowercaseUppercase
         {
             Vector2 world = World(px);
             Press(world, px, new Vector2(Snap(px.x), Snap(px.y)), overHud: false);
-            dragging = false;
+            dragging = draggingHandle = false;
         }
 
         /// <summary>A left click in the HUD at a world position: the palette or the panel.</summary>
@@ -229,6 +242,12 @@ namespace LowercaseUppercase
             }
 
             if (Typing != null) Commit();
+
+            if (HandleAt(px) != null)
+            {
+                draggingHandle = true;
+                return;
+            }
 
             bool doubleClick = false;
             if (StartAt(world))
@@ -333,6 +352,16 @@ namespace LowercaseUppercase
             return piece;
         }
 
+        /// <summary>Moves the selection by an offset in page pixels, as one drag would.</summary>
+        public void MoveSelectedBy(Vector2 delta)
+        {
+            if (Selected == null && !StartSelected) return;
+            dragOrigin = StartSelected
+                ? new Vector4(Level.startX, Level.startY, 0f, 0f)
+                : new Vector4(Selected.x, Selected.y, Selected.x2, Selected.y2);
+            MoveBy(delta);
+        }
+
         void DragTo(Vector2 snapped)
         {
             Vector2 delta = snapped - dragFrom;
@@ -359,6 +388,81 @@ namespace LowercaseUppercase
                 if (EditorPalette.Stands(Selected)) DropOntoWord(Selected);
             }
             Rebuild();
+        }
+
+        // ---------------------------------------------------------------- handles
+
+        /// <summary>The selected piece's handle if a page position is on it, or null.</summary>
+        public PieceHandle HandleAt(Vector2 px)
+        {
+            if (Selected == null) return null;
+            PieceHandle handle = PieceHandles.For(Selected);
+            return handle != null && Vector2.Distance(handle.At, px) <= HandleReachPx ? handle : null;
+        }
+
+        /// <summary>Drags the selected piece's handle to a page position, snapped to the grid.</summary>
+        public void DragHandleTo(Vector2 snapped)
+        {
+            if (Selected == null) return;
+            PieceHandle handle = PieceHandles.For(Selected);
+            if (handle == null) return;
+            var before = new Vector4(Selected.x2, Selected.y2, Selected.count, Selected.value);
+            handle.MoveTo(Selected, snapped);
+            if (before != new Vector4(Selected.x2, Selected.y2, Selected.count, Selected.value)) Rebuild();
+        }
+
+        /// <summary>
+        /// The lines the editor draws over the level: which door each plate opens and which stretch each key
+        /// unlocks, always; and the selected piece's handle.
+        /// </summary>
+        void DrawMarks()
+        {
+            linesUsed = 0;
+            if (Preview != null)
+            {
+                foreach (WordBlock plate in Preview.GetComponentsInChildren<WordBlock>())
+                    if (plate.kind == WordKind.Period && plate.linkedDoor != null)
+                        DrawLine(Centre(plate.transform), Centre(plate.linkedDoor.transform), DoorLinkColor);
+                foreach (CapsLockKey key in Preview.GetComponentsInChildren<CapsLockKey>(true))
+                    if (key.zone != null && key.zone.label != null)
+                        DrawLine(Centre(key.transform), Centre(key.zone.label.transform), KeyLinkColor);
+            }
+
+            PieceHandle handle = Selected != null ? PieceHandles.For(Selected) : null;
+            if (handle != null)
+            {
+                DrawLine(World(handle.From), World(handle.At), HandleLineColor);
+                handleMark.transform.position = World(handle.At);
+            }
+            if (handleMark != null) handleMark.enabled = handle != null;
+
+            for (int i = linesUsed; i < lines.Count; i++) lines[i].enabled = false;
+        }
+
+        static Vector2 Centre(Transform part)
+        {
+            Renderer shape = part.GetComponent<Renderer>();
+            return shape != null && shape.bounds.size != Vector3.zero ? (Vector2)shape.bounds.center : (Vector2)part.position;
+        }
+
+        void DrawLine(Vector2 from, Vector2 to, Color color)
+        {
+            if (linesUsed == lines.Count)
+            {
+                var go = new GameObject("Mark Line");
+                go.transform.SetParent(transform, false);
+                var line = go.AddComponent<SpriteRenderer>();
+                line.sprite = white;
+                line.sortingOrder = 19;
+                lines.Add(line);
+            }
+            SpriteRenderer mark = lines[linesUsed++];
+            mark.enabled = true;
+            mark.color = color;
+            Vector2 along = to - from;
+            mark.transform.position = (from + to) * 0.5f;
+            mark.transform.rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(along.y, along.x) * Mathf.Rad2Deg);
+            mark.transform.localScale = new Vector3(along.magnitude, LinkLinePx / PixelsPerUnit, 1f);
         }
 
         // ---------------------------------------------------------------- selection
@@ -725,11 +829,13 @@ namespace LowercaseUppercase
             string where = $"x {snapped.x:0}  y {snapped.y:0}";
             string what;
             PaletteItem hovered = overHud ? palette.ItemAt(world) : null;
-            if (Typing != null) what = "typing: Enter places it, Esc cancels";
+            if (Typing != null) what = "typing  ·  Enter places  ·  Esc cancels";
             else if (hovered != null) what = hovered.Name;
-            else if (Selected != null) what = $"{EditorPalette.NameOf(Selected)}: drag to move, Delete removes it";
-            else if (palette.Current.Typed) what = $"click to type: {palette.Current.Name}, or click a word to pick it";
-            else what = $"click to place: {palette.Current.Name}";
+            else if (Selected != null && PieceHandles.For(Selected) != null)
+                what = $"{EditorPalette.NameOf(Selected)}  ·  drag to move  ·  the square stretches  ·  Del removes";
+            else if (Selected != null) what = $"{EditorPalette.NameOf(Selected)}  ·  drag to move  ·  Del removes";
+            else if (palette.Current.Typed) what = $"click: type a {palette.Current.Name}  ·  click a word to pick it";
+            else what = $"click: place a {palette.Current.Name}";
             readout.text = $"{where}   {what}";
         }
     }
