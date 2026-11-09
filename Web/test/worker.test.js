@@ -109,6 +109,8 @@ test("the server does its own check and stores nothing bad", async () => {
   await expectReply(send("POST", "hello letters"), 400, { error: "NotACode" });
   await expectReply(send("POST", CODE_A.slice(0, -7)), 400, { error: "Damaged" });
   await expectReply(send("POST", makeCode(makeLevel({ version: 2 }))), 400, { error: "UnknownVersion" });
+  await expectReply(send("POST", makeCode(makeLevel({ missingLetter: "b" }))), 400, { error: "InvalidLevel" });
+  await expectReply(send("POST", makeCode(makeLevel(), { finished: false })), 400, { error: "NotFinished" });
   await expectReply(send("POST", CODE_A + " ".repeat(MAX_BODY_LENGTH)), 400, { error: "TooBig" });
   await expectReply(send("GET"), 200, { codes: [], next: null });
 });
