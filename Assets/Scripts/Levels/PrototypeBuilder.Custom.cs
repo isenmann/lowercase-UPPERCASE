@@ -155,8 +155,10 @@ namespace LowercaseUppercase.Levels
                 case CustomPieceType.Wind:
                 {
                     float right = piece.x2 > piece.x ? piece.x2 : piece.x + DefaultWindPx;
+                    // y2 is the top of a box whose bottom is y; 0 blows the whole height of the page.
+                    float boxTop = piece.y2 != 0f ? Mathf.Min(piece.y2, piece.y - MinWindBoxPx) : 0f;
                     WindStretch(level, piece.x, right, piece.flip, Mathf.Clamp(Value(piece, 3f), 0.5f, 8f),
-                        Mathf.Max(0f, piece.delay));
+                        Mathf.Max(0f, piece.delay), boxTop, piece.y2 != 0f ? piece.y : 0f);
                     return right;
                 }
 

@@ -200,41 +200,61 @@ namespace LowercaseUppercase.Levels
         }
 
         const float WindTopPx = 64f;
-        const float WindHeightPx = 576f;
-        const float WindFirstRowPx = 120f;
+        const float WindBottomPx = 640f;
+        const float WindFullMarksBottomPx = 544f; // A full-height wind leaves out the rows under the ground.
         const float WindRowPx = 96f;
-        const int WindRows = 5;
         const float WindMarkSpacingPx = 160f;
+        const float WindBoxRowPx = 48f;         // A box is filled more densely, so its marks show where it ends.
+        const float WindBoxMarkSpacingPx = 80f;
+        const float WindMarkDropPx = 10f;       // From the middle of a row down to the marks' baseline: » is 20 px tall.
+        const float WindMarkWidthPx = 22f;      // The ink of », from the mark's left edge.
+        const float WindFadePx = 43f;           // How far from each end the marks fade in and out.
+        const float WindBoxFadePx = 12f;
+        public const float WindBoxReachPx = 8f; // A box reaches this far under its bottom, so a letter standing there is in it.
+        public const float MinWindBoxPx = 96f;
 
         /// <summary>
-        /// Wind blowing sideways from leftPx to rightPx, the whole height of the page, like a Caps Lock stretch. Its
-        /// marks are » (« when it blows left) in staggered rows, which drift with it in play.
+        /// Wind blowing sideways from leftPx to rightPx: the whole height of the page like a Caps Lock stretch, or a
+        /// box from topPx to bottomPx when they are given. Its marks are » (« when it blows left) in staggered rows
+        /// that fill it, and they drift with it in play.
         /// </summary>
         static Wind WindStretch(Transform level, float leftPx, float rightPx, bool blowsLeft = false,
-            float strength = 3f, float gustSeconds = 0f)
+            float strength = 3f, float gustSeconds = 0f, float topPx = 0f, float bottomPx = 0f)
         {
+            bool boxed = bottomPx > topPx;
+            float top = boxed ? topPx : WindTopPx;
+            float bottom = boxed ? bottomPx + WindBoxReachPx : WindBottomPx;
+
             var zoneObject = new GameObject("Wind");
             zoneObject.transform.SetParent(level, false);
             zoneObject.layer = LayerMask.NameToLayer("Level");
             float widthPx = rightPx - leftPx;
-            zoneObject.transform.position = new Vector3(X(leftPx + widthPx * 0.5f), Y(WindTopPx + WindHeightPx * 0.5f), 0f);
+            zoneObject.transform.position = new Vector3(X(leftPx + widthPx * 0.5f), Y((top + bottom) * 0.5f), 0f);
             var trigger = zoneObject.AddComponent<BoxCollider2D>();
             trigger.isTrigger = true;
-            trigger.size = new Vector2(Size(widthPx), Size(WindHeightPx));
+            trigger.size = new Vector2(Size(widthPx), Size(bottom - top));
 
             var wind = zoneObject.AddComponent<Wind>();
             wind.direction = blowsLeft ? -1f : 1f;
             wind.strength = strength;
             wind.gustSeconds = gustSeconds;
+            wind.markWidth = Size(WindMarkWidthPx);
+            wind.markFade = Size(boxed ? WindBoxFadePx : WindFadePx);
 
             var marks = new List<TextMeshPro>();
             string glyph = blowsLeft ? "\u00ab" : "\u00bb";
-            // Spaced to fit the width a whole number of times, so the marks stay evenly spread as they wrap around.
-            int perRow = Mathf.Max(1, Mathf.FloorToInt(widthPx / WindMarkSpacingPx + 0.5f)); // Halves up, as the web page rounds.
-            float spacing = widthPx / perRow;
-            for (int row = 0; row < WindRows; row++)
+            // Spaced to fit the width and height a whole number of times, so the marks fill it evenly and stay evenly
+            // spread as they wrap around. A mark's left edge runs over the width less its own, so all of it stays
+            // inside. Halves round up, as the web page rounds them.
+            float marksBottom = boxed ? bottomPx : WindFullMarksBottomPx;
+            int rows = Mathf.Max(1, Mathf.FloorToInt((marksBottom - top) / (boxed ? WindBoxRowPx : WindRowPx) + 0.5f));
+            float rowSpacing = (marksBottom - top) / rows;
+            float runPx = Mathf.Max(1f, widthPx - WindMarkWidthPx);
+            int perRow = Mathf.Max(1, Mathf.FloorToInt(runPx / (boxed ? WindBoxMarkSpacingPx : WindMarkSpacingPx) + 0.5f));
+            float spacing = runPx / perRow;
+            for (int row = 0; row < rows; row++)
             {
-                float baseline = WindFirstRowPx + row * WindRowPx;
+                float baseline = top + (row + 0.5f) * rowSpacing + WindMarkDropPx;
                 for (int i = 0; i < perRow; i++)
                 {
                     float x = leftPx + (i + (row % 2 == 0 ? 0.25f : 0.75f)) * spacing;

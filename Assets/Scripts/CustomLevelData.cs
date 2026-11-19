@@ -165,9 +165,9 @@ namespace LowercaseUppercase
         /// <summary>The key that switches off the nearest Caps Lock stretch. y = its baseline.</summary>
         public const string CapsKey = "capsKey";
         /// <summary>
-        /// Wind from x to x2 (x + 600), the whole height of the page. It blows right, or left with flip. value = its
-        /// strength, how fast it carries a standing a (3); delay = gust seconds, blowing that long then calm as long
-        /// (0 blows steadily).
+        /// Wind from x to x2 (x + 600). y2 = the top of a box whose bottom is y; 0 = the whole height of the page. It
+        /// blows right, or left with flip. value = its strength, how fast it carries a standing a (3); delay = gust
+        /// seconds, blowing that long then calm as long (0 blows steadily).
         /// </summary>
         public const string Wind = "wind";
         /// <summary>Scenery: a hill of count rows (3) standing on the ground.</summary>

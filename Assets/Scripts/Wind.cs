@@ -26,6 +26,8 @@ namespace LowercaseUppercase
         public float markSpeedShare = 1.2f;
         [Tooltip("Units at either end of the zone where the marks fade in and out.")]
         public float markFade = 0.6f;
+        [Tooltip("How wide a mark is, units: its left edge wraps around before the mark sticks out of the zone.")]
+        public float markWidth = 0.3f;
 
         /// <summary>The wind's speed this physics step, signed: positive blows right. 0 while a gust is calm.</summary>
         public float Speed => direction * strength * Blowing;
@@ -60,7 +62,7 @@ namespace LowercaseUppercase
         void Update()
         {
             float left = transform.position.x + box.offset.x - box.size.x * 0.5f;
-            float width = box.size.x;
+            float width = Mathf.Max(0.01f, box.size.x - markWidth);
             float step = Speed * markSpeedShare * Time.deltaTime;
             if (markAlpha == null || markAlpha.Length != (marks?.Length ?? 0)) ReadMarkAlphas();
             for (int i = 0; i < marks.Length; i++)

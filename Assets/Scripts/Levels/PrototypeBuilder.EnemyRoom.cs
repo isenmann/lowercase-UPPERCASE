@@ -123,6 +123,8 @@ namespace LowercaseUppercase.Levels
             return x;
         }
 
+        const float LowWindPx = 240f;
+        const float LowWindHeightPx = 96f;
         const float WindPitPx = 500f; // Wider than a can jump, narrower than a jumps with the wind behind it.
 
         /// <summary>
@@ -141,6 +143,14 @@ namespace LowercaseUppercase.Levels
             Note(level, left + 40f, 200f, "wind blows a away, A walks through it");
             x += WordGap;
             Floor(level, "out", ref x);
+            PlaceCheckpoint(level, x - 60f, Ground);
+
+            // A box of wind along the floor only: a jumps over it, A walks through.
+            float lowLeft = x;
+            WordBlock low = Word(level, "low wind: jump it as a", x, Ground, 72f);
+            x = RightEdge(low) + WordGap;
+            float boxLeft = lowLeft + 360f;
+            WindStretch(level, boxLeft, boxLeft + LowWindPx, blowsLeft: true, topPx: Ground - LowWindHeightPx, bottomPx: Ground);
             PlaceCheckpoint(level, x - 60f, Ground);
 
             x = TailwindPit(level, x, "tailwind", "and land", 0f);

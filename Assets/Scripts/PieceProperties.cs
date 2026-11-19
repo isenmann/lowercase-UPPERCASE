@@ -66,6 +66,8 @@ namespace LowercaseUppercase
                     break;
                 case CustomPieceType.Wind:
                     list.Add(Number("width", p => p.x2 > p.x ? p.x2 - p.x : 600f, (p, v) => p.x2 = p.x + v, 80f, 160f, 4000f, 600f, "0 px"));
+                    list.Add(new PieceProperty("height", p => p.y2 != 0f ? $"{p.y - p.y2:0} px" : "full",
+                        (p, direction) => StepWindHeight(p, direction)));
                     list.Add(Facing("blows"));
                     list.Add(Number("strength", p => p.value, (p, v) => p.value = v, 0.5f, 0.5f, 8f, 3f, "0.0"));
                     list.Add(new PieceProperty("gusts", p => p.delay > 0f ? p.delay.ToString("0.0 s", System.Globalization.CultureInfo.InvariantCulture) : "steady",
@@ -122,6 +124,23 @@ namespace LowercaseUppercase
                     list.Add(Number("speed", p => p.value, (p, v) => p.value = v, 0.5f, 1f, 8f, 3.5f, "0.0"));
                     break;
             }
+        }
+
+        const float WindHeightStepPx = 48f;
+        const float WindFullTopPx = 64f;
+
+        /// <summary>
+        /// A wind's height: "full" is the whole page; one step down makes it a box over its bottom (y), as tall as
+        /// the page allows less a step, and stepping up past that makes it full again.
+        /// </summary>
+        static void StepWindHeight(CustomPiece p, int direction)
+        {
+            float tallest = p.y - WindFullTopPx;
+            float lowest = Levels.PrototypeBuilder.MinWindBoxPx;
+            float height = p.y2 != 0f ? p.y - p.y2 : tallest + WindHeightStepPx;
+            height += direction * WindHeightStepPx;
+            if (height > tallest || tallest < lowest) p.y2 = 0f;
+            else p.y2 = p.y - Mathf.Max(lowest, height);
         }
 
         // ---------------------------------------------------------------- kinds of row

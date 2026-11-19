@@ -35,6 +35,9 @@ namespace LowercaseUppercase
         const float LiftCentrePx = 63f;     // The "up" word starts 20 px in and is about 86 px wide.
         const float CapsLockMiddlePx = 352f;
         const float CursorMarkAbovePx = 60f;
+        const float WindFullTopPx = 64f;
+        const float WindFullBottomPx = 640f;
+        const float WindFullSnapPx = 24f;   // A wind's corner dragged this close to the top blows the whole height.
 
         public static PieceHandle For(CustomPiece piece)
         {
@@ -62,9 +65,18 @@ namespace LowercaseUppercase
                 }
                 case CustomPieceType.Wind:
                 {
+                    // The top right corner: dragging it sets the width and, below the top of the page, makes the
+                    // wind a box over its bottom, y. Back up at the top it blows the whole height again.
                     float right = piece.x2 > piece.x ? piece.x2 : piece.x + 600f;
-                    return new PieceHandle(new Vector2(piece.x, CapsLockMiddlePx), new Vector2(right, CapsLockMiddlePx),
-                        (p, at) => p.x2 = Mathf.Max(at.x, p.x + MinStretchPx));
+                    bool boxed = piece.y2 != 0f;
+                    var from = new Vector2(piece.x, boxed ? piece.y : WindFullBottomPx);
+                    var corner = new Vector2(right, boxed ? piece.y2 : WindFullTopPx);
+                    return new PieceHandle(from, corner, (p, at) =>
+                    {
+                        p.x2 = Mathf.Max(at.x, p.x + MinStretchPx);
+                        p.y2 = at.y <= WindFullTopPx + WindFullSnapPx ? 0f
+                            : Mathf.Min(at.y, p.y - Levels.PrototypeBuilder.MinWindBoxPx);
+                    });
                 }
                 case CustomPieceType.Hooks:
                 {

@@ -133,6 +133,11 @@ namespace LowercaseUppercase.Editor
                 x += piece.type == CustomPieceType.CapsLock ? 1000f : piece.type == CustomPieceType.Wind ? 800f : 360f;
             }
 
+            // A wind box too, besides the palette's full-height wind.
+            level.pieces.Add(new CustomPiece(CustomPieceType.Word, x - 60f, CustomLevelData.GroundPx, "ground", CustomPieceType.Solid));
+            level.pieces.Add(new CustomPiece(CustomPieceType.Wind, x, CustomLevelData.GroundPx)
+                { x2 = x + 400f, y2 = CustomLevelData.GroundPx - 200f, flip = true });
+
             level.MarkFinished();
             return level;
         }

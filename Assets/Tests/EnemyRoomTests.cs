@@ -465,6 +465,56 @@ namespace LowercaseUppercase.Tests
             Assert.IsFalse(landed[0], "The pit should be too wide for a plain jump, or the wind isn't needed.");
         }
 
+        /// <summary>The pen's wind box along the floor: the only wind lower than the page.</summary>
+        static Bounds LowWind() =>
+            All<Wind>().Select(w => w.GetComponent<BoxCollider2D>().bounds).Single(b => b.size.y < 3f);
+
+        /// <summary>Runs at the low wind from 3 units before it, jumping or growing if asked; true if it got past.</summary>
+        IEnumerator CrossTheLowWind(bool jump, bool shift, bool[] passed)
+        {
+            Bounds wind = LowWind();
+            Bounds floor = WordBounds("low wind: jump it as a");
+            PlaceLetterAt(new Vector2(wind.min.x - 3f, floor.max.y + 0.02f));
+            yield return WaitUntil(() => letter.IsGrounded);
+            letter.SetInput(1f, false, shift);
+            if (jump)
+            {
+                yield return WaitUntil(() => letter.transform.position.x > wind.min.x - 0.6f);
+                letter.PressJump();
+                letter.SetInput(1f, true, shift);
+            }
+            for (int i = 0; i < 300 && letter.transform.position.x < wind.max.x + 0.6f; i++)
+                yield return new WaitForFixedUpdate();
+            passed[0] = letter.transform.position.x >= wind.max.x + 0.6f;
+        }
+
+        [UnityTest]
+        public IEnumerator TheLowWindPushesAWalkingLowercaseBack()
+        {
+            yield return Load();
+            var passed = new bool[1];
+            yield return CrossTheLowWind(false, false, passed);
+            Assert.IsFalse(passed[0], "a walking into the low wind should be pushed back.");
+        }
+
+        [UnityTest]
+        public IEnumerator LowercaseJumpsOverTheLowWind()
+        {
+            yield return Load();
+            var passed = new bool[1];
+            yield return CrossTheLowWind(true, false, passed);
+            Assert.IsTrue(passed[0], "a should clear a wind that only blows along the floor.");
+        }
+
+        [UnityTest]
+        public IEnumerator UppercaseWalksThroughTheLowWind()
+        {
+            yield return Load();
+            var passed = new bool[1];
+            yield return CrossTheLowWind(false, true, passed);
+            Assert.IsTrue(passed[0], "A should walk through the low wind.");
+        }
+
         [UnityTest]
         public IEnumerator GustsComeAndGo()
         {

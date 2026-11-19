@@ -59,10 +59,15 @@ const PUNCTUATION = new Set(["spring", COMMA, "hyphen", "period", "power"]);
 const RISER_MARK = "¡";
 const FLOAT_RISE_PX = 270;
 const DEFAULT_WIND_PX = 600;
-const WIND_FIRST_ROW_PX = 120;
+const WIND_TOP_PX = 64;
+const WIND_FULL_MARKS_BOTTOM_PX = 544;
 const WIND_ROW_PX = 96;
-const WIND_ROWS = 5;
 const WIND_MARK_SPACING_PX = 160;
+const WIND_BOX_ROW_PX = 48;
+const WIND_BOX_MARK_SPACING_PX = 80;
+const WIND_MARK_DROP_PX = 10;
+const WIND_MARK_WIDTH_PX = 22;
+const MIN_WIND_BOX_PX = 96;
 const BRICK_LETTERS = "b\nr\ni\nc\nk\nb\nr\ni\nc\nk";
 const STICKY_LETTERS = "s\nt\ni\nc\nk\ny";
 const DOOR_LETTERS = "d\no\no\nr\nd\no\no\nr";
@@ -311,7 +316,14 @@ class Builder {
       case "wind": {
         const x2 = number(piece.x2);
         const right = x2 > x ? x2 : x + DEFAULT_WIND_PX;
-        this.wind(parts, x, right, piece.flip === true);
+        // y2 is the top of a box whose bottom is y; 0 blows the whole height of the page.
+        const y2 = number(piece.y2);
+        if (y2 !== 0) {
+          this.wind(parts, x, right, piece.flip === true, Math.min(y2, y - MIN_WIND_BOX_PX), y, true);
+        } else {
+          this.wind(parts, x, right, piece.flip === true, WIND_TOP_PX, WIND_FULL_MARKS_BOTTOM_PX, false);
+        }
+
         return right;
       }
       case "hill":
@@ -510,14 +522,17 @@ class Builder {
     this.zones.push({ middle: (left + right) / 2, label });
   }
 
-  /** Wind's marks in staggered rows, spaced to fit its width a whole number of times (WindStretch). */
-  wind(parts, left, right, blowsLeft) {
-    const width = right - left;
-    const perRow = Math.max(1, Math.round(width / WIND_MARK_SPACING_PX));
-    const spacing = width / perRow;
+  /** Wind's marks in staggered rows, spaced to fit its width and height a whole number of times (WindStretch). */
+  wind(parts, left, right, blowsLeft, top, bottom, boxed) {
+    // A mark's left edge runs over the width less its own, so all of it stays inside; a box is filled more densely.
+    const run = Math.max(1, right - left - WIND_MARK_WIDTH_PX);
+    const rows = Math.max(1, Math.floor((bottom - top) / (boxed ? WIND_BOX_ROW_PX : WIND_ROW_PX) + 0.5));
+    const rowSpacing = (bottom - top) / rows;
+    const perRow = Math.max(1, Math.floor(run / (boxed ? WIND_BOX_MARK_SPACING_PX : WIND_MARK_SPACING_PX) + 0.5));
+    const spacing = run / perRow;
     const glyph = blowsLeft ? "«" : "»";
-    for (let row = 0; row < WIND_ROWS; row++) {
-      const y = WIND_FIRST_ROW_PX + row * WIND_ROW_PX;
+    for (let row = 0; row < rows; row++) {
+      const y = top + (row + 0.5) * rowSpacing + WIND_MARK_DROP_PX;
       for (let i = 0; i < perRow; i++) {
         const x = left + (i + (row % 2 === 0 ? 0.25 : 0.75)) * spacing;
         parts.push(this.text({ text: glyph, font: FONTS.mono, size: 40, color: COLOURS.windMark, x, y, order: -3 }));
