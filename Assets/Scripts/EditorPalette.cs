@@ -60,6 +60,7 @@ namespace LowercaseUppercase
                 new PaletteItem("comma hooks", ",", PaletteLook.Interactive, CustomPieceType.Hooks),
                 new PaletteItem("Caps Lock stretch", "LCK", PaletteLook.Hot, CustomPieceType.CapsLock),
                 new PaletteItem("Caps Lock key", "key", PaletteLook.Player, CustomPieceType.CapsKey),
+                new PaletteItem("wind (blows a away, not A)", "»»", PaletteLook.Interactive, CustomPieceType.Wind),
                 new PaletteItem("checkpoint", ";", PaletteLook.Scenery, CustomPieceType.Checkpoint),
                 new PaletteItem("power block", "[*]", PaletteLook.Interactive, CustomPieceType.Power),
                 new PaletteItem("#", "#", PaletteLook.Player, CustomPieceType.Hash),
@@ -122,6 +123,7 @@ namespace LowercaseUppercase
                 case CustomPieceType.Word when item.Kind == CustomPieceType.Float: piece.y2 = y - 270f; break;
                 case CustomPieceType.Hooks: piece.count = 3; break;
                 case CustomPieceType.CapsLock: piece.x2 = x + 800f; break;
+                case CustomPieceType.Wind: piece.x2 = x + Levels.PrototypeBuilder.DefaultWindPx; break;
                 case CustomPieceType.Hill: piece.count = 3; break;
                 case CustomPieceType.Exit: piece.text = "c_t"; piece.kind = "a"; break;
                 case CustomPieceType.Enemy:

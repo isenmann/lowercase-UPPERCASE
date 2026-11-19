@@ -32,6 +32,7 @@ namespace LowercaseUppercase.Levels
             x = EnemyPen(level, x, "a plain walker", "& stomp it or shoot it", (l, g, px) => BuildEnemy(l, g, px));
             x = SlamPen(level, x);
             x = FloatPen(level, x);
+            x = WindPen(level, x);
             PowerBlock(level, x - 120f, LowPlatform);
             x = EnemyPen(level, x, "a spike walks here", "^ shoot it, don't land on it", (l, g, px) => BuildSpike(l, g, px));
             x = EnemyPen(level, x, "armour walks here", "§ stomp it, asterisks bounce off", (l, g, px) => BuildArmour(l, g, px));
@@ -119,6 +120,44 @@ namespace LowercaseUppercase.Levels
             Floor(level, "and down again", ref x);
             PlaceCheckpoint(level, x - 60f, Ground);
             return x;
+        }
+
+        const float WindPitPx = 500f; // Wider than a can jump, narrower than a jumps with the wind behind it.
+
+        /// <summary>
+        /// Not an enemy but the wind: a headwind over a long word that pushes a back, so it is crossed as A; then a
+        /// pit too wide to jump with a tailwind over it that carries a across; then the same pit with the wind in gusts.
+        /// </summary>
+        static float WindPen(Transform level, float x)
+        {
+            float left = x;
+            Floor(level, "wind", ref x);
+
+            float headLeft = x;
+            WordBlock head = Word(level, "headwind: walk into it as A", x, Ground, 72f);
+            x = RightEdge(head);
+            WindStretch(level, headLeft, x, blowsLeft: true);
+            Note(level, left + 40f, 200f, "wind blows a away, A walks through it");
+            x += WordGap;
+            Floor(level, "out", ref x);
+            PlaceCheckpoint(level, x - 60f, Ground);
+
+            x = TailwindPit(level, x, "tailwind", "and land", 0f);
+            PlaceCheckpoint(level, x - 60f, Ground);
+            x = TailwindPit(level, x, "gusts", "in a gust", 1.5f);
+            PlaceCheckpoint(level, x - 60f, Ground);
+            return x;
+        }
+
+        /// <summary>A take-off word, a pit too wide for a plain jump, a landing, and wind blowing right over the pit.</summary>
+        static float TailwindPit(Transform level, float x, string takeOff, string landing, float gustSeconds)
+        {
+            WordBlock before = Word(level, takeOff, x, Ground, 72f);
+            float pitLeft = RightEdge(before);
+            float pitRight = pitLeft + WindPitPx;
+            WordBlock after = Word(level, landing, pitRight, Ground, 72f);
+            WindStretch(level, x + 40f, pitRight + 80f, gustSeconds: gustSeconds);
+            return RightEdge(after) + WordGap;
         }
 
         /// <summary>One flier over a word, out of reach of a walking letter, and one bobbing up and down in a gap.</summary>

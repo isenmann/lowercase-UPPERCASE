@@ -152,6 +152,14 @@ namespace LowercaseUppercase.Levels
                     CustomCapsKey(level, piece.x, piece.y);
                     return piece.x + 90f;
 
+                case CustomPieceType.Wind:
+                {
+                    float right = piece.x2 > piece.x ? piece.x2 : piece.x + DefaultWindPx;
+                    WindStretch(level, piece.x, right, piece.flip, Mathf.Clamp(Value(piece, 3f), 0.5f, 8f),
+                        Mathf.Max(0f, piece.delay));
+                    return right;
+                }
+
                 case CustomPieceType.Hill:
                     Hill(level, piece.x, Count(piece, 3));
                     return piece.x;
@@ -170,6 +178,7 @@ namespace LowercaseUppercase.Levels
         }
 
         const float ColumnWidthPx = 46f * 0.6f;
+        public const float DefaultWindPx = 600f;
         const string RiserMark = "\u00a1";
 
         /// <summary>0: terrain and things, built first. 1: pieces that find terrain built before them.</summary>

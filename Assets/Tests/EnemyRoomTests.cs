@@ -384,6 +384,98 @@ namespace LowercaseUppercase.Tests
             Assert.That(speedAtLanding, Is.LessThan(-sinking.sinkSpeed * 2f), "A slam should push it down much faster than standing.");
         }
 
+        static Bounds WordBounds(string text) => GameObject.Find("Word " + text).GetComponent<BoxCollider2D>().bounds;
+
+        /// <summary>Walks (and holds Shift if asked) for a while in the headwind and returns how far the letter got.</summary>
+        IEnumerator WalkIntoTheHeadwind(bool shift, float[] moved)
+        {
+            Bounds head = WordBounds("headwind: walk into it as A");
+            PlaceLetterAt(new Vector2(head.center.x, head.max.y + 0.02f));
+            yield return WaitUntil(() => letter.IsGrounded);
+            letter.SetInput(1f, false, shift);
+            yield return Steps(25);
+            float start = letter.transform.position.x;
+            yield return Steps(50);
+            moved[0] = letter.transform.position.x - start;
+        }
+
+        [UnityTest]
+        public IEnumerator TheHeadwindPushesLowercaseBack()
+        {
+            yield return Load();
+            var moved = new float[1];
+            yield return WalkIntoTheHeadwind(false, moved);
+            Assert.That(moved[0], Is.LessThan(-0.5f), "a walking into the wind should be pushed back.");
+        }
+
+        [UnityTest]
+        public IEnumerator UppercaseWalksIntoTheHeadwind()
+        {
+            yield return Load();
+            var moved = new float[1];
+            yield return WalkIntoTheHeadwind(true, moved);
+            Assert.AreEqual(LetterForm.Uppercase, letter.Form);
+            Assert.That(moved[0], Is.GreaterThan(1.5f), "A should walk through the wind, only a little slower.");
+        }
+
+        [UnityTest]
+        public IEnumerator TheWindDoesNotMoveAStandingUppercase()
+        {
+            yield return Load();
+            Bounds take = WordBounds("tailwind");
+            PlaceLetterAt(new Vector2(take.center.x, take.max.y + 0.02f));
+            yield return GrowInPlace();
+            float start = letter.transform.position.x;
+            yield return Steps(50);
+            Assert.AreEqual(start, letter.transform.position.x, 0.02f);
+        }
+
+        /// <summary>Runs at the tailwind pit as a and jumps from its edge; true if the letter lands beyond it.</summary>
+        IEnumerator JumpThePit(bool[] landed)
+        {
+            Bounds take = WordBounds("tailwind");
+            Bounds landing = WordBounds("and land");
+            PlaceLetterAt(new Vector2(take.min.x + 0.3f, take.max.y + 0.02f));
+            yield return WaitUntil(() => letter.IsGrounded);
+            letter.SetInput(1f, false, false);
+            yield return WaitUntil(() => letter.transform.position.x > take.max.x - 0.15f);
+            letter.PressJump();
+            letter.SetInput(1f, true, false);
+            yield return Steps(5);
+            yield return WaitUntil(() => letter.IsGrounded || letter.transform.position.y < take.max.y - 2f);
+            landed[0] = letter.IsGrounded && letter.transform.position.x > landing.min.x;
+        }
+
+        [UnityTest]
+        public IEnumerator TheTailwindCarriesLowercaseOverThePit()
+        {
+            yield return Load();
+            var landed = new bool[1];
+            yield return JumpThePit(landed);
+            Assert.IsTrue(landed[0], "With the wind behind it, a should clear the pit.");
+        }
+
+        [UnityTest]
+        public IEnumerator WithoutTheWindThePitIsTooWide()
+        {
+            yield return Load();
+            foreach (Wind wind in All<Wind>()) wind.strength = 0f;
+            var landed = new bool[1];
+            yield return JumpThePit(landed);
+            Assert.IsFalse(landed[0], "The pit should be too wide for a plain jump, or the wind isn't needed.");
+        }
+
+        [UnityTest]
+        public IEnumerator GustsComeAndGo()
+        {
+            yield return Load();
+            Wind gusty = All<Wind>().Single(w => w.gustSeconds > 0f);
+            yield return WaitUntil(() => gusty.Blowing <= 0f);
+            Assert.AreEqual(0f, gusty.Speed);
+            yield return WaitUntil(() => gusty.Blowing >= 1f);
+            Assert.AreEqual(gusty.strength * gusty.direction, gusty.Speed, 0.001f);
+        }
+
         IEnumerator Steps(int count)
         {
             for (int i = 0; i < count; i++) yield return new WaitForFixedUpdate();

@@ -43,6 +43,7 @@ namespace LowercaseUppercase.Levels
         static readonly Color Breakable = new Color32(0x6B, 0x71, 0x80, 0xFF);
         static readonly Color FloatRipple = new Color32(0x5C, 0xD3, 0xF5, 0x59);
         static readonly Color FloatEnd = new Color32(0x5C, 0xD3, 0xF5, 0x1A);
+        static readonly Color WindMark = new Color32(0x5C, 0xD3, 0xF5, 0x26);
 
         static TMP_FontAsset mono;
         static TMP_FontAsset monoBold;

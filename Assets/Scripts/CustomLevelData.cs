@@ -112,9 +112,9 @@ namespace LowercaseUppercase
         public int count;
         [Tooltip("The piece's one tuning number: spring pad width, flier travel, hopper side speed, launcher interval, fire bar turn speed, cursor speed. 0 = the default.")]
         public float value;
-        [Tooltip("Seconds before a hopper or spark starts.")]
+        [Tooltip("Seconds before a hopper or spark starts. For wind: how long each gust lasts, 0 = steady.")]
         public float delay;
-        [Tooltip("Facing the other way: walkers and fliers start left, launchers fire left.")]
+        [Tooltip("Facing the other way: walkers and fliers start left, launchers fire left, wind blows left.")]
         public bool flip;
 
         public CustomPiece() { }
@@ -164,6 +164,12 @@ namespace LowercaseUppercase
         public const string CapsLock = "capsLock";
         /// <summary>The key that switches off the nearest Caps Lock stretch. y = its baseline.</summary>
         public const string CapsKey = "capsKey";
+        /// <summary>
+        /// Wind from x to x2 (x + 600), the whole height of the page. It blows right, or left with flip. value = its
+        /// strength, how fast it carries a standing a (3); delay = gust seconds, blowing that long then calm as long
+        /// (0 blows steadily).
+        /// </summary>
+        public const string Wind = "wind";
         /// <summary>Scenery: a hill of count rows (3) standing on the ground.</summary>
         public const string Hill = "hill";
         /// <summary>Scenery: a cloud. y = its baseline.</summary>

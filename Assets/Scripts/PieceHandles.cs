@@ -60,6 +60,12 @@ namespace LowercaseUppercase
                     return new PieceHandle(new Vector2(piece.x, CapsLockMiddlePx), new Vector2(right, CapsLockMiddlePx),
                         (p, at) => p.x2 = Mathf.Max(at.x, p.x + MinStretchPx));
                 }
+                case CustomPieceType.Wind:
+                {
+                    float right = piece.x2 > piece.x ? piece.x2 : piece.x + 600f;
+                    return new PieceHandle(new Vector2(piece.x, CapsLockMiddlePx), new Vector2(right, CapsLockMiddlePx),
+                        (p, at) => p.x2 = Mathf.Max(at.x, p.x + MinStretchPx));
+                }
                 case CustomPieceType.Hooks:
                 {
                     int count = Mathf.Max(1, piece.count);

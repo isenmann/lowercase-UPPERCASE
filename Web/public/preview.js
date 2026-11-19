@@ -46,6 +46,7 @@ export const COLOURS = {
   liftMark: "#5CD3F52E",
   floatRipple: "#5CD3F559",
   floatEnd: "#5CD3F51A",
+  windMark: "#5CD3F526",
   capsTint: "#FF8A3D08",
   capsLabel: "#FF8A3D4C"
 };
@@ -57,6 +58,11 @@ const PUNCTUATION = new Set(["spring", COMMA, "hyphen", "period", "power"]);
 
 const RISER_MARK = "¡";
 const FLOAT_RISE_PX = 270;
+const DEFAULT_WIND_PX = 600;
+const WIND_FIRST_ROW_PX = 120;
+const WIND_ROW_PX = 96;
+const WIND_ROWS = 5;
+const WIND_MARK_SPACING_PX = 160;
 const BRICK_LETTERS = "b\nr\ni\nc\nk\nb\nr\ni\nc\nk";
 const STICKY_LETTERS = "s\nt\ni\nc\nk\ny";
 const DOOR_LETTERS = "d\no\no\nr\nd\no\no\nr";
@@ -302,6 +308,12 @@ class Builder {
       case "capsKey":
         this.capsKey(parts, x, y);
         return x + 90;
+      case "wind": {
+        const x2 = number(piece.x2);
+        const right = x2 > x ? x2 : x + DEFAULT_WIND_PX;
+        this.wind(parts, x, right, piece.flip === true);
+        return right;
+      }
       case "hill":
         this.hill(parts, x, count(3));
         return x;
@@ -496,6 +508,21 @@ class Builder {
     const label = this.text({ text: "LOCK", font: FONTS.black, size: 96, color: COLOURS.capsLabel, x: left + 20, y: 300, order: -4 });
     parts.push(label);
     this.zones.push({ middle: (left + right) / 2, label });
+  }
+
+  /** Wind's marks in staggered rows, spaced to fit its width a whole number of times (WindStretch). */
+  wind(parts, left, right, blowsLeft) {
+    const width = right - left;
+    const perRow = Math.max(1, Math.round(width / WIND_MARK_SPACING_PX));
+    const spacing = width / perRow;
+    const glyph = blowsLeft ? "«" : "»";
+    for (let row = 0; row < WIND_ROWS; row++) {
+      const y = WIND_FIRST_ROW_PX + row * WIND_ROW_PX;
+      for (let i = 0; i < perRow; i++) {
+        const x = left + (i + (row % 2 === 0 ? 0.25 : 0.75)) * spacing;
+        parts.push(this.text({ text: glyph, font: FONTS.mono, size: 40, color: COLOURS.windMark, x, y, order: -3 }));
+      }
+    }
   }
 
   capsKey(parts, x, baseline) {

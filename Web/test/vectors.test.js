@@ -55,7 +55,7 @@ test("the layouts cover every piece type and enemy kind", () => {
   const every = vectors.layouts.find(layout => layout.label === "every piece");
   const types = new Set(every.pieces.map(piece => piece.type === "enemy" ? `enemy ${piece.kind}` : piece.type));
   for (const type of ["word", "kerned", "brick", "stickyWall", "tube", "spring", "door", "plate", "lift", "hooks",
-    "capsLock", "capsKey", "checkpoint", "power", "hash", "exit", "hill", "cloud"]) {
+    "capsLock", "capsKey", "wind", "checkpoint", "power", "hash", "exit", "hill", "cloud"]) {
     assert.ok(types.has(type), type);
   }
 

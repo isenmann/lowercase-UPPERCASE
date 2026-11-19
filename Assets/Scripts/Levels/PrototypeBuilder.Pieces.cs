@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
@@ -196,6 +197,52 @@ namespace LowercaseUppercase.Levels
             for (int i = 0; i + 1 < count; i++)
                 Hash(level, x + 170f + (i + 0.5f) * HookSpacingPx, yPx + 40f);
             return x + 170f + (count - 1) * HookSpacingPx + 210f;
+        }
+
+        const float WindTopPx = 64f;
+        const float WindHeightPx = 576f;
+        const float WindFirstRowPx = 120f;
+        const float WindRowPx = 96f;
+        const int WindRows = 5;
+        const float WindMarkSpacingPx = 160f;
+
+        /// <summary>
+        /// Wind blowing sideways from leftPx to rightPx, the whole height of the page, like a Caps Lock stretch. Its
+        /// marks are » (« when it blows left) in staggered rows, which drift with it in play.
+        /// </summary>
+        static Wind WindStretch(Transform level, float leftPx, float rightPx, bool blowsLeft = false,
+            float strength = 3f, float gustSeconds = 0f)
+        {
+            var zoneObject = new GameObject("Wind");
+            zoneObject.transform.SetParent(level, false);
+            zoneObject.layer = LayerMask.NameToLayer("Level");
+            float widthPx = rightPx - leftPx;
+            zoneObject.transform.position = new Vector3(X(leftPx + widthPx * 0.5f), Y(WindTopPx + WindHeightPx * 0.5f), 0f);
+            var trigger = zoneObject.AddComponent<BoxCollider2D>();
+            trigger.isTrigger = true;
+            trigger.size = new Vector2(Size(widthPx), Size(WindHeightPx));
+
+            var wind = zoneObject.AddComponent<Wind>();
+            wind.direction = blowsLeft ? -1f : 1f;
+            wind.strength = strength;
+            wind.gustSeconds = gustSeconds;
+
+            var marks = new List<TextMeshPro>();
+            string glyph = blowsLeft ? "\u00ab" : "\u00bb";
+            // Spaced to fit the width a whole number of times, so the marks stay evenly spread as they wrap around.
+            int perRow = Mathf.Max(1, Mathf.FloorToInt(widthPx / WindMarkSpacingPx + 0.5f)); // Halves up, as the web page rounds.
+            float spacing = widthPx / perRow;
+            for (int row = 0; row < WindRows; row++)
+            {
+                float baseline = WindFirstRowPx + row * WindRowPx;
+                for (int i = 0; i < perRow; i++)
+                {
+                    float x = leftPx + (i + (row % 2 == 0 ? 0.25f : 0.75f)) * spacing;
+                    marks.Add(Text(zoneObject.transform, "Wind Mark", glyph, x, baseline, 40f, mono, WindMark, -3));
+                }
+            }
+            wind.marks = marks.ToArray();
+            return wind;
         }
 
         /// <summary>

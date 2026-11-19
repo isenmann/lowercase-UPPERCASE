@@ -51,6 +51,7 @@ const THINGS = [
   [piece => piece.type === "lift", "lifts"],
   [piece => piece.type === "hooks", "comma hooks"],
   [piece => piece.type === "capsLock", "caps lock"],
+  [piece => piece.type === "wind", "wind"],
   [piece => piece.type === "power", "power blocks"],
   [piece => piece.type === "checkpoint", "checkpoints"]
 ];

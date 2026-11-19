@@ -64,6 +64,13 @@ namespace LowercaseUppercase
                 case CustomPieceType.CapsLock:
                     list.Add(Number("width", p => p.x2 > p.x ? p.x2 - p.x : 800f, (p, v) => p.x2 = p.x + v, 80f, 160f, 4000f, 800f, "0 px"));
                     break;
+                case CustomPieceType.Wind:
+                    list.Add(Number("width", p => p.x2 > p.x ? p.x2 - p.x : 600f, (p, v) => p.x2 = p.x + v, 80f, 160f, 4000f, 600f, "0 px"));
+                    list.Add(Facing("blows"));
+                    list.Add(Number("strength", p => p.value, (p, v) => p.value = v, 0.5f, 0.5f, 8f, 3f, "0.0"));
+                    list.Add(new PieceProperty("gusts", p => p.delay > 0f ? p.delay.ToString("0.0 s", System.Globalization.CultureInfo.InvariantCulture) : "steady",
+                        (p, direction) => p.delay = Mathf.Clamp(p.delay + direction * 0.5f, 0f, 5f)));
+                    break;
                 case CustomPieceType.Hill:
                     list.Add(Whole("rows", p => p.count, (p, v) => p.count = v, 1, 6, 3));
                     break;

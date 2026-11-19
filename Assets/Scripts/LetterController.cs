@@ -39,6 +39,14 @@ namespace LowercaseUppercase
         public float hookReleaseBoost = 0.55f;
         public float regrabDelay = 0.35f;
 
+        [Header("Wind")]
+        [Tooltip("How quickly the wind changes a's sideways speed in the air when no key is held, units per second squared.")]
+        public float windAcceleration = 20f;
+        [Tooltip("How much of the wind's push a holds off by walking against it. Below 1, a is still pushed back.")]
+        [Range(0f, 1f)] public float headwindHold = 0.5f;
+        [Tooltip("How much of A's run speed each unit of wind speed takes away when A walks against it.")]
+        public float upperHeadwindDrag = 0.05f;
+
         [Header("Slam")]
         [Tooltip("Turning A in the air stops the letter for this long before it dives.")]
         public float slamHangSeconds = 0.08f;
@@ -118,6 +126,8 @@ namespace LowercaseUppercase
         // Trigger callbacks run after the physics step, so they are read at the start of the next one.
         WordBlock pendingLift;
         CapsLockZone pendingCapsZone;
+        Wind pendingWind;
+        Wind wind; // The wind the letter is in this step, if any.
 
         bool WantsUppercase => shiftHeld != IsCapsLocked;
 
@@ -152,6 +162,8 @@ namespace LowercaseUppercase
             IsSlamming = false;
             IsFallingOff = false;
             carrier = null;
+            wind = null;
+            pendingWind = null;
             groundVelocityY = 0f;
             box.enabled = true;
             IsGrounded = false;
@@ -212,6 +224,8 @@ namespace LowercaseUppercase
             if (WantsUppercase && !wantedUppercase) upperFromCaps = capsChanged;
             wantedUppercase = WantsUppercase;
             pendingCapsZone = null;
+            wind = pendingWind;
+            pendingWind = null;
             WordBlock lift = pendingLift;
             pendingLift = null;
             regrabTimer -= dt;
@@ -269,6 +283,13 @@ namespace LowercaseUppercase
             if (zone != null)
             {
                 pendingCapsZone = zone;
+                return;
+            }
+
+            var blowing = other.GetComponent<Wind>();
+            if (blowing != null)
+            {
+                pendingWind = blowing;
                 return;
             }
 
@@ -580,13 +601,18 @@ namespace LowercaseUppercase
             float grip = onWord ? surface.grip : 1f;
             float runSpeed = s.runSpeed * (onWord ? surface.moveFactor : 1f);
             float target = moveInput * runSpeed;
+            float windSpeed = wind != null ? wind.Speed : 0f;
+            if (windSpeed != 0f) target = WindTarget(target, windSpeed);
+            float limit = Mathf.Max(runSpeed, Mathf.Abs(target));
             float rate;
 
             if (!hasInput)
             {
                 rate = IsGrounded ? s.groundDeceleration * grip : s.airDeceleration;
+                // In the air a would hardly drift with the wind at the gentle rate of letting go.
+                if (windSpeed != 0f && Form == LetterForm.Lowercase) rate = Mathf.Max(rate, windAcceleration);
             }
-            else if (Mathf.Sign(velocity.x) == Mathf.Sign(moveInput) && Mathf.Abs(velocity.x) > runSpeed)
+            else if (Mathf.Sign(velocity.x) == Mathf.Sign(moveInput) && Mathf.Abs(velocity.x) > limit)
             {
                 rate = IsGrounded ? s.overspeedDecayGround * grip : s.overspeedDecayAir;
             }
@@ -598,6 +624,19 @@ namespace LowercaseUppercase
             }
 
             velocity.x = Mathf.MoveTowards(velocity.x, target, rate * dt);
+        }
+
+        /// <summary>
+        /// The run speed the letter heads for in the wind. a goes with it faster, drifts along with it when let go, and
+        /// is pushed back slowly when it walks against it. A walks into it a little slower and is not moved otherwise.
+        /// </summary>
+        float WindTarget(float target, float windSpeed)
+        {
+            float along = moveInput * Mathf.Sign(windSpeed);
+            if (Form == LetterForm.Uppercase)
+                return along < 0f ? target * Mathf.Clamp01(1f - Mathf.Abs(windSpeed) * upperHeadwindDrag) : target;
+            if (along >= 0f) return target + windSpeed;
+            return windSpeed * (1f - headwindHold * Mathf.Abs(moveInput));
         }
 
         /// <summary>Pressing into the side of a sticky word holds the letter there, and it can jump from there.</summary>
