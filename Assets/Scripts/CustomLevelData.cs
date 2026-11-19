@@ -196,6 +196,8 @@ namespace LowercaseUppercase
         public const string Sticky = "sticky";
         /// <summary>A hyphen bridge: a crosses it, A snaps it.</summary>
         public const string Plank = "plank";
+        /// <summary>A brick word: a stands on it, A smashes it by walking into it or landing on it (a slam too).</summary>
+        public const string Cracked = "cracked";
 
         // ------------------------------------------------ enemy kinds
 

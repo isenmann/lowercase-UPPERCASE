@@ -24,8 +24,14 @@ namespace LowercaseUppercase
         public Vector2 shrinkPop = new Vector2(1.5f, 1.5f);
         public Vector2 jumpStretch = new Vector2(0.75f, 1.3f);
         public Vector2 launchStretch = new Vector2(0.6f, 1.6f);
+        public Vector2 slamStretch = new Vector2(0.7f, 1.35f);
         public float landSquashPerSpeed = 0.035f;
         public float maxLandSquash = 0.5f;
+
+        [Header("Slam dust")]
+        public string slamDust = "~";
+        public float slamDustSize = 5f;
+        public float slamDustSpeed = 5f;
 
         [Header("Refused grow")]
         public float deniedShake = 0.06f;
@@ -57,6 +63,8 @@ namespace LowercaseUppercase
             letter.Jumped += OnJumped;
             letter.Landed += OnLanded;
             letter.Launched += OnLaunched;
+            letter.SlamStarted += OnSlamStarted;
+            letter.Slammed += OnSlammed;
         }
 
         void OnDisable()
@@ -66,6 +74,8 @@ namespace LowercaseUppercase
             letter.Jumped -= OnJumped;
             letter.Landed -= OnLanded;
             letter.Launched -= OnLaunched;
+            letter.SlamStarted -= OnSlamStarted;
+            letter.Slammed -= OnSlammed;
         }
 
         /// <summary>Pops the letter into view on the squash spring.</summary>
@@ -156,6 +166,27 @@ namespace LowercaseUppercase
         void OnGrowDenied() => deniedTimer = deniedDuration;
         void OnJumped() => Kick(jumpStretch);
         void OnLaunched() => Kick(launchStretch);
+        void OnSlamStarted() => Kick(slamStretch);
+
+        /// <summary>Two puffs thrown out sideways from the feet, as far as the shockwave reaches.</summary>
+        void OnSlammed(int knockedOut)
+        {
+            for (int side = -1; side <= 1; side += 2)
+            {
+                var puff = new GameObject("Slam dust");
+                puff.transform.position = transform.position + new Vector3(side * 0.4f, 0.15f, 0f);
+                var label = puff.AddComponent<TextMeshPro>();
+                label.font = upperGlyph.font;
+                label.fontSize = slamDustSize;
+                label.color = normalColor;
+                label.text = slamDust;
+                label.alignment = TextAlignmentOptions.Center;
+                label.textWrappingMode = TextWrappingModes.NoWrap;
+                label.rectTransform.sizeDelta = new Vector2(2f, 1f);
+                label.sortingOrder = 20;
+                puff.AddComponent<FlyingText>().Launch(new Vector2(side * slamDustSpeed, 1.5f), 0f);
+            }
+        }
 
         void OnLanded(float impactSpeed)
         {

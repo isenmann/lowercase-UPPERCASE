@@ -192,7 +192,9 @@ namespace LowercaseUppercase.Tests
             Assert.That(editor.panel.Shown[1].Label, Is.EqualTo("kind"));
             Assert.That(editor.Selected.kind, Is.EqualTo(CustomPieceType.Plank));
             editor.panel.Shown[1].Step(1);
-            Assert.That(editor.Selected.kind, Is.EqualTo(CustomPieceType.Solid));
+            Assert.That(editor.Selected.kind, Is.EqualTo(CustomPieceType.Cracked));
+            editor.panel.Shown[1].Step(1);
+            Assert.That(editor.Selected.kind, Is.EqualTo(CustomPieceType.Solid), "The last kind should wrap round.");
         }
 
         [Test]

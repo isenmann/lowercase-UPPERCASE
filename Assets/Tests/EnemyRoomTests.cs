@@ -215,6 +215,96 @@ namespace LowercaseUppercase.Tests
             yield return WaitUntil(() => Vector2.Distance(bar.dots[bar.dots.Length - 1].transform.position, tip) > 1f);
         }
 
+        // ---------------------------------------------------------------- slam
+
+        static Bounds SlamFloor() => GameObject.Find("Word slam down on whatever walks below").GetComponent<BoxCollider2D>().bounds;
+
+        static WordBlock SlamLid()
+        {
+            Bounds floor = SlamFloor();
+            return All<WordBlock>().Single(b => b.kind == WordKind.Cracked
+                && b.transform.position.x > floor.min.x && b.transform.position.x < floor.max.x);
+        }
+
+        static Enemy SlamPenEnemy(string glyph)
+        {
+            Bounds floor = SlamFloor();
+            Enemy found = All<Enemy>().Single(e => e.glyph.text == glyph
+                && e.transform.position.x > floor.min.x && e.transform.position.x < floor.max.x);
+            found.GetComponent<EnemyWalk>().speed = 0f;
+            return found;
+        }
+
+        [UnityTest]
+        public IEnumerator TurningUppercaseInTheAirSlamsThroughTheLid()
+        {
+            yield return Load();
+            Bounds lid = SlamLid().GetComponent<BoxCollider2D>().bounds;
+            Collider2D lidCollider = SlamLid().GetComponent<Collider2D>();
+            foreach (Enemy e in new[] { SlamPenEnemy("^"), SlamPenEnemy("\u00a7") })
+                e.Body.position = new Vector2(SlamFloor().max.x - 1f, e.Body.position.y);
+
+            bool started = false, landed = false;
+            letter.SlamStarted += () => started = true;
+            letter.Slammed += _ => landed = true;
+            PlaceLetterAt(new Vector2(lid.center.x, lid.max.y + 2f));
+            letter.SetInput(0f, false, true);
+
+            yield return WaitUntil(() => landed);
+            Assert.IsTrue(started, "Turning A in the air should start a slam.");
+            Assert.IsFalse(lidCollider.enabled, "The slam should break the lid on its way down.");
+            Assert.That(letter.transform.position.y, Is.LessThan(lid.min.y), "The letter should land below the lid.");
+            Assert.IsFalse(letter.IsSlamming);
+        }
+
+        [UnityTest]
+        public IEnumerator TheSlamKnocksOutASpikeBesideTheLandingButNotOneFarAway()
+        {
+            yield return Load();
+            Enemy spike = SlamPenEnemy("^");
+            Enemy armour = SlamPenEnemy("\u00a7");
+            Vector2 spikeFeet = spike.transform.position;
+            float landingX = SlamFloor().max.x - 1.5f;
+            spike.Body.position = new Vector2(landingX - letter.shockRadius * 0.7f, spikeFeet.y);
+            armour.Body.position = new Vector2(landingX - letter.shockRadius - 2f, spikeFeet.y);
+            yield return new WaitForFixedUpdate();
+
+            int knockedOut = -1;
+            letter.Slammed += n => knockedOut = n;
+            PlaceLetterAt(new Vector2(landingX, spikeFeet.y + 1.2f));
+            letter.SetInput(0f, false, true);
+
+            yield return WaitUntil(() => knockedOut >= 0);
+            Assert.AreEqual(1, knockedOut);
+            Assert.IsTrue(spike == null || !spike.Box.enabled, "The spike beside the landing should be knocked out.");
+            Assert.IsTrue(armour != null && armour.Box.enabled, "The armour out of reach should be left alone.");
+            Assert.IsTrue(letter != null && !letter.IsFallingOff, "The slam shouldn't hurt the letter.");
+        }
+
+        [UnityTest]
+        public IEnumerator UppercaseFromACapsLockChangeDoesNotSlam()
+        {
+            yield return Load();
+            Bounds floor = SlamFloor();
+            Bounds power = All<WordBlock>().Single(b => b.kind == WordKind.Power
+                && b.transform.position.x > floor.min.x && b.transform.position.x < floor.max.x).GetComponent<BoxCollider2D>().bounds;
+
+            bool started = false, denied = false, grewInTheAir = false;
+            letter.SlamStarted += () => started = true;
+            letter.GrowDenied += () => denied = true;
+            letter.FormChanged += form => grewInTheAir = form == LetterForm.Uppercase && !letter.IsGrounded;
+
+            // Half under the power block: no room to grow until the letter has moved out, still falling.
+            PlaceLetterAt(new Vector2(power.max.x - 0.05f, power.min.y - 0.45f));
+            letter.SetInput(1f, false, false);
+            letter.SwapCase();
+            yield return WaitUntil(() => letter.Form == LetterForm.Uppercase);
+
+            Assert.IsTrue(denied, "The power block should hold the growing back at first.");
+            Assert.IsTrue(grewInTheAir, "The letter should grow in the air once it is clear.");
+            Assert.IsFalse(started, "Only the player's own Shift should slam, even when growing has to wait.");
+        }
+
         IEnumerator GrowInPlace()
         {
             letter.SetInput(0f, false, true);

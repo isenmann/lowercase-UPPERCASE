@@ -84,6 +84,14 @@ namespace LowercaseUppercase.Levels
             return ice;
         }
 
+        /// <summary>A word of brick lying flat: a stands on it, A smashes it from the side or from above.</summary>
+        static WordBlock BrickWord(Transform level, string content, float leftPx, float surfacePx = Ground)
+        {
+            WordBlock brick = Word(level, content, leftPx, surfacePx, 72f, WordKind.Cracked, Breakable);
+            brick.impactFont = black;
+            return brick;
+        }
+
         static WordBlock HotWord(Transform level, string content, float leftPx, float surfacePx = Ground)
         {
             return Word(level, content, leftPx, surfacePx, 72f, WordKind.Hot, Hot);

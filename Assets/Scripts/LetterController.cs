@@ -38,6 +38,18 @@ namespace LowercaseUppercase
         public float hookReleaseBoost = 0.55f;
         public float regrabDelay = 0.35f;
 
+        [Header("Slam")]
+        [Tooltip("Turning A in the air stops the letter for this long before it dives.")]
+        public float slamHangSeconds = 0.08f;
+        [Tooltip("Units per second straight down at the start of the dive.")]
+        public float slamSpeed = 18f;
+        [Tooltip("Share of the sideways speed the dive keeps.")]
+        public float slamKeptX = 0.2f;
+        [Tooltip("Enemies standing within this many units to either side of the landing are knocked out.")]
+        public float shockRadius = 1.6f;
+        [Tooltip("How far an enemy's feet may be above or below the letter's feet and still be hit.")]
+        public float shockHeight = 0.3f;
+
         public event Action<LetterForm> FormChanged;
         public event Action GrowDenied;
         public event Action Jumped;
@@ -46,6 +58,9 @@ namespace LowercaseUppercase
         public event Action Smashed;
         public event Action Slotted;
         public event Action Burned;
+        public event Action SlamStarted;
+        /// <summary>A slam reached the ground. The number is how many enemies the shockwave knocked out.</summary>
+        public event Action<int> Slammed;
 
         public LetterForm Form { get; private set; } = LetterForm.Lowercase;
         public bool IsGrounded { get; private set; }
@@ -53,6 +68,8 @@ namespace LowercaseUppercase
         public bool IsCapsLocked { get; private set; }
         public bool IsClinging { get; private set; }
         public bool IsFallingOff { get; private set; }
+        /// <summary>From turning A in the air until the letter lands, bounces or grabs something.</summary>
+        public bool IsSlamming { get; private set; }
         public bool IsHanging => hook != null;
         public Vector2 HookAnchor => hook != null ? hook.WorldCentre : Vector2.zero;
         public WordBlock Surface => surface;
@@ -66,6 +83,7 @@ namespace LowercaseUppercase
         ContactFilter2D solidFilter;
         readonly RaycastHit2D[] hits = new RaycastHit2D[8];
         readonly Collider2D[] overlaps = new Collider2D[1];
+        readonly System.Collections.Generic.List<Collider2D> shockHits = new System.Collections.Generic.List<Collider2D>();
 
         float moveInput;
         bool jumpHeld;
@@ -78,6 +96,13 @@ namespace LowercaseUppercase
         float facing = 1f;
         float previousVerticalSpeed;
         float lastBumpSound = float.NegativeInfinity;
+        float slamHangTimer;
+        float slamCarryX;
+        bool wasCapsLocked;
+        bool wantedUppercase;
+        // UPPERCASE was last asked for by a Caps Lock zone or a case swapper, not the player's Shift. Kept until the
+        // letter grows, because a ceiling can hold the growing back for a while.
+        bool upperFromCaps;
         WordBlock surface;
 
         WordBlock hook;
@@ -109,6 +134,7 @@ namespace LowercaseUppercase
         {
             if (IsSlotted) return;
             hook = null;
+            IsSlamming = false;
             IsSlotted = true;
             rb.linearVelocity = Vector2.zero;
             rb.simulated = false;
@@ -120,6 +146,7 @@ namespace LowercaseUppercase
         public void Respawn(Vector2 feetPosition)
         {
             hook = null;
+            IsSlamming = false;
             IsFallingOff = false;
             box.enabled = true;
             IsGrounded = false;
@@ -142,6 +169,7 @@ namespace LowercaseUppercase
         {
             if (IsSlotted || IsFallingOff) return;
             IsFallingOff = true;
+            IsSlamming = false;
             hook = null;
             IsGrounded = false;
             IsClinging = false;
@@ -174,6 +202,10 @@ namespace LowercaseUppercase
             float dt = Time.fixedDeltaTime;
 
             IsCapsLocked = (pendingCapsZone != null && pendingCapsZone.IsActive) != caseSwapped;
+            bool capsChanged = IsCapsLocked != wasCapsLocked;
+            wasCapsLocked = IsCapsLocked;
+            if (WantsUppercase && !wantedUppercase) upperFromCaps = capsChanged;
+            wantedUppercase = WantsUppercase;
             pendingCapsZone = null;
             WordBlock lift = pendingLift;
             pendingLift = null;
@@ -187,6 +219,7 @@ namespace LowercaseUppercase
 
             if (hook != null)
             {
+                IsSlamming = false;
                 IsGrounded = false;
                 IsClinging = false;
                 StepHanging(dt);
@@ -194,6 +227,7 @@ namespace LowercaseUppercase
             }
 
             UpdateGround(velocity);
+            if (IsSlamming && IsGrounded) LandSlam();
             if (IsGrounded && surface != null) surface.OnStood(this, dt);
             if (IsFallingOff) return; // A hot word can burn the letter just above, and the hop must survive this step.
             ResolveForm(ref velocity);
@@ -203,6 +237,7 @@ namespace LowercaseUppercase
             Spring(ref velocity);
             Jump(ref velocity, dt);
             ApplyGravity(ref velocity, dt, lift);
+            if (IsSlamming) StepSlam(ref velocity, dt, lift);
             BumpAbove(velocity, dt);
 
             rb.linearVelocity = velocity;
@@ -283,6 +318,7 @@ namespace LowercaseUppercase
             velocity.y = Current.JumpVelocity;
             rb.linearVelocity = velocity;
             previousVerticalSpeed = velocity.y;
+            IsSlamming = false;
             IsGrounded = false;
             coyoteTimer = 0f;
             risingFromJump = false;
@@ -311,7 +347,8 @@ namespace LowercaseUppercase
 
             if (IsGrounded && !wasGrounded)
             {
-                if (-previousVerticalSpeed > QuietLandingSpeed) Sfx.Play(Sound.Land);
+                // A slam lands with its own, bigger sound.
+                if (-previousVerticalSpeed > QuietLandingSpeed && !IsSlamming) Sfx.Play(Sound.Land);
                 Landed?.Invoke(-previousVerticalSpeed);
             }
         }
@@ -370,7 +407,19 @@ namespace LowercaseUppercase
             FormSettings settings = Current;
             ApplyBody(settings);
 
-            if (!IsGrounded && velocity.y < 0f)
+            bool slam = form == LetterForm.Uppercase && !IsGrounded && !upperFromCaps;
+            if (form == LetterForm.Lowercase && IsSlamming)
+            {
+                // Letting go mid-dive glides like any other fall, but no faster than a can fall.
+                IsSlamming = false;
+                velocity.y = Mathf.Max(velocity.y, -settings.maxFallSpeed);
+            }
+
+            if (slam)
+            {
+                StartSlam(ref velocity);
+            }
+            else if (!IsGrounded && velocity.y < 0f)
             {
                 float direction = Mathf.Abs(moveInput) > 0.01f ? Mathf.Sign(moveInput)
                     : Mathf.Abs(velocity.x) > 0.1f ? Mathf.Sign(velocity.x)
@@ -381,6 +430,7 @@ namespace LowercaseUppercase
 
             Sfx.Play(form == LetterForm.Uppercase ? Sound.ToUpper : Sound.ToLower);
             FormChanged?.Invoke(form);
+            if (slam) SlamStarted?.Invoke();
         }
 
         void ApplyBody(FormSettings settings)
@@ -432,6 +482,70 @@ namespace LowercaseUppercase
                 if (!power && Time.time - lastBumpSound > BumpSoundGap) Sfx.Play(Sound.BumpBlock);
                 lastBumpSound = Time.time;
             }
+        }
+
+        // ---------------------------------------------------------------- slam
+
+        /// <summary>Turning A in the air: a short stop, then a dive almost straight down.</summary>
+        void StartSlam(ref Vector2 velocity)
+        {
+            IsSlamming = true;
+            slamHangTimer = slamHangSeconds;
+            slamCarryX = velocity.x * slamKeptX;
+            velocity = Vector2.zero;
+            coyoteTimer = 0f;
+            risingFromJump = false;
+            jumpBufferTimer = 0f;
+        }
+
+        void StepSlam(ref Vector2 velocity, float dt, WordBlock lift)
+        {
+            if (lift != null || IsClinging)
+            {
+                IsSlamming = false;
+                return;
+            }
+
+            if (slamHangTimer > 0f)
+            {
+                slamHangTimer -= dt;
+                velocity = slamHangTimer > 0f ? Vector2.zero : new Vector2(slamCarryX, -slamSpeed);
+                return;
+            }
+
+            if (velocity.y > 0f) IsSlamming = false;
+        }
+
+        /// <summary>
+        /// The landing knocks out the enemies standing close by at the same height, like a rolling o does:
+        /// anything that can be stomped or shot, so spikes too. Fire and the cursor are left alone.
+        /// </summary>
+        void LandSlam()
+        {
+            IsSlamming = false;
+            Vector2 feet = rb.position;
+            var filter = new ContactFilter2D { useTriggers = true };
+            Physics2D.OverlapBox(feet + Vector2.up * 0.5f, new Vector2(shockRadius * 2f, 1f + shockHeight * 2f), 0f,
+                filter, shockHits);
+
+            Sfx.Play(Sound.Slam);
+            int knockedOut = 0;
+            foreach (Collider2D hit in shockHits)
+            {
+                if (hit == null || !hit.enabled) continue;
+                Enemy enemy = hit.GetComponent<Enemy>();
+                if (enemy == null || Mathf.Abs(enemy.transform.position.y - feet.y) > shockHeight) continue;
+                if (!enemy.stompable && !enemy.shootable) continue;
+                enemy.Kill();
+                knockedOut++;
+            }
+
+            if (knockedOut > 0)
+            {
+                Sfx.Play(Sound.EnemyStomp);
+                Smashed?.Invoke();
+            }
+            Slammed?.Invoke(knockedOut);
         }
 
         // ---------------------------------------------------------------- movement

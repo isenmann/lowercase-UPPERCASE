@@ -369,6 +369,7 @@ class Builder {
       case "hot": return this.topped(parts, text, x, surface, 72, FONTS.mono, COLOURS.hot, HOT);
       case "sticky": return this.topped(parts, text, x, surface, 72, FONTS.mono, COLOURS.interactive, "sticky");
       case "plank": return this.topped(parts, text, x, surface, 72, FONTS.mono, COLOURS.interactive, "hyphen");
+      case "cracked": return this.topped(parts, text, x, surface, 72, FONTS.mono, COLOURS.breakable, "cracked");
       default: return this.topped(parts, text, x, surface, 72, FONTS.mono, COLOURS.paper, SOLID);
     }
   }

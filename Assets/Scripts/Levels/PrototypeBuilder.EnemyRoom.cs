@@ -30,6 +30,7 @@ namespace LowercaseUppercase.Levels
             Floor(level, "the enemy room", ref x);
             PlaceCheckpoint(level, x - 60f, Ground);
             x = EnemyPen(level, x, "a plain walker", "& stomp it or shoot it", (l, g, px) => BuildEnemy(l, g, px));
+            x = SlamPen(level, x);
             PowerBlock(level, x - 120f, LowPlatform);
             x = EnemyPen(level, x, "a spike walks here", "^ shoot it, don't land on it", (l, g, px) => BuildSpike(l, g, px));
             x = EnemyPen(level, x, "armour walks here", "§ stomp it, asterisks bounce off", (l, g, px) => BuildArmour(l, g, px));
@@ -67,6 +68,30 @@ namespace LowercaseUppercase.Levels
             x = RightEdge(ground) + WordGap;
             Note(level, left + 40f, 300f, note);
             build(level, ground, left + 300f);
+            PlaceCheckpoint(level, x - 60f, Ground);
+            return x;
+        }
+
+        /// <summary>
+        /// Not an enemy but A's slam: a shelf at a's jump height with a cracked lid in it, over a word
+        /// where armour and a spike walk. Slam through the lid and the landing knocks out what walks beside it.
+        /// </summary>
+        static float SlamPen(Transform level, float x)
+        {
+            float left = x;
+            WordBlock ground = Word(level, "slam down on whatever walks below", x, Ground, 72f);
+            x = RightEdge(ground) + WordGap;
+            Note(level, left + 40f, 260f, "turn A in the air to slam: it breaks brick and knocks out what walks beside you");
+
+            float shelf = left + 260f;
+            WordBlock before = Word(level, "jump up", shelf, LowPlatform, 72f);
+            shelf = RightEdge(before);
+            WordBlock lid = BrickWord(level, "brick", shelf, LowPlatform);
+            shelf = RightEdge(lid);
+            Word(level, "and slam", shelf, LowPlatform, 72f);
+
+            BuildArmour(level, ground, left + 420f);
+            BuildSpike(level, ground, left + 620f);
             PlaceCheckpoint(level, x - 60f, Ground);
             return x;
         }

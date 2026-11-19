@@ -805,6 +805,30 @@ def _(st):
     return Mix().add(tone(st, glide(1800, 700, 0.12), 0.18, dec=0.05)).render()
 
 
+
+@event("Movement", "slam", "Slam", "The letter turned UPPERCASE in the air, dived and hit the ground.", "LetterController.LandSlam", 0.85)
+def _(st):
+    if st == "chip":
+        m = Mix().add(noise(st, 0.35, glide(3200, 150, 0.35), dec=0.12))
+        m.add(tone(st, glide(170, 32, 0.32), 0.32, dec=0.16, duty=0.5), 0, 1.0)
+        m.add(tone(st, glide(90, 30, 0.2), 0.2, dec=0.1, duty=0.5), 0.05, 0.7)
+        return m.render()
+    if st == "ink":
+        m = Mix().add(tone(st, glide(130, 32, 0.4), 0.4, dec=0.14))
+        m.add(noise(st, 0.3, glide(2200, 180, 0.3), dec=0.08), 0, 0.8)
+        return m.render()
+    if st == "type":  # every key at once, then the desk shakes
+        m = Mix().add(osc("sine", glide(95, 32, 0.32), 0.32) * env(0.32, 0.001, 0.11), 0, 1.4)
+        m.add(svf(white(0.12), 300, 0.7) * env(0.12, 0.001, 0.04), 0, 1.2)
+        for p in (0.5, 0.65, 0.8, 1.0):
+            m.add(key(p, 1.0), rng.uniform(0.0, 0.006))
+        m.add(ratchet(6, 0.12, 0.8, 0.45, 0.35), 0.03)
+        return m.render()
+    m = Mix().add(tone("ink", glide(140, 35, 0.35), 0.35, dec=0.12), 0, 1.0)
+    m.add(noise(st, 0.15, 900, 2.0, dec=0.05), 0, 0.7)
+    m.add(tone(st, 131, 0.5, 0.5, dec=0.15), 0.02)
+    return m.render()
+
 STYLES = [
     dict(id="chip", name="Chip", blurb="Square waves and stepped noise, stair-stepped at 60 fps like an 8-bit console."),
     dict(id="ink", name="Ink", blurb="Soft sine and triangle tones, smooth glides, rounded edges. Calm and modern."),

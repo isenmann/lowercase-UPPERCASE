@@ -367,6 +367,7 @@ namespace LowercaseUppercase.Levels
                 case CustomPieceType.Hot: return HotWord(level, text, leftPx, surfacePx);
                 case CustomPieceType.Sticky: return StickyFloor(level, text, leftPx, surfacePx);
                 case CustomPieceType.Plank: return Word(level, text, leftPx, surfacePx, 72f, WordKind.Hyphen, Interactive);
+                case CustomPieceType.Cracked: return BrickWord(level, text, leftPx, surfacePx);
                 default: return Word(level, text, leftPx, surfacePx, 72f);
             }
         }

@@ -28,7 +28,8 @@ namespace LowercaseUppercase
     {
         static readonly string[] WordKinds =
         {
-            CustomPieceType.Solid, CustomPieceType.Ice, CustomPieceType.Hot, CustomPieceType.Sticky, CustomPieceType.Plank
+            CustomPieceType.Solid, CustomPieceType.Ice, CustomPieceType.Hot, CustomPieceType.Sticky, CustomPieceType.Plank,
+            CustomPieceType.Cracked
         };
 
         public static List<PieceProperty> For(CustomPiece piece)

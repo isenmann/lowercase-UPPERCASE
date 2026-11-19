@@ -43,7 +43,7 @@ namespace LowercaseUppercase.Levels
             new GuideTile("ice", Interactive, "both", "Literal words",
                 "Words do what they say: ice slides, up lifts, sticky holds you to walls, hot burns."),
             new GuideTile("brick", Breakable, "A", "Cracked word",
-                "A wall made of a word. Run into it as a capital to smash through."),
+                "A wall or floor made of a word. Run into it or slam down on it as a capital."),
             new GuideTile("g a p", Paper, "a", "Kerning gap",
                 "Loosely spaced letters leave holes only a small letter fits through."),
             new GuideTile("LOCK", GuideOrange, "both", "Caps Lock zone",
@@ -64,7 +64,7 @@ namespace LowercaseUppercase.Levels
             new GuideTile("\u00a7", Danger, "A", "Armour",
                 "Asterisks bounce off it. Only a capital landing on it gets through."),
             new GuideTile("^", Danger, "*", "Spike",
-                "Walks like the others, but landing on it hurts."),
+                "Walks like the others, but landing on it hurts. A slam beside it knocks it out."),
             new GuideTile("!", Danger, "A *", "Hopper",
                 "Hops on a beat. Pass under it while it is up."),
             new GuideTile("~", Danger, "A *", "Flier",
@@ -167,8 +167,8 @@ namespace LowercaseUppercase.Levels
                 "Heavy and slow, with a short hop\n" +
                 "Smashes cracked words, presses periods\n" +
                 "Squashes an enemy by landing on it\n" +
-                "Shoots bigger asterisks\n" +
-                "Snaps hyphen bridges and breaks commas",
+                "Grow in mid-air to slam: knocks out enemies beside you\n" +
+                "Snaps hyphens, breaks commas, shoots bigger asterisks",
                 filled, outline, regular);
 
             RectTransform note = Strip(page, "ShiftNote", 562f, 52f, outline, MenuOutline);
