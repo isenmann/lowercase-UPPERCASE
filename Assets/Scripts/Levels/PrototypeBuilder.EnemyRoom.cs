@@ -31,9 +31,10 @@ namespace LowercaseUppercase.Levels
             PlaceCheckpoint(level, x - 60f, Ground);
             x = EnemyPen(level, x, "a plain walker", "& stomp it or shoot it", (l, g, px) => BuildEnemy(l, g, px));
             x = SlamPen(level, x);
+            // Over the end of the slam pen's floor, where a test grows the letter under it.
+            PowerBlock(level, x - 120f, LowPlatform);
             x = FloatPen(level, x);
             x = WindPen(level, x);
-            PowerBlock(level, x - 120f, LowPlatform);
             x = EnemyPen(level, x, "a spike walks here", "^ shoot it, don't land on it", (l, g, px) => BuildSpike(l, g, px));
             x = EnemyPen(level, x, "armour walks here", "§ stomp it, asterisks bounce off", (l, g, px) => BuildArmour(l, g, px));
             x = EnemyPen(level, x, "hoppers keep the beat", "! one hops in place, one hops along", (l, g, px) =>
