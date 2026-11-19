@@ -41,6 +41,8 @@ namespace LowercaseUppercase.Levels
         static readonly Color Interactive = new Color32(0x5C, 0xD3, 0xF5, 0xFF);
         static readonly Color Danger = new Color32(0xFF, 0x4D, 0x5E, 0xFF);
         static readonly Color Breakable = new Color32(0x6B, 0x71, 0x80, 0xFF);
+        static readonly Color FloatRipple = new Color32(0x5C, 0xD3, 0xF5, 0x59);
+        static readonly Color FloatEnd = new Color32(0x5C, 0xD3, 0xF5, 0x1A);
 
         static TMP_FontAsset mono;
         static TMP_FontAsset monoBold;

@@ -45,6 +45,7 @@ namespace LowercaseUppercase
                 new PaletteItem("sticky word", "gum", PaletteLook.Interactive, CustomPieceType.Word, CustomPieceType.Sticky, typed: true),
                 new PaletteItem("hyphen bridge", "---", PaletteLook.Interactive, CustomPieceType.Word, CustomPieceType.Plank, typed: true),
                 new PaletteItem("brick word (A smashes it)", "brk", PaletteLook.Breakable, CustomPieceType.Word, CustomPieceType.Cracked, typed: true),
+                new PaletteItem("floating word (a rises, A sinks)", "f~", PaletteLook.Interactive, CustomPieceType.Word, CustomPieceType.Float, typed: true),
                 new PaletteItem("loose letters (! marks a riser)", "a b", PaletteLook.Plain, CustomPieceType.Kerned, typed: true),
                 new PaletteItem("brick column", "b|", PaletteLook.Breakable, CustomPieceType.Brick),
                 new PaletteItem("sticky wall", "s|", PaletteLook.Interactive, CustomPieceType.StickyWall),
@@ -118,6 +119,7 @@ namespace LowercaseUppercase
                 case CustomPieceType.StickyWall: piece.text = "sticky"; break;
                 case CustomPieceType.Tube: piece.text = "tube"; piece.count = 3; break;
                 case CustomPieceType.Lift: piece.y2 = y - 300f; break;
+                case CustomPieceType.Word when item.Kind == CustomPieceType.Float: piece.y2 = y - 270f; break;
                 case CustomPieceType.Hooks: piece.count = 3; break;
                 case CustomPieceType.CapsLock: piece.x2 = x + 800f; break;
                 case CustomPieceType.Hill: piece.count = 3; break;

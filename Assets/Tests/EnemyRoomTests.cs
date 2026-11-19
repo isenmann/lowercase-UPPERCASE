@@ -305,6 +305,90 @@ namespace LowercaseUppercase.Tests
             Assert.IsFalse(started, "Only the player's own Shift should slam, even when growing has to wait.");
         }
 
+        // ---------------------------------------------------------------- floating words
+
+        /// <summary>The pen's two floats: the one resting low that rises, and the one resting high that sinks.</summary>
+        static void PenFloats(out FloatingWord rising, out FloatingWord sinking)
+        {
+            FloatingWord[] floats = All<FloatingWord>().OrderBy(f => f.transform.position.x).ToArray();
+            Assert.That(floats.Length, Is.EqualTo(2), "The Enemy Room should have the float pen's two floats.");
+            rising = floats[0];
+            sinking = floats[1];
+            Assert.That(rising.topY, Is.GreaterThan(rising.RestY + 3f));
+            Assert.That(sinking.bottomY, Is.LessThan(sinking.RestY - 3f));
+        }
+
+        void StandOn(FloatingWord floating)
+        {
+            Bounds word = floating.GetComponent<BoxCollider2D>().bounds;
+            PlaceLetterAt(new Vector2(word.center.x, word.max.y + 0.02f));
+        }
+
+        [UnityTest]
+        public IEnumerator LowercaseRidesAFloatUpToItsTop()
+        {
+            yield return Load();
+            PenFloats(out FloatingWord rising, out _);
+            StandOn(rising);
+            yield return WaitUntil(() => letter.IsGrounded);
+
+            int airborneSteps = 0;
+            yield return WaitUntil(() =>
+            {
+                if (!letter.IsGrounded) airborneSteps++;
+                return rising.transform.position.y >= rising.topY - 0.01f;
+            });
+            Assert.That(airborneSteps, Is.LessThan(3), "The letter should ride the float, not bounce on it.");
+            Assert.AreEqual(rising.gameObject, letter.Surface.gameObject);
+            Assert.AreEqual(rising.GetComponent<BoxCollider2D>().bounds.max.y, letter.transform.position.y, 0.08f,
+                "The letter should stand on top of the float.");
+        }
+
+        [UnityTest]
+        public IEnumerator UppercaseSinksAFloatAndItDriftsBackWhenLeft()
+        {
+            yield return Load();
+            PenFloats(out _, out FloatingWord sinking);
+            StandOn(sinking);
+            yield return WaitUntil(() => letter.IsGrounded);
+            yield return Steps(10);
+            Assert.AreEqual(sinking.RestY, sinking.transform.position.y, 0.1f, "a shouldn't sink it.");
+
+            letter.SetInput(0f, false, true);
+            int airborneSteps = 0;
+            yield return WaitUntil(() =>
+            {
+                if (!letter.IsGrounded) airborneSteps++;
+                return sinking.transform.position.y <= sinking.bottomY + 0.01f;
+            });
+            Assert.That(airborneSteps, Is.LessThan(3), "The letter should ride the float down, not fall behind it.");
+
+            // Step off onto the floor beyond, and the float goes back up.
+            letter.SetInput(1f, false, false);
+            yield return WaitUntil(() => letter.Surface != null && letter.Surface.gameObject != sinking.gameObject);
+            yield return WaitUntil(() => sinking.transform.position.y >= sinking.RestY - 0.1f);
+        }
+
+        [UnityTest]
+        public IEnumerator ASlamJoltsAFloatDown()
+        {
+            yield return Load();
+            PenFloats(out _, out FloatingWord sinking);
+            Bounds word = sinking.GetComponent<BoxCollider2D>().bounds;
+
+            float speedAtLanding = 0f;
+            letter.Slammed += _ => speedAtLanding = sinking.Velocity;
+            PlaceLetterAt(new Vector2(word.center.x, word.max.y + 1.5f));
+            letter.SetInput(0f, false, true);
+            yield return WaitUntil(() => speedAtLanding < 0f);
+            Assert.That(speedAtLanding, Is.LessThan(-sinking.sinkSpeed * 2f), "A slam should push it down much faster than standing.");
+        }
+
+        IEnumerator Steps(int count)
+        {
+            for (int i = 0; i < count; i++) yield return new WaitForFixedUpdate();
+        }
+
         IEnumerator GrowInPlace()
         {
             letter.SetInput(0f, false, true);

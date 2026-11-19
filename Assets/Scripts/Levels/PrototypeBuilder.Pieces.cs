@@ -92,6 +92,36 @@ namespace LowercaseUppercase.Levels
             return brick;
         }
 
+        const float DefaultFloatRisePx = 270f;
+        const float FloatRippleBelowPx = 26f;   // Below the word's baseline.
+        const float FloatRipplePerLetter = 1.8f; // 40 px tildes under 72 px letters, so the ripple spans the word.
+
+        /// <summary>
+        /// A floating word resting with its surface at surfacePx, moving as far as otherEndPx, above or below. A faint
+        /// ripple of tildes moves under it, and a fainter ghost of the ripple marks each end of its travel.
+        /// </summary>
+        static WordBlock FloatWord(Transform level, string content, float leftPx, float surfacePx, float otherEndPx)
+        {
+            WordBlock word = Word(level, content, leftPx, surfacePx, 72f, WordKind.Float, Interactive);
+            float baselinePx = 360f - word.transform.position.y * PixelsPerUnit;
+
+            string tildes = new string('~', Mathf.Clamp(Mathf.RoundToInt(content.Trim().Length * FloatRipplePerLetter), 3, 36));
+            float rippleBaselinePx = baselinePx + FloatRippleBelowPx;
+            TextMeshPro ripple = Text(level, "Float Ripple", tildes, leftPx, rippleBaselinePx, 40f, mono, FloatRipple);
+            ripple.transform.SetParent(word.transform, true);
+
+            // Where the ripple is when the word rests, and where it is at the other end. Drawn behind the ripple.
+            Text(level, "Float End", tildes, leftPx, rippleBaselinePx, 40f, mono, FloatEnd, -2);
+            Text(level, "Float End", tildes, leftPx, rippleBaselinePx + otherEndPx - surfacePx, 40f, mono, FloatEnd, -2);
+
+            var floating = word.gameObject.AddComponent<FloatingWord>();
+            floating.GetComponent<Rigidbody2D>().bodyType = RigidbodyType2D.Kinematic;
+            float travel = Size(surfacePx - otherEndPx); // Positive when the other end is higher up the page.
+            floating.topY = word.transform.position.y + Mathf.Max(0f, travel);
+            floating.bottomY = word.transform.position.y + Mathf.Min(0f, travel);
+            return word;
+        }
+
         static WordBlock HotWord(Transform level, string content, float leftPx, float surfacePx = Ground)
         {
             return Word(level, content, leftPx, surfacePx, 72f, WordKind.Hot, Hot);

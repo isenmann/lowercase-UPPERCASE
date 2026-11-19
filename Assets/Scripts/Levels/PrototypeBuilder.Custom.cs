@@ -91,7 +91,7 @@ namespace LowercaseUppercase.Levels
             {
                 case CustomPieceType.Word:
                     if (text.Trim().Length == 0) return piece.x;
-                    return RightEdge(CustomWord(level, text, piece.x, piece.y, piece.kind));
+                    return RightEdge(CustomWord(level, text, piece.x, piece.y, piece.kind, piece.y2));
 
                 case CustomPieceType.Brick:
                     BrickWall(level, piece.x, ColumnLetters(text, BrickLetters), piece.y);
@@ -359,7 +359,7 @@ namespace LowercaseUppercase.Levels
             return best;
         }
 
-        static WordBlock CustomWord(Transform level, string text, float leftPx, float surfacePx, string kind)
+        static WordBlock CustomWord(Transform level, string text, float leftPx, float surfacePx, string kind, float otherEndPx)
         {
             switch (kind)
             {
@@ -368,6 +368,8 @@ namespace LowercaseUppercase.Levels
                 case CustomPieceType.Sticky: return StickyFloor(level, text, leftPx, surfacePx);
                 case CustomPieceType.Plank: return Word(level, text, leftPx, surfacePx, 72f, WordKind.Hyphen, Interactive);
                 case CustomPieceType.Cracked: return BrickWord(level, text, leftPx, surfacePx);
+                case CustomPieceType.Float:
+                    return FloatWord(level, text, leftPx, surfacePx, otherEndPx != 0f ? otherEndPx : surfacePx - DefaultFloatRisePx);
                 default: return Word(level, text, leftPx, surfacePx, 72f);
             }
         }

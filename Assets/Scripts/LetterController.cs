@@ -22,6 +22,7 @@ namespace LowercaseUppercase
         // Landings slower than this (stepping off a low ledge, settling after a lift) make no sound.
         const float QuietLandingSpeed = 3f;
         const float BumpSoundGap = 0.2f;
+        const float CarrierCatchUp = 6f; // Most speed a floating word's rider uses to close the gap to its top.
 
         public FormSettings lowercase;
         public FormSettings uppercase;
@@ -104,6 +105,8 @@ namespace LowercaseUppercase
         // letter grows, because a ceiling can hold the growing back for a while.
         bool upperFromCaps;
         WordBlock surface;
+        FloatingWord carrier;   // The floating word under the letter, if it stands on one.
+        float groundVelocityY;  // How fast the ground under the letter moves up or down.
 
         WordBlock hook;
         WordBlock lastHook;
@@ -148,6 +151,8 @@ namespace LowercaseUppercase
             hook = null;
             IsSlamming = false;
             IsFallingOff = false;
+            carrier = null;
+            groundVelocityY = 0f;
             box.enabled = true;
             IsGrounded = false;
             surface = null;
@@ -333,9 +338,12 @@ namespace LowercaseUppercase
             IsGrounded = false;
             surface = null;
 
-            if (velocity.y <= 0.01f)
+            // Measured against the ground's own speed, so a rising floating word still counts as ground.
+            if (velocity.y - groundVelocityY <= 0.01f)
             {
-                int count = box.Cast(Vector2.down, solidFilter, hits, GroundProbe);
+                // Riding a floating word, look as far as it moves in a step, or the letter flickers off it.
+                float reach = wasGrounded && carrier != null ? Mathf.Abs(groundVelocityY) * Time.fixedDeltaTime * 2f : 0f;
+                int count = box.Cast(Vector2.down, solidFilter, hits, GroundProbe + reach);
                 for (int i = 0; i < count; i++)
                 {
                     if (hits[i].normal.y < 0.7f) continue;
@@ -345,11 +353,17 @@ namespace LowercaseUppercase
                 }
             }
 
+            if (surface == null || surface.kind != WordKind.Float) carrier = null;
+            else if (carrier == null || carrier.gameObject != surface.gameObject) carrier = surface.GetComponent<FloatingWord>();
+            groundVelocityY = IsGrounded && carrier != null ? carrier.Velocity : 0f;
+
             if (IsGrounded && !wasGrounded)
             {
+                // Against the ground's own speed: dropping onto a sinking float is a soft landing.
+                float impact = groundVelocityY - previousVerticalSpeed;
                 // A slam lands with its own, bigger sound.
-                if (-previousVerticalSpeed > QuietLandingSpeed && !IsSlamming) Sfx.Play(Sound.Land);
-                Landed?.Invoke(-previousVerticalSpeed);
+                if (impact > QuietLandingSpeed && !IsSlamming) Sfx.Play(Sound.Land);
+                Landed?.Invoke(impact);
             }
         }
 
@@ -523,6 +537,12 @@ namespace LowercaseUppercase
         void LandSlam()
         {
             IsSlamming = false;
+            if (carrier != null)
+            {
+                // The letter rides the jolt down instead of being left hanging above the word.
+                carrier.Jolt();
+                groundVelocityY = carrier.Velocity;
+            }
             Vector2 feet = rb.position;
             var filter = new ContactFilter2D { useTriggers = true };
             Physics2D.OverlapBox(feet + Vector2.up * 0.5f, new Vector2(shockRadius * 2f, 1f + shockHeight * 2f), 0f,
@@ -647,6 +667,15 @@ namespace LowercaseUppercase
 
             if (IsGrounded)
             {
+                if (carrier != null)
+                {
+                    // Ride the floating word: its speed, plus whatever closes the gap to its top, so both end the
+                    // step touching. Leaving it to the contacts lets the letter bounce off a word moving under it.
+                    float gap = carrier.SurfaceY - rb.position.y;
+                    velocity.y = groundVelocityY + Mathf.Clamp(gap / dt, -CarrierCatchUp, CarrierCatchUp);
+                    return;
+                }
+
                 // A small downward speed keeps the body on the surface instead of hovering at the probe distance.
                 velocity.y = StickToGroundSpeed;
                 return;

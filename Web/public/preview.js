@@ -44,6 +44,8 @@ export const COLOURS = {
   hot: "#FF8A3D",
   scenery: "#F2F0EB1A",
   liftMark: "#5CD3F52E",
+  floatRipple: "#5CD3F559",
+  floatEnd: "#5CD3F51A",
   capsTint: "#FF8A3D08",
   capsLabel: "#FF8A3D4C"
 };
@@ -54,6 +56,7 @@ const SOLID = "solid", HOT = "hot", DOOR = "door", UP = "up", COMMA = "comma";
 const PUNCTUATION = new Set(["spring", COMMA, "hyphen", "period", "power"]);
 
 const RISER_MARK = "¡";
+const FLOAT_RISE_PX = 270;
 const BRICK_LETTERS = "b\nr\ni\nc\nk\nb\nr\ni\nc\nk";
 const STICKY_LETTERS = "s\nt\ni\nc\nk\ny";
 const DOOR_LETTERS = "d\no\no\nr\nd\no\no\nr";
@@ -241,7 +244,7 @@ class Builder {
     const value = fallback => number(piece.value) !== 0 ? piece.value : fallback;
     switch (piece.type) {
       case "word":
-        return text.trim().length === 0 ? x : this.customWord(parts, text, x, y, string(piece.kind)).right;
+        return text.trim().length === 0 ? x : this.customWord(parts, text, x, y, string(piece.kind), number(piece.y2)).right;
       case "brick":
         this.column(parts, columnLetters(text, BRICK_LETTERS), x, y, 46, "cracked", COLOURS.breakable);
         return x + COLUMN_WIDTH_PX;
@@ -363,8 +366,9 @@ class Builder {
     return this.block(parts, { text, font, size, color, x, y: bottom + box.bottom, kind, lineSpacing });
   }
 
-  customWord(parts, text, x, surface, kind) {
+  customWord(parts, text, x, surface, kind, otherEnd) {
     switch (kind) {
+      case "float": return this.floatWord(parts, text, x, surface, otherEnd !== 0 ? otherEnd : surface - FLOAT_RISE_PX);
       case "ice": return this.topped(parts, text, x, surface, 72, FONTS.mono, COLOURS.interactive, "ice", 0, true);
       case "hot": return this.topped(parts, text, x, surface, 72, FONTS.mono, COLOURS.hot, HOT);
       case "sticky": return this.topped(parts, text, x, surface, 72, FONTS.mono, COLOURS.interactive, "sticky");
@@ -372,6 +376,19 @@ class Builder {
       case "cracked": return this.topped(parts, text, x, surface, 72, FONTS.mono, COLOURS.breakable, "cracked");
       default: return this.topped(parts, text, x, surface, 72, FONTS.mono, COLOURS.paper, SOLID);
     }
+  }
+
+  /** A floating word at rest, with the ripple under it and a ghost of the ripple at each end of its travel (FloatWord). */
+  floatWord(parts, text, x, surface, otherEnd) {
+    const block = this.topped(parts, text, x, surface, 72, FONTS.mono, COLOURS.interactive, "float");
+    const tildes = "~".repeat(Math.min(36, Math.max(3, Math.round(text.trim().length * 1.8))));
+    const ripple = block.part.yPx + 26;
+    parts.push(this.text({ text: tildes, font: FONTS.mono, size: 40, color: COLOURS.floatRipple, x, y: ripple }));
+    for (const end of [ripple, ripple + otherEnd - surface]) {
+      parts.push(this.text({ text: tildes, font: FONTS.mono, size: 40, color: COLOURS.floatEnd, x, y: end, order: -2 }));
+    }
+
+    return block;
   }
 
   column(parts, letters, x, bottom, size, kind, color) {

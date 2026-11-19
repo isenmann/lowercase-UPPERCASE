@@ -5,7 +5,7 @@ using UnityEngine;
 namespace LowercaseUppercase
 {
     // New kinds go at the end: scenes store these as numbers.
-    public enum WordKind { Solid, Ice, Cracked, Spring, Hot, Sticky, Up, Comma, Hyphen, Period, Door, Power }
+    public enum WordKind { Solid, Ice, Cracked, Spring, Hot, Sticky, Up, Comma, Hyphen, Period, Door, Power, Float }
 
     /// <summary>
     /// A typed word that is also level geometry. A one-line word gets one flat collider from baseline
@@ -177,6 +177,11 @@ namespace LowercaseUppercase
 
                 case WordKind.Hyphen:
                     if (heavy) Smash();
+                    break;
+
+                case WordKind.Float:
+                    FloatingWord floating = GetComponent<FloatingWord>();
+                    if (floating != null) floating.Stood(letter);
                     break;
 
                 case WordKind.Hot:

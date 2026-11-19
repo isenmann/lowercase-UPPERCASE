@@ -198,6 +198,9 @@ namespace LowercaseUppercase
         public const string Plank = "plank";
         /// <summary>A brick word: a stands on it, A smashes it by walking into it or landing on it (a slam too).</summary>
         public const string Cracked = "cracked";
+        /// <summary>A floating word: rises under a, sinks under A, drifts back to y when left. y2 = the other end of
+        /// its travel, above or below (y - 270).</summary>
+        public const string Float = "float";
 
         // ------------------------------------------------ enemy kinds
 

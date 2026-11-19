@@ -31,6 +31,7 @@ namespace LowercaseUppercase.Levels
             PlaceCheckpoint(level, x - 60f, Ground);
             x = EnemyPen(level, x, "a plain walker", "& stomp it or shoot it", (l, g, px) => BuildEnemy(l, g, px));
             x = SlamPen(level, x);
+            x = FloatPen(level, x);
             PowerBlock(level, x - 120f, LowPlatform);
             x = EnemyPen(level, x, "a spike walks here", "^ shoot it, don't land on it", (l, g, px) => BuildSpike(l, g, px));
             x = EnemyPen(level, x, "armour walks here", "§ stomp it, asterisks bounce off", (l, g, px) => BuildArmour(l, g, px));
@@ -92,6 +93,30 @@ namespace LowercaseUppercase.Levels
 
             BuildArmour(level, ground, left + 420f);
             BuildSpike(level, ground, left + 620f);
+            PlaceCheckpoint(level, x - 60f, Ground);
+            return x;
+        }
+
+        const float FloatLedge = 250f; // 270 px above the ground: higher than a can jump.
+
+        /// <summary>
+        /// Not an enemy but the floating word: one rests in the floor and carries a up to a ledge too high to jump to,
+        /// the next rests at the ledge and sinks under A back down to the floor. Both have nothing under them.
+        /// </summary>
+        static float FloatPen(Transform level, float x)
+        {
+            float left = x;
+            Floor(level, "float words", ref x);
+            Note(level, left + 40f, 200f, "a rides a float up, A rides it down, and it drifts back when you step off");
+
+            WordBlock up = FloatWord(level, "float", x, Ground, FloatLedge);
+            x = RightEdge(up) + WordGap;
+            WordBlock ledge = Word(level, "up here", x, FloatLedge, 72f);
+            x = RightEdge(ledge) + WordGap;
+            WordBlock down = FloatWord(level, "float", x, FloatLedge, Ground);
+            x = RightEdge(down) + WordGap;
+
+            Floor(level, "and down again", ref x);
             PlaceCheckpoint(level, x - 60f, Ground);
             return x;
         }

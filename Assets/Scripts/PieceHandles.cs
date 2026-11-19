@@ -27,6 +27,7 @@ namespace LowercaseUppercase
     public static class PieceHandles
     {
         public const float MinLiftPx = 120f;
+        public const float FloatTravelLimitPx = 80f;   // Its far end stays this far inside the page, top and bottom.
         public const float HighestLiftTopPx = 80f;
         public const float MinStretchPx = 160f;
         public const float HookSpacingPx = 240f;
@@ -45,6 +46,13 @@ namespace LowercaseUppercase
                     float top = piece.y2 != 0f ? piece.y2 : piece.y - 300f;
                     return new PieceHandle(new Vector2(x, piece.y), new Vector2(x, top),
                         (p, at) => p.y2 = Mathf.Clamp(at.y, HighestLiftTopPx, p.y - MinLiftPx));
+                }
+                case CustomPieceType.Word when piece.kind == CustomPieceType.Float:
+                {
+                    float x = piece.x + Mathf.Max(1, piece.text.Trim().Length) * 72f * 0.6f * 0.5f;
+                    float end = piece.y2 != 0f ? piece.y2 : piece.y - 270f;
+                    return new PieceHandle(new Vector2(x, piece.y), new Vector2(x, end),
+                        (p, at) => p.y2 = Mathf.Clamp(at.y, FloatTravelLimitPx, 720f - FloatTravelLimitPx));
                 }
                 case CustomPieceType.CapsLock:
                 {
