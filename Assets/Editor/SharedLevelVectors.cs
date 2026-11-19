@@ -126,12 +126,13 @@ namespace LowercaseUppercase.Editor
                 else if (piece.type == CustomPieceType.Kerned) piece.text = "b¡etwe¡en";
                 else if (piece.type == CustomPieceType.Heavy) piece.text = "heavy";
                 else if (!EditorPalette.Stands(piece) && piece.type != CustomPieceType.CapsLock &&
-                         piece.type != CustomPieceType.Wind &&
+                         piece.type != CustomPieceType.Wind && piece.type != CustomPieceType.Ink &&
                          piece.type != CustomPieceType.Hill && piece.type != CustomPieceType.Lift)
                     piece.y = 360f;
                 level.pieces.Add(piece);
 
-                x += piece.type == CustomPieceType.CapsLock ? 1000f : piece.type == CustomPieceType.Wind ? 800f : 360f;
+                x += piece.type == CustomPieceType.CapsLock ? 1000f : piece.type == CustomPieceType.Wind ? 800f
+                    : piece.type == CustomPieceType.Ink ? 600f : 360f;
             }
 
             // A wind box too, besides the palette's full-height wind.

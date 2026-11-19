@@ -172,6 +172,11 @@ namespace LowercaseUppercase
         /// seconds, blowing that long then calm as long (0 blows steadily).
         /// </summary>
         public const string Wind = "wind";
+        /// <summary>
+        /// A pool of ink from x to x2 (x + 400), lying on the surface y. y2 = the ink's surface (y - 150). a floats in it,
+        /// A sinks to the bottom.
+        /// </summary>
+        public const string Ink = "ink";
         /// <summary>Scenery: a hill of count rows (3) standing on the ground.</summary>
         public const string Hill = "hill";
         /// <summary>Scenery: a cloud. y = its baseline.</summary>

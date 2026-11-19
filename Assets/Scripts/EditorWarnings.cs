@@ -19,7 +19,8 @@ namespace LowercaseUppercase
 
     /// <summary>
     /// The level editor's checks: no exit, solid pieces inside each other, enemies with nothing to walk on, springs
-    /// with no room to bounce. They are warnings, not rules; a level with them still plays.
+    /// with no room to bounce, ink pools not held in by walls. They are warnings, not rules; a level with them still
+    /// plays.
     /// </summary>
     public static class EditorWarnings
     {
@@ -30,12 +31,21 @@ namespace LowercaseUppercase
         public const string NoHotGround = "spark with no hot word under it";
         public const string NoRoom = "spring with no room above it";
         public const string WrongLetter = "the exit wants a different letter than the sentence";
+        public const string InkUnwalled = "ink pool needs a wall on each side";
+        public const string InkNoFloor = "ink pool needs a floor under all of it";
 
         /// <summary>How deep two solid pieces may sink into each other before it counts, in pixels.</summary>
         const float OverlapSlackPx = 2f;
         /// <summary>The air a spring needs above its pad, in pixels.</summary>
         const float SpringRoomPx = 120f;
         const float DefaultPadPx = 80f;
+        /// <summary>
+        /// How far a wall may stand from a pool's side, or a gap in it may be, and still hold the ink, in pixels: one
+        /// grid step, since a word's edge is where its letters are drawn and rarely on the grid.
+        /// </summary>
+        const float InkWallSlackPx = LevelEditor.GridPx;
+        /// <summary>A gap in a pool's floor narrower than this lets nothing through: both letters are wider.</summary>
+        const float InkFloorGapPx = 24f;
 
         static readonly HashSet<string> Solid = new HashSet<string>
         {
@@ -85,8 +95,107 @@ namespace LowercaseUppercase
                     warnings.Add(new EditorWarning(piece.kind == CustomPieceType.Spark ? NoHotGround : NoGround, piece));
                 if (piece.type == CustomPieceType.Spring && !HasRoom(piece, boxes))
                     warnings.Add(new EditorWarning(NoRoom, piece));
+                if (piece.type == CustomPieceType.Ink && !IsWalledIn(piece, level, boxes))
+                    warnings.Add(new EditorWarning(InkUnwalled, piece));
+                if (piece.type == CustomPieceType.Ink && !HasFloor(piece, boxes))
+                    warnings.Add(new EditorWarning(InkNoFloor, piece));
             }
             return warnings;
+        }
+
+        /// <summary>The ink's surface and bottom in page pixels, as the builder makes them.</summary>
+        static void InkExtent(CustomPiece pool, out float left, out float right, out float surface, out float bottom)
+        {
+            left = pool.x;
+            right = pool.x2 > pool.x ? pool.x2 : pool.x + Levels.PrototypeBuilder.DefaultInkWidthPx;
+            bottom = pool.y;
+            surface = pool.y2 != 0f
+                ? Mathf.Min(pool.y2, pool.y - Levels.PrototypeBuilder.MinInkDepthPx)
+                : pool.y - Levels.PrototypeBuilder.DefaultInkDepthPx;
+        }
+
+        /// <summary>
+        /// Whether something holds the ink in on both sides: solid pieces at each side that, together, close it from
+        /// the pool's bottom up to its surface or higher. A wall can be stacked from several pieces, and another pool
+        /// beside it holds it in as far up as its own surface. Heavy and floating words move, so they don't count.
+        /// </summary>
+        static bool IsWalledIn(CustomPiece pool, CustomLevelData level, Dictionary<CustomPiece, List<Rect>> boxes)
+        {
+            InkExtent(pool, out float left, out float right, out float surface, out float bottom);
+            return IsHeldIn(pool, left, surface, bottom, level, boxes) && IsHeldIn(pool, right, surface, bottom, level, boxes);
+        }
+
+        /// <summary>
+        /// Whether the pool's bottom is closed from side to side, so a sinking A lands on something: by words lying
+        /// at the bottom, or walls standing on it. Gaps too narrow for a letter don't matter.
+        /// </summary>
+        static bool HasFloor(CustomPiece pool, Dictionary<CustomPiece, List<Rect>> boxes)
+        {
+            InkExtent(pool, out float leftPx, out float rightPx, out _, out float bottomPx);
+            float slack = InkWallSlackPx / LevelEditor.PixelsPerUnit;
+            float gap = InkFloorGapPx / LevelEditor.PixelsPerUnit;
+            float left = LevelEditor.World(new Vector2(leftPx, 0f)).x;
+            float right = LevelEditor.World(new Vector2(rightPx, 0f)).x;
+            float bottom = LevelEditor.World(new Vector2(0f, bottomPx)).y;
+
+            // What crosses the bottom line, as spans along it.
+            var spans = new List<Vector2>();
+            foreach (KeyValuePair<CustomPiece, List<Rect>> entry in boxes)
+            {
+                CustomPiece piece = entry.Key;
+                if (piece == pool || piece.type == CustomPieceType.Heavy) continue;
+                if (piece.type == CustomPieceType.Word && piece.kind == CustomPieceType.Float) continue;
+                foreach (Rect box in entry.Value)
+                    if (box.yMin <= bottom + slack && box.yMax >= bottom - slack)
+                        spans.Add(new Vector2(box.xMin, box.xMax));
+            }
+
+            // Walk them from the left side to the right; a gap a letter fits through is a hole.
+            float reached = left + slack;
+            foreach (Vector2 span in spans.OrderBy(s => s.x))
+            {
+                if (span.x > reached + gap) break;
+                reached = Mathf.Max(reached, span.y);
+            }
+            return reached >= right - slack;
+        }
+
+        static bool IsHeldIn(CustomPiece pool, float sidePx, float surfacePx, float bottomPx, CustomLevelData level,
+            Dictionary<CustomPiece, List<Rect>> boxes)
+        {
+            float slack = InkWallSlackPx / LevelEditor.PixelsPerUnit;
+            float side = LevelEditor.World(new Vector2(sidePx, 0f)).x;
+            float surface = LevelEditor.World(new Vector2(0f, surfacePx)).y;
+            float bottom = LevelEditor.World(new Vector2(0f, bottomPx)).y;
+
+            // What stands at this side, as spans of height.
+            var spans = new List<Vector2>();
+            foreach (KeyValuePair<CustomPiece, List<Rect>> entry in boxes)
+            {
+                CustomPiece piece = entry.Key;
+                if (piece == pool || piece.type == CustomPieceType.Heavy) continue;
+                if (piece.type == CustomPieceType.Word && piece.kind == CustomPieceType.Float) continue;
+                foreach (Rect box in entry.Value)
+                    if (box.xMin <= side + slack && box.xMax >= side - slack)
+                        spans.Add(new Vector2(box.yMin, box.yMax));
+            }
+            foreach (CustomPiece other in level.pieces)
+            {
+                if (other == pool || other.type != CustomPieceType.Ink) continue;
+                InkExtent(other, out float otherLeft, out float otherRight, out float otherSurface, out float otherBottom);
+                if (otherLeft > sidePx + InkWallSlackPx || otherRight < sidePx - InkWallSlackPx) continue;
+                spans.Add(new Vector2(LevelEditor.World(new Vector2(0f, otherBottom)).y,
+                    LevelEditor.World(new Vector2(0f, otherSurface)).y));
+            }
+
+            // Climb the spans from the bottom; a gap on the way up lets the ink out.
+            float reached = bottom + slack;
+            foreach (Vector2 span in spans.OrderBy(s => s.x))
+            {
+                if (span.x > reached + slack) break;
+                reached = Mathf.Max(reached, span.y);
+            }
+            return reached >= surface - 0.01f;
         }
 
         /// <summary>The solid boxes a piece built, as world rectangles.</summary>

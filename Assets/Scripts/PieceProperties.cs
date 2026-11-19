@@ -67,6 +67,10 @@ namespace LowercaseUppercase
                 case CustomPieceType.CapsLock:
                     list.Add(Number("width", p => p.x2 > p.x ? p.x2 - p.x : 800f, (p, v) => p.x2 = p.x + v, 80f, 160f, 4000f, 800f, "0 px"));
                     break;
+                case CustomPieceType.Ink:
+                    list.Add(Number("width", p => p.x2 > p.x ? p.x2 - p.x : 400f, (p, v) => p.x2 = p.x + v, 40f, 120f, 4000f, 400f, "0 px"));
+                    list.Add(Number("depth", p => p.y2 != 0f ? p.y - p.y2 : 150f, (p, v) => p.y2 = p.y - v, 24f, 48f, 480f, 150f, "0 px"));
+                    break;
                 case CustomPieceType.Wind:
                     list.Add(Number("width", p => p.x2 > p.x ? p.x2 - p.x : 600f, (p, v) => p.x2 = p.x + v, 80f, 160f, 4000f, 600f, "0 px"));
                     list.Add(new PieceProperty("height", p => p.y2 != 0f ? $"{p.y - p.y2:0} px" : "full",

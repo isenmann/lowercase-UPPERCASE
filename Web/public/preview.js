@@ -47,6 +47,8 @@ export const COLOURS = {
   floatRipple: "#5CD3F559",
   floatEnd: "#5CD3F51A",
   windMark: "#5CD3F526",
+  inkTint: "#4B5BD614",
+  inkSurface: "#7B8BFF80",
   capsTint: "#FF8A3D08",
   capsLabel: "#FF8A3D4C"
 };
@@ -60,6 +62,8 @@ const PUNCTUATION = new Set(["spring", COMMA, "hyphen", "period", "power"]);
 const RISER_MARK = "¡";
 const FLOAT_RISE_PX = 270;
 const DEFAULT_WIND_PX = 600;
+const DEFAULT_INK_WIDTH_PX = 400, DEFAULT_INK_DEPTH_PX = 150, MIN_INK_DEPTH_PX = 48;
+const INK_REACH_PX = 8, INK_SURFACE_DROP_PX = 12, INK_TILDE_PX = 40 * 0.6;
 const WIND_TOP_PX = 64;
 const WIND_FULL_MARKS_BOTTOM_PX = 544;
 const WIND_ROW_PX = 96;
@@ -321,6 +325,13 @@ class Builder {
       case "capsKey":
         this.capsKey(parts, x, y);
         return x + 90;
+      case "ink": {
+        const x2 = number(piece.x2), y2 = number(piece.y2);
+        const right = x2 > x ? x2 : x + DEFAULT_INK_WIDTH_PX;
+        const surface = y2 !== 0 ? Math.min(y2, y - MIN_INK_DEPTH_PX) : y - DEFAULT_INK_DEPTH_PX;
+        this.inkPool(parts, x, right, surface, y);
+        return right;
+      }
       case "wind": {
         const x2 = number(piece.x2);
         const right = x2 > x ? x2 : x + DEFAULT_WIND_PX;
@@ -530,6 +541,19 @@ class Builder {
     const label = this.text({ text: "LOCK", font: FONTS.black, size: 96, color: COLOURS.capsLabel, x: left + 20, y: 300, order: -4 });
     parts.push(label);
     this.zones.push({ middle: (left + right) / 2, label });
+  }
+
+  /** A pool of ink: its tint, as deep as its trigger, and a ~ line on its surface (InkPool). */
+  inkPool(parts, left, right, surface, bottom) {
+    const reach = bottom + INK_REACH_PX;
+    parts.push(rectPart({
+      cx: (left + right) / 2, cy: (surface + reach) / 2, width: right - left, height: reach - surface,
+      color: COLOURS.inkTint, order: -5
+    }));
+    const tildes = "~".repeat(Math.max(1, Math.floor((right - left) / INK_TILDE_PX)));
+    parts.push(this.text({
+      text: tildes, font: FONTS.mono, size: 40, color: COLOURS.inkSurface, x: left, y: surface + INK_SURFACE_DROP_PX, order: -4
+    }));
   }
 
   /** Wind's marks in staggered rows, spaced to fit its width and height a whole number of times (WindStretch). */

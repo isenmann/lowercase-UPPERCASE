@@ -36,6 +36,7 @@ namespace LowercaseUppercase.Levels
             x = FloatPen(level, x);
             x = WindPen(level, x);
             x = PushPen(level, x);
+            x = InkPen(level, x);
             x = EnemyPen(level, x, "a spike walks here", "^ shoot it, don't land on it", (l, g, px) => BuildSpike(l, g, px));
             x = EnemyPen(level, x, "armour walks here", "§ stomp it, asterisks bounce off", (l, g, px) => BuildArmour(l, g, px));
             x = EnemyPen(level, x, "hoppers keep the beat", "! one hops in place, one hops along", (l, g, px) =>
@@ -172,6 +173,59 @@ namespace LowercaseUppercase.Levels
             return RightEdge(after) + WordGap;
         }
 
+        /// <summary>A stacked "wall" standing with its bottom at bottomPx, with rows added until it is at least heightPx tall.</summary>
+        static WordBlock WallUpTo(Transform level, float leftPx, float heightPx, float bottomPx)
+        {
+            int rows = 1;
+            WordBlock wall = Stacked(level, "wall", leftPx, rows, bottomPx);
+            while (wall.GetComponent<BoxCollider2D>().size.y < Size(heightPx) && rows < 12)
+            {
+                Object.DestroyImmediate(wall.gameObject);
+                wall = Stacked(level, "wall", leftPx, ++rows, bottomPx);
+            }
+            return wall;
+        }
+
+        const float InkLowWallPx = 86f;      // 1.2 units: a jumps it, A can't hop it.
+        const float InkPoolOnePx = 300f;
+        const float InkGapPx = 80f;          // Under the dividing wall: 1.1 units, room for A (0.92) to walk through.
+        const float InkDividerPx = 360f;     // Its top, 5 units up: out of a's jump from the first pool's surface.
+        const float InkDeepPx = 216f;        // The second pool's surface, 3 units up: A can't get out, a can.
+
+        /// <summary>
+        /// Not an enemy but ink: a low wall a jumps over into a pool, a wall dividing it with a gap at the bottom only
+        /// a sunk A gets through, and a deeper pool behind it that a rises in and jumps out of over the far wall.
+        /// </summary>
+        static float InkPen(Transform level, float x)
+        {
+            float left = x;
+            Floor(level, "ink", ref x);
+            Note(level, left + 40f, 120f, "a floats on ink and jumps out of it, A sinks to the bottom and walks under walls");
+
+            WordBlock low = WallUpTo(level, x, InkLowWallPx, Ground);
+            float poolLeft = RightEdge(low);
+            WordBlock bottom = Word(level, "the bottom of the ink", poolLeft, Ground, 72f);
+            float bottomRight = RightEdge(bottom);
+
+            float dividerLeft = poolLeft + InkPoolOnePx;
+            WordBlock divider = WallUpTo(level, dividerLeft, InkDividerPx - InkGapPx, Ground - InkGapPx);
+            float dividerRight = RightEdge(divider);
+
+            WordBlock far = WallUpTo(level, bottomRight, InkDeepPx + 10f, Ground);
+            float farRight = RightEdge(far);
+
+            // The first pool reaches under the divider, so A walks from one pool into the other in ink.
+            InkPool(level, poolLeft, dividerRight, TopPx(low) + 10f, Ground, dividerLeft);
+            InkPool(level, dividerRight, bottomRight, TopPx(far) + 10f, Ground);
+
+            x = farRight;
+            WordBlock outWord = Word(level, "and out", x, TopPx(far), 72f);
+            x = RightEdge(outWord) + WordGap;
+            Floor(level, "dripping", ref x);
+            PlaceCheckpoint(level, x - 60f, Ground);
+            return x;
+        }
+
         const float PushRunPx = 288f;        // How far A pushes the heavy word to the wall: 4 units.
         const float PushLedgeAbovePx = 216f; // 3 units over the floor: out of a's jump, in reach from the heavy word.
 
@@ -191,17 +245,8 @@ namespace LowercaseUppercase.Levels
             Object.DestroyImmediate(heavy.gameObject);
             HeavyWord(level, "heavy", x - PushRunPx - heavyWidthPx, Ground);
 
-            // The wall: stacked rows, as tall as needed to reach the ledge.
-            int rows = 1;
-            WordBlock wall = Stacked(level, "wall", x, rows, Ground);
-            while (wall.GetComponent<BoxCollider2D>().size.y < Size(PushLedgeAbovePx) && rows < 12)
-            {
-                Object.DestroyImmediate(wall.gameObject);
-                wall = Stacked(level, "wall", x, ++rows, Ground);
-            }
-            var wallBox = wall.GetComponent<BoxCollider2D>();
-            float wallTop = wall.transform.position.y + wallBox.offset.y + wallBox.size.y * 0.5f;
-            float ledge = 360f - wallTop * PixelsPerUnit;
+            WordBlock wall = WallUpTo(level, x, PushLedgeAbovePx, Ground);
+            float ledge = TopPx(wall);
             WordBlock up = Word(level, "and up", RightEdge(wall), ledge, 72f);
             x = RightEdge(up) + WordGap;
             Floor(level, "and down", ref x);

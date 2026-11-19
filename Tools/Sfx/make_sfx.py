@@ -863,6 +863,26 @@ def _(st):
     return Mix().add(svf(white(d), 700, 2.5, "bp") * shape * grain, 0, 1.8).render()
 
 
+@event("Movement", "splash", "Splash", "The letter falls into a pool of ink.", "LetterController.FixedUpdate", 0.45)
+def _(st):
+    if st == "chip":
+        m = Mix().add(noise(st, 0.22, glide(3000, 400, 0.22), dec=0.08))
+        m.add(tone(st, glide(520, 140, 0.16), 0.16, 0.8, dec=0.08, duty=0.5), 0.02)
+        return m.render()
+    if st == "ink":
+        m = Mix().add(noise(st, 0.25, glide(2400, 300, 0.25), dec=0.08), 0, 0.8)
+        m.add(tone(st, glide(420, 130, 0.2), 0.2, dec=0.08), 0.02)
+        return m.render()
+    if st == "type":  # a drop of ink hitting the pool: wet slap, a falling bloop, a few droplets
+        m = Mix().add(svf(white(0.18), glide(2600, 500, 0.18), 1.1, "bp") * env(0.18, 0.001, 0.05), 0, 1.4)
+        m.add(osc("sine", glide(380, 120, 0.2, 0.6), 0.2) * env(0.2, 0.004, 0.07), 0.015, 0.9)
+        for at, f in ((0.09, 1500), (0.15, 1900), (0.22, 1300)):
+            m.add(osc("sine", glide(f, f * 0.6, 0.05), 0.05) * env(0.05, 0.001, 0.015), at, 0.25)
+        return m.render()
+    m = Mix().add(noise(st, 0.2, glide(4000, 900, 0.2), 3.0, dec=0.06), 0, 0.9)
+    return m.add(tone(st, glide(1200, 500, 0.18), 0.25, 0.7, dec=0.06), 0.02).render()
+
+
 STYLES = [
     dict(id="chip", name="Chip", blurb="Square waves and stepped noise, stair-stepped at 60 fps like an 8-bit console."),
     dict(id="ink", name="Ink", blurb="Soft sine and triangle tones, smooth glides, rounded edges. Calm and modern."),

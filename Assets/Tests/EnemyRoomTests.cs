@@ -618,6 +618,111 @@ namespace LowercaseUppercase.Tests
             Assert.AreEqual(heavy.StartPosition.y, body.position.y, 0.01f);
         }
 
+        // ---------------------------------------------------------------- ink
+
+        /// <summary>The pen's two pools, left to right: the shallow one behind the low wall and the deep one.</summary>
+        static void PenPools(out InkPool shallow, out InkPool deep)
+        {
+            InkPool[] pools = All<InkPool>().OrderBy(p => p.transform.position.x).ToArray();
+            Assert.That(pools.Length, Is.EqualTo(2), "The Enemy Room should have the ink pen's two pools.");
+            shallow = pools[0];
+            deep = pools[1];
+            Assert.That(deep.SurfaceY, Is.GreaterThan(shallow.SurfaceY + 1f));
+        }
+
+        static Bounds PoolBounds(InkPool pool) => pool.GetComponent<BoxCollider2D>().bounds;
+
+        /// <summary>How far the letter's middle is under the pool's surface.</summary>
+        float DepthIn(InkPool pool) => pool.SurfaceY - (letter.transform.position.y + 0.2f);
+
+        [UnityTest]
+        public IEnumerator LowercaseFloatsUpToTheSurfaceOfInk()
+        {
+            yield return Load();
+            PenPools(out InkPool shallow, out _);
+            Bounds pool = PoolBounds(shallow);
+            PlaceLetterAt(new Vector2(pool.min.x + 1f, pool.min.y + 0.15f));
+            yield return WaitUntil(() => letter.IsFloating);
+            yield return Steps(60);
+            Assert.IsTrue(letter.IsFloating);
+            Assert.IsFalse(letter.IsGrounded, "a shouldn't rest on the bottom of ink.");
+            Assert.AreEqual(0f, DepthIn(shallow), 0.05f, "a should float with its middle at the surface.");
+        }
+
+        [UnityTest]
+        public IEnumerator FloatingLowercaseCannotPassUnderTheDivider()
+        {
+            yield return Load();
+            PenPools(out InkPool shallow, out InkPool deep);
+            Bounds pool = PoolBounds(shallow);
+            PlaceLetterAt(new Vector2(pool.min.x + 1f, pool.min.y + 0.15f));
+            yield return WaitUntil(() => letter.IsFloating);
+            letter.SetInput(1f, false, false);
+            yield return Steps(200);
+            Assert.That(letter.transform.position.x, Is.LessThan(PoolBounds(deep).min.x - 1f),
+                "a floats too high to get under the dividing wall.");
+        }
+
+        [UnityTest]
+        public IEnumerator UppercaseSinksAndWalksUnderTheDividerIntoTheDeepPool()
+        {
+            yield return Load();
+            PenPools(out InkPool shallow, out InkPool deep);
+            Bounds pool = PoolBounds(shallow);
+            PlaceLetterAt(new Vector2(pool.min.x + 1f, pool.min.y + 0.15f));
+            yield return WaitUntil(() => letter.IsFloating);
+            yield return GrowInPlace();
+            yield return WaitUntil(() => letter.IsGrounded);
+            Assert.AreEqual(pool.min.y + Size(8f), letter.transform.position.y, 0.05f, "A should sink to the bottom.");
+            letter.SetInput(1f, false, true);
+            yield return WaitUntil(() => letter.transform.position.x > PoolBounds(deep).min.x + 1f);
+        }
+
+        [UnityTest]
+        public IEnumerator UppercaseCannotHopOutOfTheDeepPoolButLowercaseJumpsOut()
+        {
+            yield return Load();
+            PenPools(out _, out InkPool deep);
+            Bounds pool = PoolBounds(deep);
+            Bounds outWord = WordBounds("and out");
+            PlaceLetterAt(new Vector2(pool.max.x - 1.6f, pool.min.y + 0.15f));
+            yield return GrowInPlace();
+            yield return WaitUntil(() => letter.IsGrounded);
+            float highest = float.MinValue;
+            letter.PressJump();
+            letter.SetInput(0f, true, true);
+            for (int i = 0; i < 60; i++)
+            {
+                yield return new WaitForFixedUpdate();
+                highest = Mathf.Max(highest, letter.transform.position.y);
+            }
+            Assert.That(highest, Is.LessThan(deep.SurfaceY - 1f), "A's hop shouldn't get it anywhere near the surface.");
+
+            letter.SetInput(0f, false, false);
+            yield return WaitUntil(() => letter.IsFloating);
+            letter.PressJump();
+            letter.SetInput(1f, true, false);
+            yield return WaitUntil(() => letter.IsGrounded && letter.transform.position.y > outWord.max.y - 0.05f);
+        }
+
+        [UnityTest]
+        public IEnumerator TurningUppercaseInInkSinksInsteadOfSlamming()
+        {
+            yield return Load();
+            PenPools(out InkPool shallow, out _);
+            Bounds pool = PoolBounds(shallow);
+            PlaceLetterAt(new Vector2(pool.min.x + 1f, pool.min.y + 0.15f));
+            yield return WaitUntil(() => letter.IsFloating);
+            bool slammed = false;
+            letter.SlamStarted += () => slammed = true;
+            yield return GrowInPlace();
+            yield return Steps(30);
+            Assert.IsFalse(slammed);
+            Assert.IsFalse(letter.IsSlamming);
+        }
+
+        static float Size(float pixels) => pixels / 72f;
+
         IEnumerator Steps(int count)
         {
             for (int i = 0; i < count; i++) yield return new WaitForFixedUpdate();

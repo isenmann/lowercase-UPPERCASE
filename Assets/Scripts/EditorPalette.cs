@@ -47,6 +47,7 @@ namespace LowercaseUppercase
                 new PaletteItem("brick word (A smashes it)", "brk", PaletteLook.Breakable, CustomPieceType.Word, CustomPieceType.Cracked, typed: true),
                 new PaletteItem("floating word (a rises, A sinks)", "f~", PaletteLook.Interactive, CustomPieceType.Word, CustomPieceType.Float, typed: true),
                 new PaletteItem("heavy word (only A pushes it)", "hvy", PaletteLook.Interactive, CustomPieceType.Heavy, typed: true),
+                new PaletteItem("ink pool (a floats, A sinks)", "ink", PaletteLook.Interactive, CustomPieceType.Ink),
                 new PaletteItem("loose letters (! marks a riser)", "a b", PaletteLook.Plain, CustomPieceType.Kerned, typed: true),
                 new PaletteItem("brick column", "b|", PaletteLook.Breakable, CustomPieceType.Brick),
                 new PaletteItem("sticky wall", "s|", PaletteLook.Interactive, CustomPieceType.StickyWall),
@@ -125,6 +126,10 @@ namespace LowercaseUppercase
                 case CustomPieceType.Hooks: piece.count = 3; break;
                 case CustomPieceType.CapsLock: piece.x2 = x + 800f; break;
                 case CustomPieceType.Wind: piece.x2 = x + Levels.PrototypeBuilder.DefaultWindPx; break;
+                case CustomPieceType.Ink:
+                    piece.x2 = x + Levels.PrototypeBuilder.DefaultInkWidthPx;
+                    piece.y2 = y - Levels.PrototypeBuilder.DefaultInkDepthPx;
+                    break;
                 case CustomPieceType.Hill: piece.count = 3; break;
                 case CustomPieceType.Exit: piece.text = "c_t"; piece.kind = "a"; break;
                 case CustomPieceType.Enemy:
@@ -161,6 +166,7 @@ namespace LowercaseUppercase
                 case CustomPieceType.StickyWall:
                 case CustomPieceType.Tube:
                 case CustomPieceType.Heavy:
+                case CustomPieceType.Ink:
                     return true;
                 case CustomPieceType.Enemy:
                     switch (piece.kind)

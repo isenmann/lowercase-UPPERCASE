@@ -52,6 +52,8 @@ namespace LowercaseUppercase.Levels
                 "Loosely spaced letters leave holes only a small letter fits through."),
             new GuideTile("LOCK", GuideOrange, "both", "Caps Lock zone",
                 "Shift is inverted inside: you are A unless you hold it. Find the key to switch it off."),
+            new GuideTile("~~~", new Color32(0x7B, 0x8B, 0xFF, 0xFF), "both", "Ink",
+                "a floats and jumps out from the top. A sinks and walks along the bottom."),
             new GuideTile("\u00bb\u00bb", Interactive, "both", "Wind",
                 "Blows a away, so walk into it as A. Behind a, it carries a jump further."),
             new GuideTile(";", Muted, "both", "Checkpoint",

@@ -445,6 +445,60 @@ namespace LowercaseUppercase.Tests
             Assert.That(editor.Warnings.Count(w => w.Text == EditorWarnings.Overlap), Is.EqualTo(2));
         }
 
+        /// <summary>A floor with a pool on it from x 400 to 800, its surface at 400, and walls of the given heights.</summary>
+        void OpenPool(float leftWallTopPx, float rightWallTopPx)
+        {
+            var level = new CustomLevelData();
+            level.pieces.Add(new CustomPiece(CustomPieceType.Word, 40f, 520f, "a floor with a pool on it here", CustomPieceType.Solid));
+            if (leftWallTopPx > 0f)
+                level.pieces.Add(new CustomPiece(CustomPieceType.Tube, 400f - 110f, 520f, "wall") { count = Rows(leftWallTopPx) });
+            if (rightWallTopPx > 0f)
+                level.pieces.Add(new CustomPiece(CustomPieceType.Tube, 800f, 520f, "wall") { count = Rows(rightWallTopPx) });
+            level.pieces.Add(new CustomPiece(CustomPieceType.Ink, 400f, 520f) { x2 = 800f, y2 = 400f });
+            editor.Open(level);
+        }
+
+        /// <summary>Rows of a 48 px "wall" tube that reach at least as high as the page y given.</summary>
+        static int Rows(float topPx) => Mathf.CeilToInt((520f - topPx) / 24f) + 1;
+
+        [Test]
+        public void AnInkPoolBetweenHighEnoughWallsIsNotWarnedAbout()
+        {
+            OpenPool(300f, 300f);
+            Assert.That(editor.Warnings.Select(w => w.Text), Does.Not.Contain(EditorWarnings.InkUnwalled));
+        }
+
+        [Test]
+        public void AnInkPoolOpenAtTheSidesIsWarnedAbout()
+        {
+            OpenPool(0f, 0f);
+            Assert.That(editor.Warnings.Count(w => w.Text == EditorWarnings.InkUnwalled), Is.EqualTo(1));
+        }
+
+        [Test]
+        public void AnInkPoolWithAWallLowerThanItsSurfaceIsWarnedAbout()
+        {
+            OpenPool(300f, 480f);
+            Assert.That(editor.Warnings.Select(w => w.Text), Does.Contain(EditorWarnings.InkUnwalled));
+        }
+
+        [Test]
+        public void AnInkPoolOnAFloorIsNotWarnedAboutItsBottom()
+        {
+            OpenPool(300f, 300f);
+            Assert.That(editor.Warnings.Select(w => w.Text), Does.Not.Contain(EditorWarnings.InkNoFloor));
+        }
+
+        [Test]
+        public void AnInkPoolOverAHoleIsWarnedAbout()
+        {
+            var level = new CustomLevelData();
+            level.pieces.Add(new CustomPiece(CustomPieceType.Word, 40f, 520f, "a short floor", CustomPieceType.Solid));
+            level.pieces.Add(new CustomPiece(CustomPieceType.Ink, 400f, 520f) { x2 = 1000f, y2 = 400f });
+            editor.Open(level);
+            Assert.That(editor.Warnings.Select(w => w.Text), Does.Contain(EditorWarnings.InkNoFloor));
+        }
+
         [Test]
         public void ASpringUnderAWordIsWarnedAbout()
         {

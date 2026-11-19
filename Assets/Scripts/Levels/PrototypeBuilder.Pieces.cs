@@ -217,6 +217,35 @@ namespace LowercaseUppercase.Levels
             return x + 170f + (count - 1) * HookSpacingPx + 210f;
         }
 
+        public const float InkReachPx = 8f;      // The pool reaches this far under its bottom, so a letter standing there is in it.
+        const float InkSurfaceDropPx = 12f;      // The ~ line's baseline under the surface, so it sits on it.
+        const float InkTildePx = 40f * 0.6f;
+
+        /// <summary>
+        /// A pool of ink from leftPx to rightPx, from its surface down to its bottom (usually the surface of the word
+        /// it lies on). a floats in it, A sinks.
+        /// </summary>
+        static InkPool InkPool(Transform level, float leftPx, float rightPx, float surfacePx, float bottomPx,
+            float surfaceRightPx = 0f)
+        {
+            var poolObject = new GameObject("Ink");
+            poolObject.transform.SetParent(level, false);
+            poolObject.layer = LayerMask.NameToLayer("Level");
+            float widthPx = rightPx - leftPx;
+            float bottom = bottomPx + InkReachPx;
+            poolObject.transform.position = new Vector3(X(leftPx + widthPx * 0.5f), Y((surfacePx + bottom) * 0.5f), 0f);
+            var trigger = poolObject.AddComponent<BoxCollider2D>();
+            trigger.isTrigger = true;
+            trigger.size = new Vector2(Size(widthPx), Size(bottom - surfacePx));
+
+            Rect(poolObject.transform, "Tint", Vector2.zero, trigger.size, InkTint, -5);
+            // The ~ line can stop short, where a wall stands in the ink and its surface is out of sight under it.
+            float surfaceWidthPx = (surfaceRightPx > leftPx ? surfaceRightPx : rightPx) - leftPx;
+            string tildes = new string('~', Mathf.Max(1, Mathf.FloorToInt(surfaceWidthPx / InkTildePx)));
+            Text(poolObject.transform, "Ink Surface", tildes, leftPx, surfacePx + InkSurfaceDropPx, 40f, mono, InkSurface, -4);
+            return poolObject.AddComponent<InkPool>();
+        }
+
         const float WindTopPx = 64f;
         const float WindBottomPx = 640f;
         const float WindFullMarksBottomPx = 544f; // A full-height wind leaves out the rows under the ground.

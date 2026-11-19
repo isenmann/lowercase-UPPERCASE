@@ -36,6 +36,7 @@ namespace LowercaseUppercase
         const float CapsLockMiddlePx = 352f;
         const float CursorMarkAbovePx = 60f;
         const float WindFullTopPx = 64f;
+        const float MinInkWidthPx = 120f;
         const float WindFullBottomPx = 640f;
         const float WindFullSnapPx = 24f;   // A wind's corner dragged this close to the top blows the whole height.
 
@@ -62,6 +63,17 @@ namespace LowercaseUppercase
                     float right = piece.x2 > piece.x ? piece.x2 : piece.x + 800f;
                     return new PieceHandle(new Vector2(piece.x, CapsLockMiddlePx), new Vector2(right, CapsLockMiddlePx),
                         (p, at) => p.x2 = Mathf.Max(at.x, p.x + MinStretchPx));
+                }
+                case CustomPieceType.Ink:
+                {
+                    // The top right corner: dragging it sets the width and where the surface is.
+                    float right = piece.x2 > piece.x ? piece.x2 : piece.x + 400f;
+                    float surface = piece.y2 != 0f ? piece.y2 : piece.y - 150f;
+                    return new PieceHandle(new Vector2(piece.x, piece.y), new Vector2(right, surface), (p, at) =>
+                    {
+                        p.x2 = Mathf.Max(at.x, p.x + MinInkWidthPx);
+                        p.y2 = Mathf.Clamp(at.y, WindFullTopPx, p.y - Levels.PrototypeBuilder.MinInkDepthPx);
+                    });
                 }
                 case CustomPieceType.Wind:
                 {

@@ -33,6 +33,19 @@ namespace LowercaseUppercase
         public float slamDustSize = 5f;
         public float slamDustSpeed = 5f;
 
+        [Header("Ink splash")]
+        public string splashDrop = "\u2022";
+        public float splashDropSize = 4.5f;
+        public Color splashColor = new Color32(0x7B, 0x8B, 0xFF, 0xFF);
+        [Tooltip("Sideways speeds of the drops on each side; the fan is mirrored to the other side.")]
+        public float[] splashSideSpeeds = { 1.2f, 2.6f, 4f };
+        [Tooltip("Upward speed of the drops, and how much more a faster fall throws them.")]
+        public float splashRise = 4f;
+        public float splashRisePerSpeed = 0.25f;
+        [Tooltip("How much each drop's speed varies, as a share either way, so no two splashes look the same.")]
+        public float splashSideJitter = 0.25f;
+        public Vector2 splashRiseJitter = new Vector2(0.8f, 1.15f);
+
         [Header("Refused grow")]
         public float deniedShake = 0.06f;
         public float deniedDuration = 0.18f;
@@ -65,6 +78,7 @@ namespace LowercaseUppercase
             letter.Launched += OnLaunched;
             letter.SlamStarted += OnSlamStarted;
             letter.Slammed += OnSlammed;
+            letter.Splashed += OnSplashed;
         }
 
         void OnDisable()
@@ -76,6 +90,7 @@ namespace LowercaseUppercase
             letter.Launched -= OnLaunched;
             letter.SlamStarted -= OnSlamStarted;
             letter.Slammed -= OnSlammed;
+            letter.Splashed -= OnSplashed;
         }
 
         /// <summary>Pops the letter into view on the squash spring.</summary>
@@ -186,6 +201,39 @@ namespace LowercaseUppercase
                 label.sortingOrder = 20;
                 puff.AddComponent<FlyingText>().Launch(new Vector2(side * slamDustSpeed, 1.5f), 0f);
             }
+        }
+
+        /// <summary>A fan of drops thrown up from where the letter broke the ink's surface, higher for a harder fall.</summary>
+        void OnSplashed(Vector2 at, float speed)
+        {
+            float rise = splashRise + speed * splashRisePerSpeed;
+            for (int side = -1; side <= 1; side += 2)
+                for (int i = 0; i < splashSideSpeeds.Length; i++)
+                {
+                    // The outer drops fly lower, so the fan opens like a splash.
+                    float up = rise * (1f - 0.18f * i) * Random.Range(splashRiseJitter.x, splashRiseJitter.y);
+                    float across = splashSideSpeeds[i] * Random.Range(1f - splashSideJitter, 1f + splashSideJitter);
+                    Throw(splashDrop, splashDropSize, splashColor, at + new Vector2(side * 0.1f, 0f),
+                        new Vector2(side * across, up));
+                }
+            Throw(splashDrop, splashDropSize, splashColor, at,
+                new Vector2(Random.Range(-0.5f, 0.5f), rise * 1.15f * Random.Range(splashRiseJitter.x, splashRiseJitter.y)));
+        }
+
+        void Throw(string glyph, float size, Color color, Vector2 from, Vector2 velocity)
+        {
+            var drop = new GameObject("Ink drop");
+            drop.transform.position = new Vector3(from.x, from.y, 0f);
+            var label = drop.AddComponent<TextMeshPro>();
+            label.font = upperGlyph.font;
+            label.fontSize = size;
+            label.color = color;
+            label.text = glyph;
+            label.alignment = TextAlignmentOptions.Center;
+            label.textWrappingMode = TextWrappingModes.NoWrap;
+            label.rectTransform.sizeDelta = new Vector2(1f, 1f);
+            label.sortingOrder = 20;
+            drop.AddComponent<FlyingText>().Launch(velocity, 0f);
         }
 
         void OnLanded(float impactSpeed)

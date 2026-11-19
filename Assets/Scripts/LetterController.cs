@@ -47,6 +47,21 @@ namespace LowercaseUppercase
         [Tooltip("How much of A's run speed each unit of wind speed takes away when A walks against it.")]
         public float upperHeadwindDrag = 0.05f;
 
+        [Header("Ink")]
+        [Tooltip("How fast a rises to the surface and A sinks to the bottom, units per second.")]
+        public float inkRiseSpeed = 2.5f;
+        public float inkSinkSpeed = 1.8f;
+        [Tooltip("How quickly the ink changes the letter's vertical speed, units per second squared.")]
+        public float inkAcceleration = 25f;
+        [Tooltip("How firmly a settles at the surface: speed per unit of depth.")]
+        public float inkSettle = 8f;
+        [Tooltip("How close to floating half under a has to be to jump out, units.")]
+        public float inkFloatReach = 0.15f;
+        [Tooltip("Share of the run speed left in ink.")]
+        public float inkMoveFactor = 0.6f;
+        [Tooltip("How fast the letter has to fall into ink to splash, units per second.")]
+        public float splashSpeed = 1.5f;
+
         [Header("Pushing")]
         [Tooltip("How close the side of a heavy word has to be for A walking into it to push it, units.")]
         public float pushReach = 0.06f;
@@ -74,6 +89,8 @@ namespace LowercaseUppercase
         public event Action SlamStarted;
         /// <summary>A slam reached the ground. The number is how many enemies the shockwave knocked out.</summary>
         public event Action<int> Slammed;
+        /// <summary>The letter fell into ink: where it broke the surface, and how fast it was falling.</summary>
+        public event Action<Vector2, float> Splashed;
 
         public LetterForm Form { get; private set; } = LetterForm.Lowercase;
         public bool IsGrounded { get; private set; }
@@ -134,6 +151,9 @@ namespace LowercaseUppercase
         CapsLockZone pendingCapsZone;
         Wind pendingWind;
         Wind wind; // The wind the letter is in this step, if any.
+        InkPool pendingInk;
+        InkPool ink; // The ink the letter is in this step, if any.
+        bool wasInInk;
 
         bool WantsUppercase => shiftHeld != IsCapsLocked;
 
@@ -170,6 +190,9 @@ namespace LowercaseUppercase
             carrier = null;
             wind = null;
             pendingWind = null;
+            ink = null;
+            pendingInk = null;
+            wasInInk = false;
             groundVelocityY = 0f;
             box.enabled = true;
             IsGrounded = false;
@@ -232,6 +255,15 @@ namespace LowercaseUppercase
             pendingCapsZone = null;
             wind = pendingWind;
             pendingWind = null;
+            ink = pendingInk;
+            pendingInk = null;
+            // Falling into ink splashes; drifting in sideways or bobbing at the surface doesn't.
+            if (ink != null && !wasInInk && velocity.y < -splashSpeed)
+            {
+                Sfx.Play(Sound.Splash);
+                Splashed?.Invoke(new Vector2(rb.position.x, ink.SurfaceY), -velocity.y);
+            }
+            wasInInk = ink != null;
             WordBlock lift = pendingLift;
             pendingLift = null;
             regrabTimer -= dt;
@@ -297,6 +329,13 @@ namespace LowercaseUppercase
             if (blowing != null)
             {
                 pendingWind = blowing;
+                return;
+            }
+
+            var pool = other.GetComponent<InkPool>();
+            if (pool != null)
+            {
+                pendingInk = pool;
                 return;
             }
 
@@ -449,7 +488,8 @@ namespace LowercaseUppercase
             FormSettings settings = Current;
             ApplyBody(settings);
 
-            bool slam = form == LetterForm.Uppercase && !IsGrounded && !upperFromCaps;
+            // In ink, turning A just sinks: there is nothing to dive through.
+            bool slam = form == LetterForm.Uppercase && !IsGrounded && !upperFromCaps && ink == null;
             if (form == LetterForm.Lowercase && IsSlamming)
             {
                 // Letting go mid-dive glides like any other fall, but no faster than a can fall.
@@ -606,7 +646,7 @@ namespace LowercaseUppercase
 
             bool onWord = IsGrounded && surface != null;
             float grip = onWord ? surface.grip : 1f;
-            float runSpeed = s.runSpeed * (onWord ? surface.moveFactor : 1f);
+            float runSpeed = s.runSpeed * (onWord ? surface.moveFactor : 1f) * (ink != null ? inkMoveFactor : 1f);
             float target = moveInput * runSpeed;
             float windSpeed = wind != null ? wind.Speed : 0f;
             if (windSpeed != 0f) target = WindTarget(target, windSpeed);
@@ -631,6 +671,24 @@ namespace LowercaseUppercase
             }
 
             velocity.x = Mathf.MoveTowards(velocity.x, target, rate * dt);
+        }
+
+        /// <summary>
+        /// How far the letter's middle is under the ink's surface, units; 0 when not in ink, negative above it. Above
+        /// the surface the letter falls as anywhere else, so a jump out of the ink is a whole jump.
+        /// </summary>
+        float InkDepth => ink != null ? ink.SurfaceY - (rb.position.y + Current.colliderSize.y * 0.5f) : 0f;
+
+        /// <summary>a floating at the ink's surface, where it can jump from.</summary>
+        public bool IsFloating => Form == LetterForm.Lowercase && ink != null && Mathf.Abs(InkDepth) <= inkFloatReach;
+
+        /// <summary>a rises to float half under the surface; A sinks to the bottom.</summary>
+        void Swim(ref Vector2 velocity, float dt)
+        {
+            float target = Form == LetterForm.Lowercase
+                ? Mathf.Clamp(InkDepth * inkSettle, -inkRiseSpeed, inkRiseSpeed)
+                : -inkSinkSpeed;
+            velocity.y = Mathf.MoveTowards(velocity.y, target, inkAcceleration * dt);
         }
 
         /// <summary>
@@ -701,7 +759,7 @@ namespace LowercaseUppercase
 
         void Jump(ref Vector2 velocity, float dt)
         {
-            coyoteTimer = IsGrounded || IsClinging ? Current.coyoteTime : coyoteTimer - dt;
+            coyoteTimer = IsGrounded || IsClinging || IsFloating ? Current.coyoteTime : coyoteTimer - dt;
             jumpBufferTimer -= dt;
 
             if (jumpBufferTimer > 0f && coyoteTimer > 0f)
@@ -732,6 +790,13 @@ namespace LowercaseUppercase
         {
             FormSettings s = Current;
 
+            // a never rests on the bottom of ink: it rises off it, and off anything else under the surface.
+            if (Form == LetterForm.Lowercase && ink != null && InkDepth > 0f && !risingFromJump)
+            {
+                Swim(ref velocity, dt);
+                return;
+            }
+
             if (IsGrounded)
             {
                 if (carrier != null)
@@ -758,6 +823,13 @@ namespace LowercaseUppercase
             if (IsClinging && velocity.y <= 0f)
             {
                 velocity.y = 0f;
+                return;
+            }
+
+            // A jump out of the ink leaves it at full speed; the ink doesn't hold the letter back on the way up.
+            if (ink != null && InkDepth > 0f && !risingFromJump)
+            {
+                Swim(ref velocity, dt);
                 return;
             }
 

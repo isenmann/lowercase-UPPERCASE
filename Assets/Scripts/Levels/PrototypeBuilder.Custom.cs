@@ -156,6 +156,14 @@ namespace LowercaseUppercase.Levels
                     CustomCapsKey(level, piece.x, piece.y);
                     return piece.x + 90f;
 
+                case CustomPieceType.Ink:
+                {
+                    float right = piece.x2 > piece.x ? piece.x2 : piece.x + DefaultInkWidthPx;
+                    float surface = piece.y2 != 0f ? Mathf.Min(piece.y2, piece.y - MinInkDepthPx) : piece.y - DefaultInkDepthPx;
+                    InkPool(level, piece.x, right, surface, piece.y);
+                    return right;
+                }
+
                 case CustomPieceType.Wind:
                 {
                     float right = piece.x2 > piece.x ? piece.x2 : piece.x + DefaultWindPx;
@@ -185,6 +193,9 @@ namespace LowercaseUppercase.Levels
 
         const float ColumnWidthPx = 46f * 0.6f;
         public const float DefaultWindPx = 600f;
+        public const float DefaultInkWidthPx = 400f;
+        public const float DefaultInkDepthPx = 150f;
+        public const float MinInkDepthPx = 48f;
         const string RiserMark = "\u00a1";
 
         /// <summary>0: terrain and things, built first. 1: pieces that find terrain built before them.</summary>

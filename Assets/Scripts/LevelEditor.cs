@@ -777,7 +777,9 @@ namespace LowercaseUppercase
                 foreach (Renderer shape in part.GetComponentsInChildren<Renderer>())
                 {
                     if (!shape.enabled || shape.bounds.size == Vector3.zero) continue;
-                    if (shape is SpriteRenderer sprite && sprite.color.a < FaintAlpha) continue;
+                    // A pool's tint is faint but is the pool itself: it outlines it and picks it.
+                    bool inkTint = shape.GetComponentInParent<InkPool>() != null;
+                    if (shape is SpriteRenderer sprite && sprite.color.a < FaintAlpha && !inkTint) continue;
                     var text = shape.GetComponent<TMP_Text>();
                     if (text != null && (text.alpha < FaintAlpha || text.color.a < FaintAlpha)) continue;
                     if (!any) bounds = shape.bounds;

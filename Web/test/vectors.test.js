@@ -54,7 +54,7 @@ test("every built level's code reads, with its pieces in the same order", async 
 test("the layouts cover every piece type and enemy kind", () => {
   const every = vectors.layouts.find(layout => layout.label === "every piece");
   const types = new Set(every.pieces.map(piece => piece.type === "enemy" ? `enemy ${piece.kind}` : piece.type));
-  for (const type of ["word", "kerned", "heavy", "brick", "stickyWall", "tube", "spring", "door", "plate", "lift", "hooks",
+  for (const type of ["word", "kerned", "heavy", "ink", "brick", "stickyWall", "tube", "spring", "door", "plate", "lift", "hooks",
     "capsLock", "capsKey", "wind", "checkpoint", "power", "hash", "exit", "hill", "cloud"]) {
     assert.ok(types.has(type), type);
   }
