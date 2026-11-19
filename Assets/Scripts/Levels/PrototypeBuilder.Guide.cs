@@ -33,7 +33,7 @@ namespace LowercaseUppercase.Levels
         static GuideTile[] VocabularyTiles() => new[]
         {
             new GuideTile(".", Interactive, "A", "Period",
-                "A pressure plate. Only UPPERCASE is heavy enough to hold it down and open the door."),
+                "A pressure plate. Only UPPERCASE is heavy enough to press it and open the door."),
             new GuideTile("!", Interactive, "both", "Exclamation",
                 "A spring. Launches anyone; lowercase flies twice as high."),
             new GuideTile(",", Interactive, "a", "Comma",
@@ -44,10 +44,14 @@ namespace LowercaseUppercase.Levels
                 "Words do what they say: ice slides, up lifts, sticky holds you to walls, hot burns."),
             new GuideTile("brick", Breakable, "A", "Cracked word",
                 "A wall or floor made of a word. Run into it or slam down on it as a capital."),
+            new GuideTile("float", Interactive, "both", "Floating word",
+                "Rises while a stands on it and sinks under A. Left alone, it drifts back."),
             new GuideTile("g a p", Paper, "a", "Kerning gap",
                 "Loosely spaced letters leave holes only a small letter fits through."),
             new GuideTile("LOCK", GuideOrange, "both", "Caps Lock zone",
                 "Shift is inverted inside: you are A unless you hold it. Find the key to switch it off."),
+            new GuideTile("\u00bb\u00bb", Interactive, "both", "Wind",
+                "Blows a away, so walk into it as A. Behind a, it carries a jump further."),
             new GuideTile(";", Muted, "both", "Checkpoint",
                 "Pass it, and dying brings you back here instead of to the start."),
             new GuideTile("[<color=#FFD23F>*</color>]", Interactive, "both", "Power block",
@@ -240,7 +244,7 @@ namespace LowercaseUppercase.Levels
             RectTransform page = GuidePage(board, "VocabularyPage", "Level vocabulary",
                 "The world is text. Punctuation is machinery, and words do what they say.", regular, bold);
 
-            TileGrid(page, VocabularyTiles(), 4, filled, outline, keycap, regular, bold);
+            TileGrid(page, VocabularyTiles(), 5, filled, outline, keycap, regular, bold);
 
             RectTransform goal = Strip(page, "Goal", 576f, 52f, filled, GuideCard);
             UnityEngine.UI.Image goalLine = UiImage(goal, "Outline", outline, BarLine);
@@ -312,7 +316,7 @@ namespace LowercaseUppercase.Levels
             new GuideTile("[ ]", Player, "mouse", "Pick and move",
                 "Click a piece to pick it and drag to move it. Double-click a word to retype it. Del removes."),
             new GuideTile("up", Interactive, "mouse", "Stretch",
-                "Lifts, hooks, Caps Lock, fliers and cursors have a yellow square. Drag it to size them."),
+                "Lifts, floats, wind, hooks, Caps Lock, fliers and cursors have a yellow square. Drag it to size them."),
             new GuideTile("< >", Paper, "mouse", "Settings",
                 "The panel changes the picked piece. settings, top right, sets the name, sentence, time and ceiling."),
             new GuideTile("play", Player, "P H", "Test play",

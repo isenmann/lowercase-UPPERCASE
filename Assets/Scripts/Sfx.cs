@@ -12,7 +12,7 @@ namespace LowercaseUppercase
         CollectHash, Checkpoint, CapsUnlock, LevelComplete, TimerTick, TimeUp,
         DeathEnemy, Burn, FallOff, Respawn, LifeLost, GameOver,
         GameFinished, HighScore,
-        Slam,
+        Slam, Gust,
     }
 
     /// <summary>The two sound styles the Options menu switches between.</summary>

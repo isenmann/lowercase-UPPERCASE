@@ -19,6 +19,8 @@ namespace LowercaseUppercase
         public float gustSeconds;
         [Tooltip("Seconds a gust takes to rise or die down.")]
         public float gustRamp = 0.4f;
+        [Tooltip("How far past the edges of the screen a gust is still heard, units.")]
+        public float gustHearing = 1f;
 
         [Header("Marks")]
         public TextMeshPro[] marks;
@@ -56,7 +58,19 @@ namespace LowercaseUppercase
         {
             clock += Time.fixedDeltaTime;
             float target = gustSeconds <= 0f || Mathf.Repeat(clock, gustSeconds * 2f) < gustSeconds ? 1f : 0f;
+            // A gust starting is heard, as long as the wind is on screen: every gust in the level at once would roar.
+            if (gustSeconds > 0f && target > 0f && Blowing <= 0f && IsOnScreen()) Sfx.Play(Sound.Gust);
             Blowing = gustRamp <= 0f ? target : Mathf.MoveTowards(Blowing, target, Time.fixedDeltaTime / gustRamp);
+        }
+
+        bool IsOnScreen()
+        {
+            Camera view = Camera.main;
+            if (view == null) return false;
+            float halfWidth = view.orthographicSize * view.aspect + gustHearing;
+            float halfZone = box.size.x * 0.5f;
+            float centre = transform.position.x + box.offset.x;
+            return Mathf.Abs(centre - view.transform.position.x) < halfWidth + halfZone;
         }
 
         void Update()

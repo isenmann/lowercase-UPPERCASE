@@ -829,6 +829,23 @@ def _(st):
     m.add(tone(st, 131, 0.5, 0.5, dec=0.15), 0.02)
     return m.render()
 
+@event("Movement", "gust", "Gust", "A gusting wind starts blowing again while it is on screen.", "Wind.FixedUpdate", 0.3)
+def _(st):
+    d = 0.65
+    t = t_(d)
+    swell = np.sin(np.pi * t / d) ** 1.6  # rises and dies away, like air moving past
+    if st == "chip":
+        rate = glide(900, 2600, d, 0.7)
+        return 0.45 * chipnoise(d, rate) * frames(np.floor(swell * 15) / 15)
+    if st == "ink":
+        return 0.9 * svf(white(d), glide(500, 1800, d, 0.7), 0.9, "bp") * swell
+    if st == "type":  # a page lifted by the draught: breathy rush with a soft paper flutter
+        m = Mix().add(svf(white(d), glide(600, 2200, d, 0.7), 1.4, "bp") * swell, 0, 1.2)
+        m.add(ratchet(7, 0.3, 1.0, 0.7, 0.12), 0.18)
+        return m.render()
+    return Mix().add(svf(white(d), glide(900, 3000, d, 0.7), 3.0, "bp") * swell, 0, 1.4).render()
+
+
 STYLES = [
     dict(id="chip", name="Chip", blurb="Square waves and stepped noise, stair-stepped at 60 fps like an 8-bit console."),
     dict(id="ink", name="Ink", blurb="Soft sine and triangle tones, smooth glides, rounded edges. Calm and modern."),
