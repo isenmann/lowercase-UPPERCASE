@@ -5,7 +5,7 @@ using UnityEngine;
 namespace LowercaseUppercase
 {
     // New kinds go at the end: scenes store these as numbers.
-    public enum WordKind { Solid, Ice, Cracked, Spring, Hot, Sticky, Up, Comma, Hyphen, Period, Door, Power, Float }
+    public enum WordKind { Solid, Ice, Cracked, Spring, Hot, Sticky, Up, Comma, Hyphen, Period, Door, Power, Float, Heavy }
 
     /// <summary>
     /// A typed word that is also level geometry. A one-line word gets one flat collider from baseline
@@ -115,7 +115,8 @@ namespace LowercaseUppercase
                 float pointsToUnits = text.fontSize / face.pointSize * face.scale * 0.1f;
                 left = 0f;
                 right = text.GetPreferredValues(text.text).x;
-                bottom = 0f;
+                // A heavy word stands on its descenders, so the tail of a y rests on the floor, not in it.
+                bottom = kind == WordKind.Heavy ? face.descentLine * pointsToUnits : 0f;
                 top = kind == WordKind.Up ? liftHeight : face.meanLine * pointsToUnits;
             }
 

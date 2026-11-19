@@ -123,6 +123,24 @@ namespace LowercaseUppercase.Levels
             return word;
         }
 
+        public const float HeavyFontPx = 108f; // Tall enough that A can't hop onto it: 0.8 units against A's 0.6.
+
+        /// <summary>
+        /// A heavy word standing on the surface at bottomPx, which only A can push. Set in the heavy font, so it
+        /// looks as heavy as it is.
+        /// </summary>
+        static WordBlock HeavyWord(Transform level, string content, float leftPx, float bottomPx = Ground)
+        {
+            TextMeshPro text = Text(level, $"Word {content}", content, leftPx, bottomPx, HeavyFontPx, black, Interactive);
+            WordBlock word = AddBlock(text, WordKind.Heavy);
+            var box = word.GetComponent<BoxCollider2D>();
+            SetHeight(word, Y(bottomPx) - (box.offset.y - box.size.y * 0.5f));
+            var heavy = word.gameObject.AddComponent<HeavyWord>();
+            heavy.GetComponent<Rigidbody2D>().bodyType = RigidbodyType2D.Kinematic;
+            heavy.levelMask = LayerMask.GetMask("Level");
+            return word;
+        }
+
         static WordBlock HotWord(Transform level, string content, float leftPx, float surfacePx = Ground)
         {
             return Word(level, content, leftPx, surfacePx, 72f, WordKind.Hot, Hot);

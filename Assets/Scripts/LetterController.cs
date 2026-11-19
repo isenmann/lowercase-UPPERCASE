@@ -47,6 +47,10 @@ namespace LowercaseUppercase
         [Tooltip("How much of A's run speed each unit of wind speed takes away when A walks against it.")]
         public float upperHeadwindDrag = 0.05f;
 
+        [Header("Pushing")]
+        [Tooltip("How close the side of a heavy word has to be for A walking into it to push it, units.")]
+        public float pushReach = 0.06f;
+
         [Header("Slam")]
         [Tooltip("Turning A in the air stops the letter for this long before it dives.")]
         public float slamHangSeconds = 0.08f;
@@ -79,6 +83,8 @@ namespace LowercaseUppercase
         public bool IsFallingOff { get; private set; }
         /// <summary>From turning A in the air until the letter lands, bounces or grabs something.</summary>
         public bool IsSlamming { get; private set; }
+        /// <summary>A walked into the side of a heavy word this physics step and is pushing it.</summary>
+        public bool IsPushing { get; private set; }
         public bool IsHanging => hook != null;
         public Vector2 HookAnchor => hook != null ? hook.WorldCentre : Vector2.zero;
         public WordBlock Surface => surface;
@@ -252,6 +258,7 @@ namespace LowercaseUppercase
             ResolveForm(ref velocity);
             if (Form == LetterForm.Uppercase) SmashAhead(velocity, dt);
             Run(ref velocity, dt);
+            IsPushing = Form == LetterForm.Uppercase && PushAhead(ref velocity);
             Cling(ref velocity);
             Spring(ref velocity);
             Jump(ref velocity, dt);
@@ -637,6 +644,27 @@ namespace LowercaseUppercase
                 return along < 0f ? target * Mathf.Clamp01(1f - Mathf.Abs(windSpeed) * upperHeadwindDrag) : target;
             if (along >= 0f) return target + windSpeed;
             return windSpeed * (1f - headwindHold * Mathf.Abs(moveInput));
+        }
+
+        /// <summary>
+        /// A on the ground walking into the side of a heavy word pushes it, at the word's own speed. a just meets a
+        /// wall. Returns whether the letter is pushing.
+        /// </summary>
+        bool PushAhead(ref Vector2 velocity)
+        {
+            if (!IsGrounded || Mathf.Abs(moveInput) < 0.1f) return false;
+            float direction = Mathf.Sign(moveInput);
+            int count = rb.Cast(new Vector2(direction, 0f), solidFilter, hits, pushReach);
+            for (int i = 0; i < count; i++)
+            {
+                if (Vector2.Dot(hits[i].normal, new Vector2(-direction, 0f)) < 0.5f) continue;
+                var heavy = hits[i].collider.GetComponent<HeavyWord>();
+                if (heavy == null) continue;
+                heavy.Push(direction);
+                if (velocity.x * direction > heavy.pushSpeed) velocity.x = direction * heavy.pushSpeed;
+                return true;
+            }
+            return false;
         }
 
         /// <summary>Pressing into the side of a sticky word holds the letter there, and it can jump from there.</summary>

@@ -526,6 +526,98 @@ namespace LowercaseUppercase.Tests
             Assert.AreEqual(gusty.strength * gusty.direction, gusty.Speed, 0.001f);
         }
 
+        // ---------------------------------------------------------------- heavy words
+
+        static HeavyWord PenHeavy() => All<HeavyWord>().Single();
+        static Bounds PushWall() => WordBounds("wall");
+
+        /// <summary>Walks right into the heavy word from 1.5 units before it, as a or A, for the given steps.</summary>
+        IEnumerator WalkIntoTheHeavyWord(bool shift, int steps)
+        {
+            Bounds heavy = PenHeavy().GetComponent<BoxCollider2D>().bounds;
+            Bounds floor = WordBounds("heavy words: push it as A, climb it as a");
+            PlaceLetterAt(new Vector2(heavy.min.x - 1.5f, floor.max.y + 0.02f));
+            yield return WaitUntil(() => letter.IsGrounded);
+            letter.SetInput(1f, false, shift);
+            yield return Steps(steps);
+        }
+
+        [UnityTest]
+        public IEnumerator LowercaseCannotPushAHeavyWord()
+        {
+            yield return Load();
+            HeavyWord heavy = PenHeavy();
+            float start = heavy.transform.position.x;
+            yield return WalkIntoTheHeavyWord(false, 120);
+            Assert.AreEqual(start, heavy.transform.position.x, 0.001f, "a is too light to move it.");
+            Assert.IsFalse(letter.IsPushing);
+            Assert.That(letter.transform.position.x, Is.LessThan(heavy.GetComponent<BoxCollider2D>().bounds.min.x),
+                "a should stay on its side of it.");
+        }
+
+        [UnityTest]
+        public IEnumerator UppercasePushesAHeavyWordUpToTheWall()
+        {
+            yield return Load();
+            HeavyWord heavy = PenHeavy();
+            Bounds wall = PushWall();
+            float bottom = heavy.GetComponent<BoxCollider2D>().bounds.min.y;
+            yield return WalkIntoTheHeavyWord(true, 60);
+            Assert.IsTrue(letter.IsPushing);
+            yield return WaitUntil(() => heavy.GetComponent<BoxCollider2D>().bounds.max.x >= wall.min.x - 0.03f);
+            yield return Steps(30);
+            Bounds pushed = heavy.GetComponent<BoxCollider2D>().bounds;
+            Assert.That(pushed.max.x, Is.LessThanOrEqualTo(wall.min.x + 0.001f), "The wall should stop it.");
+            Assert.AreEqual(bottom, pushed.min.y, 0.02f, "It should slide along the floor, not sink or rise.");
+        }
+
+        [UnityTest]
+        public IEnumerator LowercaseClimbsTheWallFromTheHeavyWordButNotFromTheFloor()
+        {
+            yield return Load();
+            Bounds wall = PushWall();
+            Bounds floor = WordBounds("heavy words: push it as A, climb it as a");
+
+            PlaceLetterAt(new Vector2(wall.min.x - 0.6f, floor.max.y + 0.02f));
+            yield return WaitUntil(() => letter.IsGrounded);
+            letter.PressJump();
+            letter.SetInput(1f, true, false);
+            yield return Steps(90);
+            Assert.That(letter.transform.position.y, Is.LessThan(wall.max.y - 0.5f), "The wall is too high to jump from the floor.");
+
+            // Move the word to the wall, as A would, and climb from it.
+            HeavyWord heavy = PenHeavy();
+            Bounds word = heavy.GetComponent<BoxCollider2D>().bounds;
+            var body = heavy.GetComponent<Rigidbody2D>();
+            body.position += new Vector2(wall.min.x - 0.01f - word.max.x, 0f);
+            yield return Steps(2);
+            word = heavy.GetComponent<BoxCollider2D>().bounds;
+            PlaceLetterAt(new Vector2(word.max.x - 0.6f, word.max.y + 0.02f));
+            letter.SetInput(0f, false, false);
+            yield return WaitUntil(() => letter.IsGrounded);
+            letter.PressJump();
+            letter.SetInput(1f, true, false);
+            bool onTop = false;
+            for (int i = 0; i < 120 && !onTop; i++)
+            {
+                yield return new WaitForFixedUpdate();
+                onTop = letter.IsGrounded && letter.transform.position.y > wall.max.y - 0.05f;
+            }
+            Assert.IsTrue(onTop, "From the heavy word, a should get up onto the wall.");
+        }
+
+        [UnityTest]
+        public IEnumerator AHeavyWordThatFallsOutOfTheLevelComesBack()
+        {
+            yield return Load();
+            HeavyWord heavy = PenHeavy();
+            var body = heavy.GetComponent<Rigidbody2D>();
+            body.position = heavy.StartPosition + Vector2.down * (heavy.lostBelow + 1f);
+            yield return Steps(3);
+            Assert.AreEqual(heavy.StartPosition.x, body.position.x, 0.01f);
+            Assert.AreEqual(heavy.StartPosition.y, body.position.y, 0.01f);
+        }
+
         IEnumerator Steps(int count)
         {
             for (int i = 0; i < count; i++) yield return new WaitForFixedUpdate();

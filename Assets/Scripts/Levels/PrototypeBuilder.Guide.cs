@@ -46,6 +46,8 @@ namespace LowercaseUppercase.Levels
                 "A wall or floor made of a word. Run into it or slam down on it as a capital."),
             new GuideTile("float", Interactive, "both", "Floating word",
                 "Rises while a stands on it and sinks under A. Left alone, it drifts back."),
+            new GuideTile("heavy", Interactive, "both", "Heavy word",
+                "Only A is heavy enough to push it, and only a jumps high enough to climb onto it."),
             new GuideTile("g a p", Paper, "a", "Kerning gap",
                 "Loosely spaced letters leave holes only a small letter fits through."),
             new GuideTile("LOCK", GuideOrange, "both", "Caps Lock zone",

@@ -122,6 +122,10 @@ namespace LowercaseUppercase.Levels
                 case CustomPieceType.Kerned:
                     return CustomKerned(level, text, piece.x, piece.y);
 
+                case CustomPieceType.Heavy:
+                    if (text.Trim().Length == 0) return piece.x;
+                    return RightEdge(HeavyWord(level, text, piece.x, piece.y));
+
                 case CustomPieceType.Spring:
                     Spring(level, piece.x, piece.y, Value(piece, 80f));
                     return piece.x + 40f;

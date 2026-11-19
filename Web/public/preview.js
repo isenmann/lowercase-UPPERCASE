@@ -52,6 +52,7 @@ export const COLOURS = {
 };
 
 // Kinds of word block, for what finds what: enemies stand on blocks, plates open doors, sparks leap from hot words.
+const HEAVY = "heavy", HEAVY_FONT_PX = 108;
 const SOLID = "solid", HOT = "hot", DOOR = "door", UP = "up", COMMA = "comma";
 // Word blocks fitted to their ink, as WordBlock.IsPunctuation says, rather than to the font's lines.
 const PUNCTUATION = new Set(["spring", COMMA, "hyphen", "period", "power"]);
@@ -310,6 +311,13 @@ class Builder {
         this.capsLock(parts, x, x2 > x ? x2 : x + 800);
         return Math.max(x, x2);
       }
+      case "heavy": {
+        if (text.trim().length === 0) {
+          return x;
+        }
+
+        return this.standing(parts, text, x, y, HEAVY_FONT_PX, FONTS.black, COLOURS.interactive, HEAVY, 0).right;
+      }
       case "capsKey":
         this.capsKey(parts, x, y);
         return x + 90;
@@ -375,7 +383,9 @@ class Builder {
       return box;
     }
 
-    return { left: 0, right: preferredWidth(this.metrics, font, size, text), bottom: 0, top: FACES[font].meanLine * size };
+    // A heavy word stands on its descenders, so the tail of a y rests on the floor, not in it.
+    const bottom = kind === HEAVY ? FACES[font].descentLine * size : 0;
+    return { left: 0, right: preferredWidth(this.metrics, font, size, text), bottom, top: FACES[font].meanLine * size };
   }
 
   /** A block moved up or down until the top of its collider is at `surface` (MoveTopTo). */

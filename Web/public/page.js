@@ -43,6 +43,7 @@ const THINGS = [
   [piece => piece.type === "word" && piece.kind === "plank", "hyphen bridges"],
   [piece => piece.type === "word" && piece.kind === "float", "floating words"],
   [piece => piece.type === "kerned", "loose letters"],
+  [piece => piece.type === "heavy", "heavy words"],
   [piece => piece.type === "brick" || (piece.type === "word" && piece.kind === "cracked"), "bricks"],
   [piece => piece.type === "stickyWall", "sticky walls"],
   [piece => piece.type === "tube", "stacked walls"],

@@ -46,6 +46,7 @@ namespace LowercaseUppercase
                 new PaletteItem("hyphen bridge", "---", PaletteLook.Interactive, CustomPieceType.Word, CustomPieceType.Plank, typed: true),
                 new PaletteItem("brick word (A smashes it)", "brk", PaletteLook.Breakable, CustomPieceType.Word, CustomPieceType.Cracked, typed: true),
                 new PaletteItem("floating word (a rises, A sinks)", "f~", PaletteLook.Interactive, CustomPieceType.Word, CustomPieceType.Float, typed: true),
+                new PaletteItem("heavy word (only A pushes it)", "hvy", PaletteLook.Interactive, CustomPieceType.Heavy, typed: true),
                 new PaletteItem("loose letters (! marks a riser)", "a b", PaletteLook.Plain, CustomPieceType.Kerned, typed: true),
                 new PaletteItem("brick column", "b|", PaletteLook.Breakable, CustomPieceType.Brick),
                 new PaletteItem("sticky wall", "s|", PaletteLook.Interactive, CustomPieceType.StickyWall),
@@ -159,6 +160,7 @@ namespace LowercaseUppercase
                 case CustomPieceType.Brick:
                 case CustomPieceType.StickyWall:
                 case CustomPieceType.Tube:
+                case CustomPieceType.Heavy:
                     return true;
                 case CustomPieceType.Enemy:
                     switch (piece.kind)
@@ -186,6 +188,7 @@ namespace LowercaseUppercase
                 case CustomPieceType.StickyWall:
                 case CustomPieceType.Tube:
                 case CustomPieceType.Exit:
+                case CustomPieceType.Heavy:
                     return true;
                 default:
                     return false;

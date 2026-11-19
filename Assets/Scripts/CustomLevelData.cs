@@ -150,6 +150,8 @@ namespace LowercaseUppercase
         /// a ¡ between two letters hides a riser enemy in that hole ("b¡etwe¡en").
         /// </summary>
         public const string Kerned = "kerned";
+        /// <summary>A heavy word that only A pushes and only a climbs. y = the surface it stands on. text = the word.</summary>
+        public const string Heavy = "heavy";
         /// <summary>A spring "!". x = its centre, y = its surface, value = pad width in pixels (80).</summary>
         public const string Spring = "spring";
         /// <summary>A door column that a plate opens. y = its bottom.</summary>

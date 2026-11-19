@@ -199,7 +199,7 @@ namespace LowercaseUppercase.Levels
         }
 
         /// <summary>The word repeated on several lines, as one word with one collider whose bottom is at bottomPx.</summary>
-        static void Stacked(Transform level, string word, float leftPx, int rows, float bottomPx)
+        static WordBlock Stacked(Transform level, string word, float leftPx, int rows, float bottomPx)
         {
             string content = string.Join("\n", System.Linq.Enumerable.Repeat(word, rows));
             TextMeshPro text = Text(level, $"Word {word}", content, leftPx, bottomPx, TubeFontPx, mono, Muted);
@@ -208,6 +208,7 @@ namespace LowercaseUppercase.Levels
             block.FitCollider();
             var box = block.GetComponent<BoxCollider2D>();
             SetHeight(block, Y(bottomPx) - (box.offset.y - box.size.y * 0.5f));
+            return block;
         }
 
         /// <summary>Stairs standing on the ground, either climbing up to edgePx or falling away from it.</summary>

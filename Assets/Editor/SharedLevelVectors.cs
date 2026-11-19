@@ -124,6 +124,7 @@ namespace LowercaseUppercase.Editor
                 if (piece.type == CustomPieceType.Word)
                     piece.text = piece.kind == CustomPieceType.Plank ? "--------" : $"{piece.kind} word";
                 else if (piece.type == CustomPieceType.Kerned) piece.text = "b¡etwe¡en";
+                else if (piece.type == CustomPieceType.Heavy) piece.text = "heavy";
                 else if (!EditorPalette.Stands(piece) && piece.type != CustomPieceType.CapsLock &&
                          piece.type != CustomPieceType.Wind &&
                          piece.type != CustomPieceType.Hill && piece.type != CustomPieceType.Lift)

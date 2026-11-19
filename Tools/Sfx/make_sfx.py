@@ -846,6 +846,23 @@ def _(st):
     return Mix().add(svf(white(d), glide(900, 3000, d, 0.7), 3.0, "bp") * swell, 0, 1.4).render()
 
 
+@event("Movement", "push", "Push", "A pushes a heavy word along; repeats while it keeps moving.", "HeavyWord.FixedUpdate", 0.3)
+def _(st):
+    d = 0.35
+    t = t_(d)
+    shape = np.clip(t / 0.04, 0, 1) * np.clip((d - t) / 0.12, 0, 1)
+    grain = 0.55 + 0.45 * np.sign(np.sin(2 * np.pi * 28 * t))  # stutters, like something heavy dragged in jerks
+    if st == "chip":
+        return 0.45 * chipnoise(d, 420.0) * frames(np.floor(shape * grain * 15) / 15)
+    if st == "ink":
+        return Mix().add(svf(white(d), 380, 0.9) * shape * grain, 0, 1.4).add(tone(st, 70, d, 0.5, dec=0.2)).render()
+    if st == "type":  # a heavy block of type dragged over the desk: low wooden rasp and a knock
+        m = Mix().add(svf(white(d), 420, 1.3, "bp") * shape * grain, 0, 2.0)
+        m.add(osc("sine", glide(80, 60, 0.12), 0.12) * env(0.12, 0.002, 0.05), 0, 0.7)
+        return m.render()
+    return Mix().add(svf(white(d), 700, 2.5, "bp") * shape * grain, 0, 1.8).render()
+
+
 STYLES = [
     dict(id="chip", name="Chip", blurb="Square waves and stepped noise, stair-stepped at 60 fps like an 8-bit console."),
     dict(id="ink", name="Ink", blurb="Soft sine and triangle tones, smooth glides, rounded edges. Calm and modern."),

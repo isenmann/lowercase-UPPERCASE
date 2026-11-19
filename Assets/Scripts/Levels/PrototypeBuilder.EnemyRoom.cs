@@ -35,6 +35,7 @@ namespace LowercaseUppercase.Levels
             PowerBlock(level, x - 120f, LowPlatform);
             x = FloatPen(level, x);
             x = WindPen(level, x);
+            x = PushPen(level, x);
             x = EnemyPen(level, x, "a spike walks here", "^ shoot it, don't land on it", (l, g, px) => BuildSpike(l, g, px));
             x = EnemyPen(level, x, "armour walks here", "§ stomp it, asterisks bounce off", (l, g, px) => BuildArmour(l, g, px));
             x = EnemyPen(level, x, "hoppers keep the beat", "! one hops in place, one hops along", (l, g, px) =>
@@ -169,6 +170,43 @@ namespace LowercaseUppercase.Levels
             WordBlock after = Word(level, landing, pitRight, Ground, 72f);
             WindStretch(level, x + 40f, pitRight + 80f, gustSeconds: gustSeconds);
             return RightEdge(after) + WordGap;
+        }
+
+        const float PushRunPx = 288f;        // How far A pushes the heavy word to the wall: 4 units.
+        const float PushLedgeAbovePx = 216f; // 3 units over the floor: out of a's jump, in reach from the heavy word.
+
+        /// <summary>
+        /// Not an enemy but the heavy word: it stands on a long floor that ends at a wall too high for a to jump.
+        /// A pushes the word to the wall, and a climbs it to get up.
+        /// </summary>
+        static float PushPen(Transform level, float x)
+        {
+            float left = x;
+            WordBlock floor = Word(level, "heavy words: push it as A, climb it as a", x, Ground, 72f);
+            Note(level, left + 40f, 200f, "only A is heavy enough to push it, and only a jumps high enough to climb it");
+            x = RightEdge(floor);
+            // A short push from the wall, so the pen shows it without a long walk behind it.
+            WordBlock heavy = HeavyWord(level, "heavy", x, Ground);
+            float heavyWidthPx = RightEdge(heavy) - x;
+            Object.DestroyImmediate(heavy.gameObject);
+            HeavyWord(level, "heavy", x - PushRunPx - heavyWidthPx, Ground);
+
+            // The wall: stacked rows, as tall as needed to reach the ledge.
+            int rows = 1;
+            WordBlock wall = Stacked(level, "wall", x, rows, Ground);
+            while (wall.GetComponent<BoxCollider2D>().size.y < Size(PushLedgeAbovePx) && rows < 12)
+            {
+                Object.DestroyImmediate(wall.gameObject);
+                wall = Stacked(level, "wall", x, ++rows, Ground);
+            }
+            var wallBox = wall.GetComponent<BoxCollider2D>();
+            float wallTop = wall.transform.position.y + wallBox.offset.y + wallBox.size.y * 0.5f;
+            float ledge = 360f - wallTop * PixelsPerUnit;
+            WordBlock up = Word(level, "and up", RightEdge(wall), ledge, 72f);
+            x = RightEdge(up) + WordGap;
+            Floor(level, "and down", ref x);
+            PlaceCheckpoint(level, x - 60f, Ground);
+            return x;
         }
 
         /// <summary>One flier over a word, out of reach of a walking letter, and one bobbing up and down in a gap.</summary>

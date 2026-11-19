@@ -44,6 +44,9 @@ namespace LowercaseUppercase
                 case CustomPieceType.Kerned:
                     list.Add(TextRow("letters"));
                     break;
+                case CustomPieceType.Heavy:
+                    list.Add(TextRow("text"));
+                    break;
                 case CustomPieceType.Brick:
                 case CustomPieceType.StickyWall:
                     list.Add(TextRow("letters"));
