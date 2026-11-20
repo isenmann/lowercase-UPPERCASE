@@ -255,7 +255,8 @@ test("runs near the maximum or near a floor time are marked", async () => {
   const id = await startRun();
   clock += 60000;
   await expectReply(post(`/api/runs/${id}/level`, { level: 1, points: all + 400, centisLeft: 4000 }), 200);
-  await expectReply(finish(id, "max"), 200);
+  // Dies at the start of the next level: still marked.
+  await expectReply(finish(id, "max", 0), 200);
   const { scores } = await expectReply(get("/api/scores"), 200);
   assert.equal(scores[0].marked, true);
 

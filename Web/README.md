@@ -101,7 +101,7 @@ then `npm test`, and deploy together with the new builds: runs from older builds
 **Floor times.** A level reported faster than its floor in `src/run-floors.json` is refused. Placeholders until the
 levels are measured; `npm run deploy` refuses to run while `"placeholder"` is `true`.
 
-**Marked runs** reach 95 % of every enemy and # of the levels they played, or finish a level within 10 % of its floor.
+**Marked runs** reach 95 % of every enemy and # (plus the time bonus they got) in the levels they finished, or finish a level within 10 % of its floor.
 The page shows them so they are easy to look at. Unfinished runs are removed by a daily cron (`triggers` in
 `wrangler.jsonc`).
 

@@ -162,12 +162,12 @@ export async function finishRun(request, env, url, id, now) {
   if (partial % 50 !== 0 || partial > (stoppedIn ? earnable(stoppedIn) : 0)) return reply(422, { error: "Impossible" });
 
   const total = run.points + partial;
-  const reachable = run.max_reachable + (stoppedIn ? earnable(stoppedIn) : 0);
   const { results: done } = await env.DB.prepare(
     "SELECT level, centis FROM run_levels WHERE run_id = ?1 ORDER BY level"
   ).bind(id).all();
   const nearFloor = row => row.centis < floorCentis(limits.levels[row.level - 1]) * MARK_FLOOR_FACTOR;
-  const marked = (reachable > 0 && total >= reachable * MARK_SHARE) || done.some(nearFloor);
+  // Judged on the finished levels only: a perfect run that dies at the start of its last level is still worth a look.
+  const marked = (run.max_reachable > 0 && run.points >= run.max_reachable * MARK_SHARE) || done.some(nearFloor);
   const { name, refused } = cleanName(body.name);
 
   const statements = [
