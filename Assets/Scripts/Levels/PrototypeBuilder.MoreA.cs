@@ -12,7 +12,7 @@ namespace LowercaseUppercase.Levels
     {
         // ---------------------------------------------------------------- slam
 
-        /// <summary>Crack: a shelf with a brick lid over a word where armour and a spike walk. Slam through and knock them out.</summary>
+        /// <summary>Crack: a shelf with a brick lid over a word where armour and an ampersand walk. Slam through and knock them out.</summary>
         static float CrackSlam(Transform level, float x) => CrackSlam(level, x, true);
 
         static float CrackSlam(Transform level, float x, bool notes) => SlamShelf(level, x, notes,
@@ -40,9 +40,17 @@ namespace LowercaseUppercase.Levels
             HashRow(level, lidLeft + 40f, OnGround, 3);
 
             // One walks before the shelf's lid and one under it, so a slam through the lid lands among them.
-            if (spikes) BuildSpike(level, ground, left + 160f);
-            else BuildArmour(level, ground, left + 160f);
-            BuildSpike(level, ground, lidLeft + 60f);
+            // Crack comes before the spike is introduced in Wall, so it has armour and an ampersand instead.
+            if (spikes)
+            {
+                BuildSpike(level, ground, left + 160f);
+                BuildSpike(level, ground, lidLeft + 60f);
+            }
+            else
+            {
+                BuildArmour(level, ground, left + 160f);
+                BuildEnemy(level, ground, lidLeft + 60f);
+            }
             return x;
         }
 

@@ -529,7 +529,18 @@ namespace LowercaseUppercase.Tests
         // ---------------------------------------------------------------- heavy words
 
         static HeavyWord PenHeavy() => All<HeavyWord>().Single();
-        static Bounds PushWall() => WordBounds("wall");
+        /// <summary>
+        /// The wall the heavy word is pushed to: the first "wall" to its right. The ink pens are built from walls with
+        /// the same name, so a plain lookup by name can find one of theirs.
+        /// </summary>
+        static Bounds PushWall()
+        {
+            float heavyRight = PenHeavy().GetComponent<BoxCollider2D>().bounds.max.x;
+            return All<BoxCollider2D>()
+                .Where(c => c.name == "Word wall" && c.bounds.min.x >= heavyRight)
+                .OrderBy(c => c.bounds.min.x)
+                .First().bounds;
+        }
 
         /// <summary>Walks right into the heavy word from 1.5 units before it, as a or A, for the given steps.</summary>
         IEnumerator WalkIntoTheHeavyWord(bool shift, int steps)
