@@ -21,7 +21,7 @@ Everything needed to fill in the itch.io "Create a new project" form for lowerca
 | Description | Paste from `description.html` (see below) |
 | Cover image | `cover.png` (630×500); `cover@2x.png` is the same at 1260×1000 |
 | Banner | `banner.png` (960×250); `banner@2x.png` at 1920×500 |
-| Screenshots | `screenshots/01-title.png` … `15-shared-levels-page.png`, 1920×1080, in that order |
+| Screenshots | `screenshots/01-title.png` … `20-shared-levels-page.png`, 1920×1080, in that order |
 
 ## Web build embed
 
@@ -52,19 +52,24 @@ Banner: upload `banner.png` (960×250, the width of the page column) under "Bann
 | File | Shows |
 | --- | --- |
 | `01-title.png` | Title screen |
-| `02-crack-armour.png` | Crack: A dropping onto a `§` armour, which only dies when A lands on it |
-| `03-chain-comma-swing.png` | Chain: a swinging from a comma hook over a pit |
-| `04-gate-arrows.png` | Gate: an arrow from the `«` launcher flying over a, next to the period and its `door` |
-| `05-space-spring.png` | Space: a launched by the `!` spring over a wall |
-| `06-skate-curl.png` | Skate: A has kicked a curled `@` and the `o` rolls away across the `slide` ice |
-| `07-flames-sparks.png` | Flames: a hopping over `hot` words while a `°` spark leaps out, with a `!` hopper ahead |
-| `08-flames-fire-bar.png` | Flames: a walking under a fire bar turning around a hot `o` |
-| `09-tar-mimic.png` | Tar: A above a mimic that has copied it and turned into `B` |
-| `10-skyline-eye.png` | Skyline: an `ö` eye drifting after a, with a `&` walker on the word |
-| `11-final-cursor.png` | Final: the backspace cursor `\|` chasing a and erasing the words behind it |
-| `12-editor-words.png` | Level editor: an ice word picked, with its settings in the panel and the words page of the palette |
-| `13-editor-things.png` | Level editor: a flier picked with its travel handle, the plate's link to its door, and the things page |
-| `14-my-levels.png` | My levels: the list with finished marks and the picture of the level |
-| `15-shared-levels-page.png` | The shared levels page with three levels, the first one open with its preview |
+| `02-crack-slam.png` | Crack: A slamming down through the `brick` lid, with a `&` and a `§` walking below |
+| `03-wall-heavy-word.png` | Wall: A pushing the `heavy` word towards the wall that only a can climb from it |
+| `04-final-ink.png` | Final: a floating on ink while a `§` armour that sank walks the bottom, beside the divider and the deep pool |
+| `05-space-float.png` | Space: a riding a `float` up towards the ledge, with the next float waiting at the top |
+| `06-trail-wind.png` | Trail: a carried over a gap too wide to jump by the tailwind, through an arc of `#` |
+| `07-crack-armour.png` | Crack: A dropping onto a `§` armour, which only dies when A lands on it |
+| `08-chain-comma-swing.png` | Chain: a swinging from a comma hook over a pit |
+| `09-gate-arrows.png` | Gate: an arrow from the `«` launcher flying over a, next to the period and its `door` |
+| `10-space-spring.png` | Space: a launched by the `!` spring over a wall |
+| `11-skate-curl.png` | Skate: A has kicked a curled `@` and the `o` rolls away across the `slide` ice |
+| `12-flames-sparks.png` | Flames: a hopping over `hot` words while a `°` spark leaps out, with a `!` hopper ahead |
+| `13-flames-fire-bar.png` | Flames: a walking under a fire bar turning around a hot `o` |
+| `14-tar-mimic.png` | Tar: A above a mimic that has copied it and turned into `B` |
+| `15-skyline-eye.png` | Skyline: an `ö` eye drifting after a, with a `&` walker on the word |
+| `16-final-cursor.png` | Final: the backspace cursor `\|` chasing a and erasing the words behind it |
+| `17-editor-words.png` | Level editor: an ice word picked, with its settings in the panel and the words page of the palette |
+| `18-editor-things.png` | Level editor: a flier picked with its travel handle, the plate's link to its door, and the things page |
+| `19-my-levels.png` | My levels: the list with finished marks and the picture of the level |
+| `20-shared-levels-page.png` | The shared levels page with three levels, the first one open with its preview |
 
-`12`–`14` were taken on 2026-11-09 in Play mode (Game view at supersize 2, scaled to 1920×1080), with showcase levels in a scratch level folder. `15` is the page itself in headless Chromium at 1440×810 CSS pixels and 4/3 density, served locally with those levels. `01`, `03` and `05` were taken on 2026-11-08 in the editor's Game view (2053×1155). The others were taken on 2026-11-09 at 3310×1862 (Game view 1655×931, supersize 2), staged in Play mode, and all are scaled to 1920×1080.
+`02`–`06` were taken on 2026-11-20 at 3310×1862 (Game view 1655×931, supersize 2), staged in Play mode with the letter driven by script, and scaled to 1920×1080. `17`–`19` were taken on 2026-11-09 in Play mode (Game view at supersize 2, scaled to 1920×1080), with showcase levels in a scratch level folder. `20` is the page itself in headless Chromium at 1440×810 CSS pixels and 4/3 density, served locally with those levels. `01`, `08` and `10` were taken on 2026-11-08 in the editor's Game view (2053×1155). The others were taken on 2026-11-09 at 3310×1862 (Game view 1655×931, supersize 2), staged in Play mode, and all are scaled to 1920×1080.
