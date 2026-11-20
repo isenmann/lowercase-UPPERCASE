@@ -49,9 +49,12 @@ namespace LowercaseUppercase
 
         readonly StringBuilder typed = new StringBuilder();
         Keyboard listeningTo;
-        // Some native players (the Linux one on X11) send no text input events. Until one arrives,
-        // the name is read from the key presses instead.
+        // Some native players send no text input events. Until one arrives, the name is read from the key presses
+        // instead.
         static bool textInputSeen;
+        // The Linux player on X11 sends text input through its IME unreliably: after the last letter of an offered
+        // name was deleted, nothing more arrived. There the name is only ever read from the key presses.
+        static bool KeyPressesOnly => Application.platform == RuntimePlatform.LinuxPlayer;
         float leavesAt;
         int shownOnFrame = -1;
         int runScore;
@@ -156,7 +159,7 @@ namespace LowercaseUppercase
                 listeningTo.SetIMEEnabled(false);
             }
             listeningTo = keyboard;
-            if (listeningTo != null)
+            if (listeningTo != null && !KeyPressesOnly)
             {
                 listeningTo.SetIMEEnabled(true);
                 listeningTo.onTextInput += OnTextInput;
@@ -217,7 +220,7 @@ namespace LowercaseUppercase
 
             if (IsEnteringName)
             {
-                if (fresh && keyboard != null && !textInputSeen) TypeFromKeyPresses(keyboard);
+                if (fresh && keyboard != null && (KeyPressesOnly || !textInputSeen)) TypeFromKeyPresses(keyboard);
                 if (keyboard != null && keyboard.backspaceKey.wasPressedThisFrame && typed.Length > 0)
                 {
                     typed.Length--;
