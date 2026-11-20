@@ -59,6 +59,9 @@ namespace LowercaseUppercase
             collected.Clear();
         }
 
+        /// <summary>What this level has paid so far: enemies and #, and once banked, the time left.</summary>
+        public static int PointsThisLevel => Score - scoreAtLevelStart;
+
         /// <summary>How many # the letter has picked up in this level so far.</summary>
         public static int CollectedThisLevel => collected.Count;
 

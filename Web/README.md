@@ -95,6 +95,21 @@ the game apart has it, so it only stops casual tampering:
 npx wrangler@4 secret put SCORE_KEY
 ```
 
+The game reads its copy from `Assets/Scripts/OnlineScores.Key.cs`, which is kept out of git. A checkout without it
+builds and plays but sends nothing online. To make one, put the same key in:
+
+```csharp
+namespace LowercaseUppercase
+{
+    public static partial class OnlineScores
+    {
+        static partial void ReadBuildKey(ref string key) => key = "<the key>";
+    }
+}
+```
+
+The game never sends from the editor (`OnlineScores.AllowInEditor`), so trying levels there leaves the live list alone.
+
 **After changing a level's enemies, # or clock**, run lowercase UPPERCASE > High Scores > Write Run Limits in Unity,
 then `npm test`, and deploy together with the new builds: runs from older builds are turned away from then on.
 

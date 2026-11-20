@@ -25,5 +25,11 @@ namespace LowercaseUppercase
             "Tar",
             "Final"
         };
+
+        /// <summary>Each level's clock, in the same order.</summary>
+        public static readonly int[] LevelSeconds =
+        {
+            60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60
+        };
     }
 }

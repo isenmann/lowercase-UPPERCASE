@@ -53,6 +53,8 @@ namespace LowercaseUppercase
             shownOnFrame = Time.frameCount;
             score.text = $"score {runScore}";
             typed.Clear();
+            // A game over stops in a level that was never reported; after the last level everything was.
+            OnlineScores.RunOver(gameOver ? LevelRun.PointsThisLevel : 0);
             Place = recordsHighScores ? HighScores.Insert(runScore) : -1;
             IsEnteringName = Place >= 0;
             Sound ending = gameOver ? Sound.GameOver : Sound.GameFinished;
@@ -73,6 +75,7 @@ namespace LowercaseUppercase
             IsEnteringName = false;
             Listen(null);
             HighScores.Rename(Place, TypedName);
+            OnlineScores.Finish(TypedName, null);
             Sfx.Play(Sound.NameSaved);
             leavesAt = Time.unscaledTime + AfterNameSeconds;
             Refresh();

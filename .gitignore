@@ -88,3 +88,7 @@ Thumbs.db
 
 # Wrangler state when it is run from the repository root
 /.wrangler/
+
+# The key the online high score calls are signed with (Web/README.md, High scores)
+/Assets/Scripts/OnlineScores.Key.cs
+/Assets/Scripts/OnlineScores.Key.cs.meta

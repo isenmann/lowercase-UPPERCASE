@@ -273,7 +273,10 @@ namespace LowercaseUppercase
             SetSentence(true);
             timeAtSlot = LevelRun.TimeLeft;
             scoreAtSlot = LevelRun.Score;
-            if (!practice) LevelRun.BankTimeLeft();
+            if (practice) return;
+            LevelRun.BankTimeLeft();
+            // Ignored unless this is the next level of a run that is online.
+            if (!endlessLives) OnlineScores.LevelFinished(gameObject.scene.name, LevelRun.PointsThisLevel, timeAtSlot);
         }
 
         /// <summary>Once the letter has slotted, the time left visibly drains into the score. The points are already banked.</summary>

@@ -48,6 +48,7 @@ namespace LowercaseUppercase.Tests
         {
             CollectionAssert.AreEqual(PlayOrder, RunLimits.LevelScenes);
             CollectionAssert.AreEqual(PlayOrder, ReadFile().levels.Select(l => l.scene).ToArray());
+            CollectionAssert.AreEqual(ReadFile().levels.Select(l => l.seconds).ToArray(), RunLimits.LevelSeconds);
         }
 
         [Test]

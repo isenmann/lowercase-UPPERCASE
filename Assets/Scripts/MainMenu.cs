@@ -52,6 +52,9 @@ namespace LowercaseUppercase
         [Tooltip("Switches between the Chip and Type sound sets.")]
         public UnityEngine.UI.Button soundButton;
         public TMP_Text soundLabel;
+        [Tooltip("Switches sending runs to the world high scores on and off.")]
+        public UnityEngine.UI.Button onlineButton;
+        public TMP_Text onlineLabel;
         [Tooltip("Locks every level but the first again. Asks for a second press first.")]
         public UnityEngine.UI.Button resetProgressButton;
         public TMP_Text resetProgressLabel;
@@ -111,6 +114,8 @@ namespace LowercaseUppercase
         {
             Time.timeScale = 1f;
             LevelRun.NewGame();
+            // Back at the menu, a run that was going on is over without a name.
+            OnlineScores.Abandon();
             CreateEventSystem();
             if (version != null) version.text = string.Format(versionFormat, Application.version);
             ShootKey.RewriteHints();
@@ -144,6 +149,7 @@ namespace LowercaseUppercase
                 if (resolutionBack != null) resolutionBack.onClick.AddListener(Back);
             }
             if (soundButton != null) soundButton.onClick.AddListener(SwitchSoundSet);
+            if (onlineButton != null) onlineButton.onClick.AddListener(() => Confirm(() => OnlineScores.Enabled = !OnlineScores.Enabled));
             if (resetProgressButton != null) resetProgressButton.onClick.AddListener(ResetProgress);
             if (exitButton != null)
             {
@@ -214,6 +220,7 @@ namespace LowercaseUppercase
             fullscreenLabel.text = DisplaySettings.ModeLabel;
             if (resolutionLabel != null) resolutionLabel.text = DisplaySettings.ResolutionLabel;
             if (soundLabel != null) soundLabel.text = $"Sounds: {Sfx.Set}";
+            if (onlineLabel != null) onlineLabel.text = OnlineScores.Enabled ? "Online scores: On" : "Online scores: Off";
 
             if (loading) return;
 
@@ -469,6 +476,8 @@ namespace LowercaseUppercase
         {
             if (loading) return;
             loading = true;
+            // Only a run from the first level goes online, whether started with Play or from Chapters.
+            if (scene == RunLimits.LevelScenes[0]) OnlineScores.BeginRun();
             Sfx.Play(Sound.MenuStart);
             StartCoroutine(FadeThenLoad(scene));
         }

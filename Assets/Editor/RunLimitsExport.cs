@@ -110,6 +110,10 @@ namespace LowercaseUppercase.Editor
             text.Append("        /// <summary>The levels of a run, in the order they are played.</summary>\n");
             text.Append("        public static readonly string[] LevelScenes =\n        {\n");
             text.Append(string.Join(",\n", levels.Select(l => $"            \"{l.scene}\"")));
+            text.Append("\n        };\n\n");
+            text.Append("        /// <summary>Each level's clock, in the same order.</summary>\n");
+            text.Append("        public static readonly int[] LevelSeconds =\n        {\n");
+            text.Append("            " + string.Join(", ", levels.Select(l => l.seconds.ToString(CultureInfo.InvariantCulture))));
             text.Append("\n        };\n    }\n}\n");
             return text.ToString();
         }

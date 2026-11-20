@@ -16,6 +16,7 @@ namespace LowercaseUppercase.Levels
         const string MenuScene = SceneFolder + "/Menu.unity";
         const float MenuColumnTop = 433f;
         const float MenuColumnWidth = 280f;
+        const float OptionsRaisePx = 24f;
         const int ButtonRadius = 10;
         const int KeycapRadius = 8;
         const float ResolutionHeadingHeight = 36f;
@@ -124,6 +125,8 @@ namespace LowercaseUppercase.Levels
             chaptersPanel.gameObject.SetActive(false);
 
             RectTransform optionsPanel = MenuPanel(ui, "OptionsPanel");
+            // Options is the tallest panel, so it starts higher, leaving the controls clear of the bottom edge.
+            optionsPanel.anchoredPosition += new Vector2(0f, OptionsRaisePx);
             // Window mode and resolution share a row, so the panel keeps its height.
             RectTransform displayRow = ButtonRow(optionsPanel, "DisplayRow");
             UnityEngine.UI.Button fullscreen = OutlineButton(displayRow, "FullscreenButton", "Fullscreen", outline,
@@ -136,10 +139,16 @@ namespace LowercaseUppercase.Levels
                 medium, out TextMeshProUGUI soundLabel);
             UnityEngine.UI.Button resetProgress = OutlineButton(soundRow, "ResetProgressButton", "Reset progress", outline,
                 medium, out TextMeshProUGUI resetProgressLabel);
+            RectTransform onlineRow = ButtonRow(optionsPanel, "OnlineRow");
+            UnityEngine.UI.Button online = OutlineButton(onlineRow, "OnlineButton", "Online scores: On", outline,
+                medium, out TextMeshProUGUI onlineLabel);
+            // Two lines rather than four, so the panel still fits above the bottom edge.
             TextMeshProUGUI controls = UiText(optionsPanel, "Controls",
-                "← →  move\nSpace  jump\nShift  grow\nCtrl  shoot", mono, 15f, Muted, TextAlignmentOptions.Center);
-            controls.rectTransform.sizeDelta = new Vector2(MenuColumnWidth, 88f);
+                "← →  move    Space  jump\nShift  grow    Ctrl  shoot", mono, 15f, Muted, TextAlignmentOptions.Center);
+            controls.rectTransform.sizeDelta = new Vector2(MenuColumnWidth, 44f);
+            // Back heads the panel, the settings follow, and the controls close it at the bottom.
             UnityEngine.UI.Button optionsBack = OutlineButton(optionsPanel, "BackButton", "Back", outline, medium, out _);
+            optionsBack.transform.SetAsFirstSibling();
             optionsPanel.gameObject.SetActive(false);
 
             BuildKeyHint(ui, keycap, shiftArrow, regular);
@@ -186,6 +195,8 @@ namespace LowercaseUppercase.Levels
             menu.resolutionReservedHeight = ResolutionHeadingHeight + ResolutionBackHeight + 2f * ResolutionStackSpacing;
             menu.soundButton = sound;
             menu.soundLabel = soundLabel;
+            menu.onlineButton = online;
+            menu.onlineLabel = onlineLabel;
             menu.resetProgressButton = resetProgress;
             menu.resetProgressLabel = resetProgressLabel;
             menu.optionsBack = optionsBack;
