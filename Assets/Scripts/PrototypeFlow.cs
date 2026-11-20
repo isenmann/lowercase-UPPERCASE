@@ -274,6 +274,10 @@ namespace LowercaseUppercase
             timeAtSlot = LevelRun.TimeLeft;
             scoreAtSlot = LevelRun.Score;
             if (practice) return;
+#if UNITY_EDITOR
+            // For measuring the floor times in Web/src/run-floors.json: play a level as fast as possible and read this.
+            Debug.Log($"[floor] {gameObject.scene.name}: {levelSeconds - timeAtSlot:F2} s used on the clock");
+#endif
             LevelRun.BankTimeLeft();
             // Ignored unless this is the next level of a run that is online.
             if (!endlessLives) OnlineScores.LevelFinished(gameObject.scene.name, LevelRun.PointsThisLevel, timeAtSlot);

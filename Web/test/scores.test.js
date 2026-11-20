@@ -55,14 +55,15 @@ async function startRun(extra = {}) {
 }
 
 /** A believable finish: some enemies and #, `used` seconds on the clock, and that much time passing first. */
-function levelReport(number, { used = 20, earned = 300 } = {}) {
+// 40 s is above every level's floor time and not close to any, so a run of these is fair and unmarked.
+function levelReport(number, { used = 40, earned = 300 } = {}) {
   const seconds = limits.levels[number - 1].seconds;
   const centisLeft = (seconds - used) * 100;
   return { level: number, points: earned + Math.ceil(centisLeft / 100) * limits.pointsPerSecondLeft, centisLeft };
 }
 
 async function playLevel(id, number, options = {}) {
-  clock += ((options.used ?? 20) + 2) * 1000;
+  clock += ((options.used ?? 40) + 2) * 1000;
   return post(`/api/runs/${id}/level`, levelReport(number, options));
 }
 
@@ -233,19 +234,19 @@ test("unfinished runs are not on the list and don't count", async () => {
 });
 
 test("the fastest finish of each level, from finished runs only, the earlier one on a tie", async () => {
-  const slow = await playRun(2, { used: 30 });
+  const slow = await playRun(2, { used: 50 });
   await expectReply(finish(slow, "slow"), 200);
-  const quick = await playRun(1, { used: 20 });
-  const unfinishedQuicker = await playRun(1, { used: 10 });
+  const quick = await playRun(1, { used: 40 });
+  const unfinishedQuicker = await playRun(1, { used: 30 });
   await expectReply(finish(quick, "quick"), 200);
-  const tie = await playRun(1, { used: 20 });
+  const tie = await playRun(1, { used: 40 });
   await expectReply(finish(tie, "tie"), 200);
   assert.ok(unfinishedQuicker);
 
   const { levels } = await expectReply(get("/api/fastest"), 200);
   assert.equal(levels.length, LAST);
-  assert.deepEqual(levels[0], { level: 1, scene: "Overworld", best: { centis: 2000, name: "quick", date: "2026-11-20", marked: false } });
-  assert.deepEqual([levels[1].best.name, levels[1].best.centis], ["slow", 3000]);
+  assert.deepEqual(levels[0], { level: 1, scene: "Overworld", best: { centis: 4000, name: "quick", date: "2026-11-20", marked: false } });
+  assert.deepEqual([levels[1].best.name, levels[1].best.centis], ["slow", 5000]);
   assert.equal(levels[2].best, null);
 });
 
