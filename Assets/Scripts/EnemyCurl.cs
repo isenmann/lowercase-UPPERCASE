@@ -109,6 +109,9 @@ namespace LowercaseUppercase
                     Move(walkSpeed * dt, smashes: false);
                     break;
                 case State.Still:
+                    // A still o curled in the ink goes on sinking.
+                    float sunk = EnemyInk.SinkStep(enemy, enemy.Body.position, dt, solidFilter);
+                    if (sunk > 0f) enemy.Body.MovePosition(enemy.Body.position + Vector2.down * sunk);
                     stillLeft -= dt;
                     if (stillLeft > 0f) return;
                     SetGlyph(walkingGlyph);
@@ -121,8 +124,12 @@ namespace LowercaseUppercase
             }
         }
 
+        // Walking or rolling, the @ sinks in ink like a walker and goes on along the bottom.
         void Move(float step, bool smashes)
         {
+            Vector2 feet = enemy.Body.position;
+            float sunk = EnemyInk.SinkStep(enemy, feet, Time.fixedDeltaTime, solidFilter);
+            if (EnemyInk.IsIn(feet)) step *= EnemyInk.MoveFactor;
             BoxCollider2D box = enemy.Box;
             float reach = box.size.x * 0.5f + step;
             Vector2 centre = enemy.Body.position + box.offset;
@@ -134,14 +141,15 @@ namespace LowercaseUppercase
                 if (smashes && block != null && block.kind == WordKind.Cracked) block.Smash();
                 else direction = -direction;
             }
-            else
+            else if (sunk <= 0f)
             {
-                Vector2 groundAhead = new Vector2(centre.x + direction * reach, enemy.Body.position.y + LedgeProbeStart);
-                if (Physics2D.Raycast(groundAhead, Vector2.down, solidFilter, hits, LedgeProbeLength) == 0)
+                Vector2 groundAhead = new Vector2(centre.x + direction * reach, feet.y + LedgeProbeStart);
+                if (Physics2D.Raycast(groundAhead, Vector2.down, solidFilter, hits, LedgeProbeLength) == 0
+                    && !EnemyInk.BeyondLedge(new Vector2(groundAhead.x, feet.y)))
                     direction = -direction;
             }
 
-            enemy.Body.MovePosition(enemy.Body.position + new Vector2(direction * step, 0f));
+            enemy.Body.MovePosition(feet + new Vector2(direction * step, -sunk));
         }
 
         /// <summary>A rolling o knocks out any enemy it meets that can be stomped or shot. Fire is left alone.</summary>

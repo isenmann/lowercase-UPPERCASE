@@ -37,6 +37,7 @@ namespace LowercaseUppercase.Levels
             x = WindPen(level, x);
             x = PushPen(level, x);
             x = InkPen(level, x);
+            x = InkEnemyPen(level, x);
             x = EnemyPen(level, x, "a spike walks here", "^ shoot it, don't land on it", (l, g, px) => BuildSpike(l, g, px));
             x = EnemyPen(level, x, "armour walks here", "§ stomp it, asterisks bounce off", (l, g, px) => BuildArmour(l, g, px));
             x = EnemyPen(level, x, "hoppers keep the beat", "! one hops in place, one hops along", (l, g, px) =>
@@ -222,6 +223,32 @@ namespace LowercaseUppercase.Levels
             WordBlock outWord = Word(level, "and out", x, TopPx(far), 72f);
             x = RightEdge(outWord) + WordGap;
             Floor(level, "dripping", ref x);
+            PlaceCheckpoint(level, x - 60f, Ground);
+            return x;
+        }
+
+        /// <summary>
+        /// Enemies in ink: a pool between two walls level with its surface. Armour walks off the left wall into it
+        /// and a spike off the right one; both sink and walk along the bottom, and the walls keep them in.
+        /// </summary>
+        static float InkEnemyPen(Transform level, float x)
+        {
+            float left = x;
+            Floor(level, "sunk", ref x);
+            Note(level, left + 40f, 120f, "enemies sink in ink too and walk along the bottom");
+
+            WordBlock near = WallUpTo(level, x, InkLowWallPx, Ground);
+            float poolLeft = RightEdge(near);
+            WordBlock bottom = Word(level, "the floor of the pool", poolLeft, Ground, 72f);
+            float poolRight = RightEdge(bottom);
+            WordBlock far = WallUpTo(level, poolRight, InkLowWallPx, Ground);
+            InkPool(level, poolLeft, poolRight, TopPx(near) + 10f, Ground);
+
+            BuildArmour(level, near, x);
+            BuildSpike(level, far, poolRight);
+
+            x = RightEdge(far) + WordGap;
+            Floor(level, "dry again", ref x);
             PlaceCheckpoint(level, x - 60f, Ground);
             return x;
         }

@@ -5,6 +5,7 @@ namespace LowercaseUppercase
     /// <summary>
     /// Hops straight up from its word on a fixed beat, and can drift along the word while in the air,
     /// turning at walls and at the end of the word like a walker. It squashes a little on landing so the beat reads.
+    /// In ink it sinks to the bottom and hops on from there, lower and slower (see <see cref="EnemyInk"/>).
     /// </summary>
     [RequireComponent(typeof(Enemy))]
     public class EnemyHop : MonoBehaviour
@@ -56,10 +57,17 @@ namespace LowercaseUppercase
             float dt = Time.fixedDeltaTime;
             Vector2 position = enemy.Body.position;
 
+            // The word it hops from sinks with it through ink, down to whatever is under it.
+            var feet = new Vector2(position.x, groundY);
+            float sunk = EnemyInk.SinkStep(enemy, feet, dt, solidFilter);
+            groundY -= sunk;
+            bool inInk = EnemyInk.IsIn(feet);
+
             if (!IsAirborne)
             {
                 restLeft -= dt;
-                if (restLeft <= 0f) verticalSpeed = Mathf.Sqrt(2f * Gravity * hopHeight);
+                float hop = hopHeight * (inInk ? EnemyInk.MoveFactor : 1f);
+                if (restLeft <= 0f) verticalSpeed = Mathf.Sqrt(2f * Gravity * hop);
             }
 
             if (IsAirborne)
@@ -75,8 +83,8 @@ namespace LowercaseUppercase
                 }
                 else if (sideSpeed > 0f)
                 {
-                    float step = sideSpeed * dt;
-                    if (MustTurn(position, step)) direction = -direction;
+                    float step = sideSpeed * dt * (inInk ? EnemyInk.MoveFactor : 1f);
+                    if (MustTurn(position, step, sinking: sunk > 0f)) direction = -direction;
                     position.x += direction * step;
                 }
             }
@@ -94,7 +102,7 @@ namespace LowercaseUppercase
         }
 
         /// <summary>Like a walker, but the ledge is looked for at the word's height, since the hopper is usually above it.</summary>
-        bool MustTurn(Vector2 position, float step)
+        bool MustTurn(Vector2 position, float step, bool sinking)
         {
             BoxCollider2D box = enemy.Box;
             float reach = box.size.x * 0.5f + step;
@@ -102,8 +110,11 @@ namespace LowercaseUppercase
             Vector2 ahead = new Vector2(direction, 0f);
             if (Physics2D.Raycast(centre, ahead, solidFilter, hits, reach) > 0) return true;
 
+            if (sinking) return false;
+
             Vector2 groundAhead = new Vector2(centre.x + direction * reach, groundY + LedgeProbeStart);
-            return Physics2D.Raycast(groundAhead, Vector2.down, solidFilter, hits, LedgeProbeLength) == 0;
+            if (Physics2D.Raycast(groundAhead, Vector2.down, solidFilter, hits, LedgeProbeLength) > 0) return false;
+            return !EnemyInk.BeyondLedge(new Vector2(groundAhead.x, groundY));
         }
     }
 }

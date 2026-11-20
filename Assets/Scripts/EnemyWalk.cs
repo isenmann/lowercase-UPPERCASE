@@ -2,7 +2,10 @@ using UnityEngine;
 
 namespace LowercaseUppercase
 {
-    /// <summary>Walks an enemy along its word, turning at walls and at the end of the word.</summary>
+    /// <summary>
+    /// Walks an enemy along its word, turning at walls and at the end of the word. A ledge with ink beyond it is
+    /// walked off: the enemy sinks to the bottom of the ink and walks along it (see <see cref="EnemyInk"/>).
+    /// </summary>
     [RequireComponent(typeof(Enemy))]
     public class EnemyWalk : MonoBehaviour
     {
@@ -27,12 +30,16 @@ namespace LowercaseUppercase
 
         void FixedUpdate()
         {
-            float step = speed * Time.fixedDeltaTime;
-            if (MustTurn(step)) direction = -direction;
-            enemy.Body.MovePosition(enemy.Body.position + new Vector2(direction * step, 0f));
+            float dt = Time.fixedDeltaTime;
+            Vector2 feet = enemy.Body.position;
+            float sunk = EnemyInk.SinkStep(enemy, feet, dt, solidFilter);
+            float step = speed * dt * (EnemyInk.IsIn(feet) ? EnemyInk.MoveFactor : 1f);
+            if (MustTurn(step, sinking: sunk > 0f)) direction = -direction;
+            enemy.Body.MovePosition(feet + new Vector2(direction * step, -sunk));
         }
 
-        bool MustTurn(float step)
+        // While it sinks there is no ground ahead to look for; only walls turn it.
+        bool MustTurn(float step, bool sinking)
         {
             BoxCollider2D box = enemy.Box;
             float reach = box.size.x * 0.5f + step;
@@ -40,8 +47,11 @@ namespace LowercaseUppercase
             Vector2 ahead = new Vector2(direction, 0f);
             if (Physics2D.Raycast(centre, ahead, solidFilter, hits, reach) > 0) return true;
 
+            if (sinking) return false;
+
             Vector2 groundAhead = new Vector2(centre.x + direction * reach, enemy.Body.position.y + LedgeProbeStart);
-            return Physics2D.Raycast(groundAhead, Vector2.down, solidFilter, hits, LedgeProbeLength) == 0;
+            if (Physics2D.Raycast(groundAhead, Vector2.down, solidFilter, hits, LedgeProbeLength) > 0) return false;
+            return !EnemyInk.BeyondLedge(new Vector2(groundAhead.x, enemy.Body.position.y));
         }
     }
 }

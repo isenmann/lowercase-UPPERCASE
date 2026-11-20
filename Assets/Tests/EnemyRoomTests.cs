@@ -623,7 +623,8 @@ namespace LowercaseUppercase.Tests
         /// <summary>The pen's two pools, left to right: the shallow one behind the low wall and the deep one.</summary>
         static void PenPools(out InkPool shallow, out InkPool deep)
         {
-            InkPool[] pools = All<InkPool>().OrderBy(p => p.transform.position.x).ToArray();
+            // The ink pen comes first; the pool where enemies sink is after it.
+            InkPool[] pools = All<InkPool>().OrderBy(p => p.transform.position.x).Take(2).ToArray();
             Assert.That(pools.Length, Is.EqualTo(2), "The Enemy Room should have the ink pen's two pools.");
             shallow = pools[0];
             deep = pools[1];
@@ -719,6 +720,37 @@ namespace LowercaseUppercase.Tests
             yield return Steps(30);
             Assert.IsFalse(slammed);
             Assert.IsFalse(letter.IsSlamming);
+        }
+
+        [UnityTest]
+        public IEnumerator EnemiesWalkIntoInkSinkAndStayOnTheBottom()
+        {
+            yield return Load();
+            Bounds floor = WordBounds("the floor of the pool");
+            InkPool pool = All<InkPool>().OrderBy(p => p.transform.position.x).Last();
+            Bounds ink = PoolBounds(pool);
+            Enemy[] sinkers = All<Enemy>()
+                .Where(e => Mathf.Abs(e.Body.position.x - ink.center.x) < ink.extents.x + 2f).ToArray();
+            Assert.That(sinkers.Length, Is.EqualTo(2), "Armour and a spike start on the pool's walls.");
+            Assert.That(sinkers.All(e => e.Body.position.y > pool.SurfaceY), "They start out of the ink.");
+
+            Func<Enemy, bool> onTheBottom = e => Mathf.Abs(e.Body.position.y - floor.max.y) < 0.02f
+                && e.Body.position.x > ink.min.x && e.Body.position.x < ink.max.x;
+            float start = Time.time;
+            while (!sinkers.All(e => onTheBottom(e)) && Time.time - start < 8f) yield return new WaitForFixedUpdate();
+            Assert.That(sinkers.All(e => onTheBottom(e)), "Both should walk off their wall and sink to the bottom.");
+
+            // Slower in the ink, and the pool's walls turn them, so they stay down there.
+            float before = sinkers[0].Body.position.x;
+            yield return Steps(Mathf.RoundToInt(1f / Time.fixedDeltaTime));
+            float speed = Mathf.Abs(sinkers[0].Body.position.x - before);
+            Assert.That(speed, Is.EqualTo(sinkers[0].GetComponent<EnemyWalk>().speed * EnemyInk.MoveFactor).Within(0.1f));
+            start = Time.time;
+            while (Time.time - start < 12f)
+            {
+                yield return new WaitForFixedUpdate();
+                Assert.That(sinkers.All(e => onTheBottom(e)), "They should keep to the bottom of the pool.");
+            }
         }
 
         static float Size(float pixels) => pixels / 72f;
