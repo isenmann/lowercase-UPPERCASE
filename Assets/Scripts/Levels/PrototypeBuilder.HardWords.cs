@@ -218,6 +218,7 @@ namespace LowercaseUppercase.Levels
             x = TarFirstWall(level, x);
             x = TarLaunch(level, x);
             x = TarGuarded(level, x);
+            x = TarHeavy(level, x);
             x = TarTwoWalls(level, x);
             x = TarLock(level, x);
             x = TarHighWall(level, x);
@@ -374,6 +375,7 @@ namespace LowercaseUppercase.Levels
             x = FinalBridgeAndBrick(level, x);
             x = FinalDoor(level, x);
             x = FinalUnderground(level, x);
+            x = FinalInk(level, x);
             x = FinalIceAndHooks(level, x);
             x = FinalLock(level, x);
             float runLeft = x;

@@ -47,6 +47,7 @@ namespace LowercaseUppercase.Levels
             x = CrackFirstWall(level, x);
             x = CrackStomp(level, x);
             x = CrackRest(level, x);
+            x = CrackSlam(level, x);
             x = CrackTunnelThenWall(level, x);
             x = CrackSecondRest(level, x);
             x = CrackBigSmallBig(level, x);
@@ -191,6 +192,7 @@ namespace LowercaseUppercase.Levels
             x = WallDoor(level, x);
             x = WallThickWall(level, x);
             x = WallUpAndOver(level, x);
+            x = WallHeavy(level, x);
             x = WallLowRoad(level, x);
             x = WallOnTheHill(level, x);
             x = WallClosingRun(level, x);

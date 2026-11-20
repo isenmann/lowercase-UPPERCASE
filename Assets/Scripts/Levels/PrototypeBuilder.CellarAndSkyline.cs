@@ -42,6 +42,7 @@ namespace LowercaseUppercase.Levels
             x = CellarOpening(level, x);
             x = CellarTunnel(level, x);
             x = CellarBrickWall(level, x);
+            x = CellarInk(level, x);
             x = CellarBridgeAndDoor(level, x);
             x = ShiftRun(level, x, true, "duck down", "break out", "duck again", "break free");
             x = CellarEnd(level, x);
@@ -156,6 +157,7 @@ namespace LowercaseUppercase.Levels
             x = SkylineBridgeAndSpring(level, x);
             x = SkylineIce(level, x);
             x = SkylineHooks(level, x);
+            x = SkylineGusts(level, x);
             x = SkylineSwapper(level, x);
             x = ShiftRun(level, x, false, "slip in", "push out", "slip in", "push out", "slip in", "push out");
             x = SkylineLiftAndStar(level, x);

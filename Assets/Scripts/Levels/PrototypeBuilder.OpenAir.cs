@@ -152,6 +152,7 @@ namespace LowercaseUppercase.Levels
             x = LadderTwoLifts(level, x);
             x = LadderBrickTop(level, x);
             x = LadderGuardedTop(level, x);
+            x = LadderFloat(level, x);
             x = LadderLongDrop(level, x);
             x = LadderEnd(level, x);
 

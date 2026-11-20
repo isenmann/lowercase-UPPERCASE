@@ -182,6 +182,7 @@ namespace LowercaseUppercase.Levels
             x = GateLongRun(level, x);
             x = GateGuard(level, x);
             x = GateShelf(level, x);
+            x = GateSlam(level, x);
             x = GateTwoDoors(level, x);
             x = GateBrickPlate(level, x);
             x = GateLowAfterDoor(level, x);

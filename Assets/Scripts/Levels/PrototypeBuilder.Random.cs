@@ -177,6 +177,9 @@ namespace LowercaseUppercase.Levels
             yield return new Section("Wall low road", 1, false, WallLowRoad);
             yield return new Section("Wall on the hill", 1, false, WallOnTheHill);
             yield return new Section("Wall closing run", 1, false, WallClosingRun);
+            yield return new Section("Wall heavy word", 1, false, (level, x) => WallHeavy(level, x, false));
+            yield return new Section("Crack slam", 1, false, (level, x) => CrackSlam(level, x, false));
+            yield return new Section("Gate slam", 2, false, GateSlam);
             yield return new Section("Plank guarded bridge", 2, false, PlankGuardedBridge);
             yield return new Section("Plank islands", 2, false, PlankIslands);
             yield return new Section("Plank high road", 2, false, PlankHighRoad);
@@ -185,20 +188,27 @@ namespace LowercaseUppercase.Levels
             yield return new Section("Space spring arc", 3, false, SpaceSpringArc);
             yield return new Section("Space second kerning", 3, false, SpaceSecondKerning);
             yield return new Section("Space high road", 3, false, SpaceHighRoad);
+            yield return new Section("Space floats", 3, false, (level, x) => SpaceFloat(level, x, false));
             yield return new Section("Trail steps", 3, false, TrailSteps);
             yield return new Section("Trail spring to ice", 3, false, TrailSpringToIce);
             yield return new Section("Trail underground", 3, false, TrailUnderground);
             yield return new Section("Trail loose bridge", 3, false, TrailLooseBridge);
             yield return new Section("Trail high arc", 3, false, TrailHighArc);
+            yield return new Section("Trail wind", 3, false, (level, x) => TrailWind(level, x, false));
             yield return new Section("Ladder two lifts", 4, false, LadderTwoLifts);
             yield return new Section("Ladder guarded top", 4, false, LadderGuardedTop);
             yield return new Section("Ladder long drop", 4, false, LadderLongDrop);
+            yield return new Section("Ladder floats", 4, false, LadderFloat);
             yield return new Section("Skyline climb", 4, false,
                 (level, x) => SkylineIce(level, SkylineBridgeAndSpring(level, SkylineSteps(level, x))));
             yield return new Section("Skyline hooks", 4, false, SkylineHooks);
+            yield return new Section("Skyline gusts", 4, false, SkylineGusts);
             yield return new Section("Tar guarded", 5, false, TarGuarded);
             yield return new Section("Tar two walls", 5, false, TarTwoWalls);
             yield return new Section("Tar high wall", 5, false, TarHighWall);
+            yield return new Section("Tar heavy word", 5, false, TarHeavy);
+            yield return new Section("Cellar ink", 2, false, (level, x) => CellarInk(level, x, false, false));
+            yield return new Section("Final ink", 5, false, (level, x) => FinalInk(level, x, false));
             yield return new Section("Shift run", 6, false,
                 (level, x) => ShiftRun(level, x, false, RunWords(rng, 4 + rng.Next(3))));
 
@@ -207,14 +217,17 @@ namespace LowercaseUppercase.Levels
             yield return new Section("Crack big small big", 1, true, CrackBigSmallBig);
             yield return new Section("Crack long hall", 1, true, CrackLongHall);
             yield return new Section("Crack second stomp", 1, true, CrackSecondStomp);
+            yield return new Section("Crack slam", 1, true, (level, x) => CrackSlam(level, x, false));
             yield return new Section("Gate guard", 2, true, GateGuard);
             yield return new Section("Gate shelf", 2, true, GateShelf);
             yield return new Section("Gate two doors", 2, true, GateTwoDoors);
             yield return new Section("Gate brick plate", 2, true, GateBrickPlate);
             yield return new Section("Gate low after door", 2, true, GateLowAfterDoor);
+            yield return new Section("Gate slam", 2, true, GateSlam);
             yield return new Section("Cellar tunnel", 2, true, CellarTunnel);
             yield return new Section("Cellar brick wall", 2, true, CellarBrickWall);
             yield return new Section("Cellar bridge and door", 2, true, CellarBridgeAndDoor);
+            yield return new Section("Cellar ink", 2, true, (level, x) => CellarInk(level, x, false, true));
             yield return new Section("Skate enemy", 3, true, SkateEnemy);
             yield return new Section("Skate tunnel", 3, true, SkateTunnel);
             yield return new Section("Skate islands", 3, true, SkateIslands);
@@ -237,6 +250,7 @@ namespace LowercaseUppercase.Levels
             yield return new Section("Final underground", 5, true, FinalUnderground);
             yield return new Section("Final ice and hooks", 5, true, FinalIceAndHooks);
             yield return new Section("Final caps lock", 5, true, FinalLock);
+            yield return new Section("Final ink", 5, true, (level, x) => FinalInk(level, x, true));
             yield return new Section("Shift run", 6, true,
                 (level, x) => ShiftRun(level, x, true, RunWords(rng, 4 + rng.Next(3))));
         }

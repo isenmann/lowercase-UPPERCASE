@@ -174,19 +174,6 @@ namespace LowercaseUppercase.Levels
             return RightEdge(after) + WordGap;
         }
 
-        /// <summary>A stacked "wall" standing with its bottom at bottomPx, with rows added until it is at least heightPx tall.</summary>
-        static WordBlock WallUpTo(Transform level, float leftPx, float heightPx, float bottomPx)
-        {
-            int rows = 1;
-            WordBlock wall = Stacked(level, "wall", leftPx, rows, bottomPx);
-            while (wall.GetComponent<BoxCollider2D>().size.y < Size(heightPx) && rows < 12)
-            {
-                Object.DestroyImmediate(wall.gameObject);
-                wall = Stacked(level, "wall", leftPx, ++rows, bottomPx);
-            }
-            return wall;
-        }
-
         const float InkLowWallPx = 86f;      // 1.2 units: a jumps it, A can't hop it.
         const float InkPoolOnePx = 300f;
         const float InkGapPx = 80f;          // Under the dividing wall: 1.1 units, room for A (0.92) to walk through.

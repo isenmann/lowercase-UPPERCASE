@@ -93,6 +93,7 @@ namespace LowercaseUppercase.Levels
             x = SpaceFirstKerning(level, x);
             x = SpaceKerningOverPit(level, x);
             x = SpaceSpringArc(level, x);
+            x = SpaceFloat(level, x);
             x = SpaceSecondKerning(level, x);
             x = SpaceHighRoad(level, x);
             x = SpaceEnd(level, x);
@@ -385,6 +386,7 @@ namespace LowercaseUppercase.Levels
             x = TrailUnderground(level, x);
             x = TrailLooseBridge(level, x);
             x = TrailHighArc(level, x);
+            x = TrailWind(level, x);
             x = TrailRest(level, x);
             x = ShiftRun(level, x, false, "a little", "then a lot", "a little", "then a lot", "and small");
             x = Exit(level, x, "here it ends", "tr", "il");
