@@ -123,6 +123,39 @@ h1 { font: 700 32px/1.1 var(--grotesk); margin: 0 0 4px; }
 .hint { margin: 0; color: var(--muted); font-size: 14px; }
 footer { color: var(--muted); font-size: 13px; }
 
+/* The two pages link to each other from the header. */
+.links { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+/* High scores: the runs beside the fastest finish of each level. */
+.scores { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 28px; align-items: start; }
+.board { display: grid; gap: 8px; min-width: 0; }
+.board h2 { font: 700 22px/1.2 var(--grotesk); margin: 0; }
+.table {
+  width: 100%; border-collapse: separate; border-spacing: 0; background: var(--background);
+  border: 1px solid var(--bar); border-radius: 10px; overflow: hidden;
+}
+.table th {
+  padding: 10px 12px; text-align: left; font: 500 12px var(--grotesk); letter-spacing: .08em; text-transform: uppercase;
+  color: var(--muted); border-bottom: 1px solid var(--bar);
+}
+.table td { padding: 8px 12px; border-bottom: 1px solid var(--ruled); font: 400 15px var(--mono); white-space: nowrap; }
+.table tr:last-child td { border-bottom: 0; }
+#runs tbody tr:nth-child(-n + 3) .score { color: var(--player); font-weight: 700; }
+.table .num { text-align: right; }
+.table .name { overflow-wrap: anywhere; white-space: normal; }
+.table .level { font-family: var(--grotesk); }
+.table tr.open td { color: var(--muted); }
+.table .empty { padding: 20px 12px; color: var(--muted); font-family: var(--grotesk); white-space: normal; }
+.mark { color: var(--hot); font-size: 11px; vertical-align: 2px; }
+.board .more { margin-top: 4px; }
+/* The fastest times stay in view beside a long list of runs. */
+.scores > .board:last-child { position: sticky; top: 16px; }
+
+@media (max-width: 1000px) {
+  .scores { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  .scores > .board:last-child { position: static; }
+}
+
 @media (max-width: 860px) {
   body { padding-block: calc(12px + env(safe-area-inset-top, 0px)) calc(24px + env(safe-area-inset-bottom, 0px)); }
   .page { gap: 18px; }
@@ -132,6 +165,8 @@ footer { color: var(--muted); font-size: 13px; }
   .strip { --height: 220px; }
   .strip.small { --height: 140px; }
   .upload .button { flex: 1 1 100%; }
+  .table .wide { display: none; }
+  .table th, .table td { padding-inline: 8px; }
   .backdrop { font-size: 14px; inset-block-start: 44px; }
   .tagline { font-size: 10px; letter-spacing: .18em; }
 }

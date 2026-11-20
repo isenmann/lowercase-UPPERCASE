@@ -9,7 +9,7 @@ Live at https://lowercase-uppercase-levels.devplayrepeat.workers.dev.
 
 | Path | What it is |
 | --- | --- |
-| `public/` | The page, served as it is. `sharecode.js` is shared with the Worker. |
+| `public/` | The pages, served as they are: `index.html` (shared levels) and `scores.html` (high scores, `scores.js`). `sharecode.js` is shared with the Worker. |
 | `src/worker.js` | `GET /api/levels` gives a page of codes (`?before=` takes the `next` of the previous page), `POST /api/levels` adds one (the body is the code). The high score calls go to `src/scores.js`. |
 | `src/scores.js`, `src/names.js` | Online high scores: runs, level reports, the world list, the fastest finish per level, the name filter. |
 | `src/run-limits.json` | What each of the 15 levels can pay, written by the game (see High scores). |
