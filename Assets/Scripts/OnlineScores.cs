@@ -41,6 +41,28 @@ namespace LowercaseUppercase
             public bool nameRefused;
         }
 
+        [Serializable]
+        public class ScoreRow
+        {
+            public int rank;
+            public string name;
+            public int total;
+            public int levels;
+            public string platform;
+            public string date;
+            public bool marked;
+        }
+
+        [Serializable]
+        public class ScoresPage
+        {
+            public int count;
+            public int offset;
+            public ScoreRow[] scores;
+            /// <summary>The run's own row once it is finished; a rank of 0 when there is none.</summary>
+            public ScoreRow you;
+        }
+
         [Serializable] class StartBody { public string hash; public string platform; public string version; }
         [Serializable] class StartReply { public string id; }
         [Serializable] class LevelBody { public int level; public int points; public int centisLeft; }
@@ -206,6 +228,38 @@ namespace LowercaseUppercase
         }
 
         static Action<Result> failedFinish;
+
+        /// <summary>
+        /// The top of the world list, with this run's own row once it is finished. <paramref name="done"/> gets null
+        /// when there is no answer, or at once when nothing may go online (see <see cref="CanGoOnline"/>).
+        /// </summary>
+        public static void FetchScores(int limit, Action<ScoresPage> done)
+        {
+            if (!CanGoOnline)
+            {
+                done(null);
+                return;
+            }
+            string url = $"{BaseUrl}/api/scores?limit={limit}";
+            if (!string.IsNullOrEmpty(RunId)) url += $"&run={RunId}";
+            Transport ??= new WebTransport();
+            Transport.Get(url, (status, text) =>
+            {
+                ScoresPage page = null;
+                if (status == 200)
+                {
+                    try
+                    {
+                        page = JsonUtility.FromJson<ScoresPage>(text);
+                    }
+                    catch (ArgumentException)
+                    {
+                        page = null;
+                    }
+                }
+                done(page);
+            });
+        }
 
         static void Enqueue(Call call)
         {

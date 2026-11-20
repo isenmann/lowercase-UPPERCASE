@@ -75,9 +75,33 @@ namespace LowercaseUppercase
             Save(entries);
         }
 
+        /// <summary>
+        /// The name typed last, offered again for the next run, so Enter alone confirms it. Kept beside the table, so
+        /// tests that move the table move it too.
+        /// </summary>
+        public static string LastName
+        {
+            get
+            {
+                var name = new System.Text.StringBuilder();
+                foreach (char c in PlayerPrefs.GetString(StorageKey + ".lastName", ""))
+                {
+                    if (name.Length == MaxNameLength) break;
+                    if (IsAllowedInName(c) && (c != ' ' || name.Length > 0)) name.Append(c);
+                }
+                return name.ToString();
+            }
+            set
+            {
+                PlayerPrefs.SetString(StorageKey + ".lastName", value ?? "");
+                PlayerPrefs.Save();
+            }
+        }
+
         public static void Clear()
         {
             PlayerPrefs.DeleteKey(StorageKey);
+            PlayerPrefs.DeleteKey(StorageKey + ".lastName");
             PlayerPrefs.Save();
         }
 

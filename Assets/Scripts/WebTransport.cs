@@ -4,20 +4,28 @@ using UnityEngine;
 
 namespace LowercaseUppercase
 {
-    /// <summary>Sends the online high score calls with UnityWebRequest, from a hidden runner that survives scene loads.</summary>
+    /// <summary>Makes the online high score calls with UnityWebRequest, from a hidden runner that survives scene loads.</summary>
     public class WebTransport : IScoreTransport
     {
         OnlineScoresRunner runner;
 
-        public void Send(string url, string body, IDictionary<string, string> headers, Action<long, string> done)
+        public void Send(string url, string body, IDictionary<string, string> headers, Action<long, string> done) =>
+            Runner.Post(url, body, headers, done);
+
+        public void Get(string url, Action<long, string> done) => Runner.Get(url, done);
+
+        OnlineScoresRunner Runner
         {
-            if (runner == null)
+            get
             {
-                var go = new GameObject("Online Scores") { hideFlags = HideFlags.HideAndDontSave };
-                UnityEngine.Object.DontDestroyOnLoad(go);
-                runner = go.AddComponent<OnlineScoresRunner>();
+                if (runner == null)
+                {
+                    var go = new GameObject("Online Scores") { hideFlags = HideFlags.HideAndDontSave };
+                    UnityEngine.Object.DontDestroyOnLoad(go);
+                    runner = go.AddComponent<OnlineScoresRunner>();
+                }
+                return runner;
             }
-            runner.Post(url, body, headers, done);
         }
     }
 }

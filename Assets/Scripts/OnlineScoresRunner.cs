@@ -12,17 +12,24 @@ namespace LowercaseUppercase
     {
         const int TimeoutSeconds = 10;
 
-        public void Post(string url, string body, IDictionary<string, string> headers, Action<long, string> done) =>
-            StartCoroutine(Send(url, body, headers, done));
-
-        static IEnumerator Send(string url, string body, IDictionary<string, string> headers, Action<long, string> done)
+        public void Post(string url, string body, IDictionary<string, string> headers, Action<long, string> done)
         {
-            using (var request = new UnityWebRequest(url, UnityWebRequest.kHttpVerbPOST))
+            var request = new UnityWebRequest(url, UnityWebRequest.kHttpVerbPOST)
             {
-                request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(body));
-                request.downloadHandler = new DownloadHandlerBuffer();
+                uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(body)),
+                downloadHandler = new DownloadHandlerBuffer()
+            };
+            foreach (KeyValuePair<string, string> header in headers) request.SetRequestHeader(header.Key, header.Value);
+            StartCoroutine(Run(request, done));
+        }
+
+        public void Get(string url, Action<long, string> done) => StartCoroutine(Run(UnityWebRequest.Get(url), done));
+
+        static IEnumerator Run(UnityWebRequest request, Action<long, string> done)
+        {
+            using (request)
+            {
                 request.timeout = TimeoutSeconds;
-                foreach (KeyValuePair<string, string> header in headers) request.SetRequestHeader(header.Key, header.Value);
                 yield return request.SendWebRequest();
 
                 bool answered = request.result == UnityWebRequest.Result.Success

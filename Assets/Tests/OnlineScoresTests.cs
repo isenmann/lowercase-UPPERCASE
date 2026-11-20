@@ -34,6 +34,8 @@ namespace LowercaseUppercase.Tests
                     ? (200, "{\"rank\":3,\"count\":12,\"total\":700,\"name\":\"zoe\",\"nameRefused\":false}")
                     : (200, "{\"levelsDone\":1}");
 
+            public void Get(string url, Action<long, string> done) => done(200, "{\"count\":0,\"offset\":0,\"scores\":[]}");
+
             public void Send(string url, string body, IDictionary<string, string> headers, Action<long, string> done)
             {
                 var sent = new Sent { url = url, body = body, headers = headers, done = done };
