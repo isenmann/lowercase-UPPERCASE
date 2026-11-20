@@ -53,7 +53,7 @@ namespace LowercaseUppercase.Levels
             new GuideTile("LOCK", GuideOrange, "both", "Caps Lock zone",
                 "Shift is inverted inside: you are A unless you hold it. Find the key to switch it off."),
             new GuideTile("~~~", new Color32(0x7B, 0x8B, 0xFF, 0xFF), "both", "Ink",
-                "a floats and jumps out from the top. A sinks and walks along the bottom."),
+                "a floats up and jumps out. A and enemies sink and walk along the bottom."),
             new GuideTile("\u00bb\u00bb", Interactive, "both", "Wind",
                 "Blows a away, so walk into it as A. Behind a, it carries a jump further."),
             new GuideTile(";", Muted, "both", "Checkpoint",
@@ -127,13 +127,14 @@ namespace LowercaseUppercase.Levels
                 FormsPage(board, filled, outline, keycap, shiftArrow, regular, bold).gameObject,
                 VocabularyPage(board, filled, outline, keycap, regular, bold).gameObject,
                 EnemiesPage(board, filled, outline, keycap, regular, bold).gameObject,
+                LivesPage(board, filled, outline, keycap, regular, bold).gameObject,
                 EditorPage(board, filled, outline, keycap, regular, bold).gameObject
             };
 
             var rowObject = new GameObject("GuideTabs", typeof(RectTransform));
             rowObject.transform.SetParent(board, false);
             var row = (RectTransform)rowObject.transform;
-            Place(row, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 28f), new Vector2(5 * 210f + 4 * 12f, 44f));
+            Place(row, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 28f), new Vector2(6 * 180f + 5 * 12f, 44f));
             var layout = rowObject.AddComponent<UnityEngine.UI.HorizontalLayoutGroup>();
             layout.spacing = 12f;
             layout.childControlWidth = true;
@@ -141,12 +142,13 @@ namespace LowercaseUppercase.Levels
             layout.childForceExpandWidth = true;
             layout.childForceExpandHeight = true;
 
-            tabs = new UnityEngine.UI.Button[4];
-            tabLabels = new TextMeshProUGUI[4];
+            tabs = new UnityEngine.UI.Button[5];
+            tabLabels = new TextMeshProUGUI[5];
             tabs[0] = OutlineButton(row, "FormsTab", "The two forms", outline, medium, out tabLabels[0]);
             tabs[1] = OutlineButton(row, "VocabularyTab", "Level vocabulary", outline, medium, out tabLabels[1]);
             tabs[2] = OutlineButton(row, "EnemiesTab", "Enemies", outline, medium, out tabLabels[2]);
-            tabs[3] = OutlineButton(row, "EditorTab", "Level editor", outline, medium, out tabLabels[3]);
+            tabs[3] = OutlineButton(row, "LivesTab", "Lives and points", outline, medium, out tabLabels[3]);
+            tabs[4] = OutlineButton(row, "EditorTab", "Level editor", outline, medium, out tabLabels[4]);
             back = OutlineButton(row, "BackButton", "Back", outline, medium, out _);
 
             panel.gameObject.SetActive(false);
@@ -167,15 +169,17 @@ namespace LowercaseUppercase.Levels
                 "Fast and light, with a high, floaty jump\n" +
                 "Slips through the gaps in spaced-out words\n" +
                 "Hangs from commas and crosses hyphens\n" +
-                "Springs launch it twice as high\n" +
-                "Too light to hold a period down or break a word",
+                "Springs and floating words lift it high\n" +
+                "Floats on ink, and the wind blows it along\n" +
+                "Too light to press a period, push or break a word",
                 filled, outline, regular);
             FormCard(page, 56f + cardWidth + 24f, cardWidth, "A", black, 130f, "UPPERCASE", black, "while Shift is held",
                 new[] { 5, 5, 2, 1 },
                 "Heavy and slow, with a short hop\n" +
-                "Smashes cracked words, presses periods\n" +
+                "Smashes brick, presses periods, pushes heavy words\n" +
                 "Squashes an enemy by landing on it\n" +
                 "Grow in mid-air to slam: knocks out enemies beside you\n" +
+                "Sinks to the bottom of ink and walks into the wind\n" +
                 "Snaps hyphens, breaks commas, shoots bigger asterisks",
                 filled, outline, regular);
 
@@ -224,8 +228,9 @@ namespace LowercaseUppercase.Levels
             }
 
             TextMeshProUGUI list = UiText(card, "Traits", Bullets(traits), regular, 16f, GuideBody, TextAlignmentOptions.TopLeft);
-            list.lineSpacing = 20f;
-            PlaceTopLeft(list.rectTransform, 32f, 282f, width - 64f, 140f);
+            // Six traits fill the card down to its bottom edge.
+            list.lineSpacing = 8f;
+            PlaceTopLeft(list.rectTransform, 32f, 278f, width - 64f, 152f);
         }
 
         /// <summary>One bullet per line, with wrapped lines indented under the text.</summary>
@@ -310,6 +315,50 @@ namespace LowercaseUppercase.Levels
             return page;
         }
 
+        // ---------------------------------------------------------------- lives and points
+
+        // Tags say what each belongs to: the whole run, one level, a key, or the menu.
+        static GuideTile[] LivesTiles() => new[]
+        {
+            new GuideTile("a a a", Player, "run", "Lives",
+                "A run starts with three. Every bite, burn or fall costs one, and losing the last ends the run."),
+            new GuideTile("+a", Player, "run", "Life back",
+                "Every 1500 points give back a lost life. You never have more than three."),
+            new GuideTile("60s", Paper, "level", "Clock",
+                "Counts down in every level. If it runs out, the run is over."),
+            new GuideTile("+10", Player, "level", "Time left",
+                "Reach the blank early: every second left on the clock is worth 10 points."),
+            new GuideTile("&", Danger, "level", "Enemies",
+                "100 points for each enemy you knock out, once per level."),
+            new GuideTile("#", Player, "level", "Hash",
+                "50 points for each # you pick up. Each one can be taken once per level."),
+            new GuideTile("R", Paper, "key", "Restart",
+                "Starts the level again, and takes back the points it earned and any life it gave back."),
+            new GuideTile("top 10", Player, "menu", "High scores",
+                "A run with a top 10 score asks for your name. Random levels don't count."),
+        };
+
+        static RectTransform LivesPage(RectTransform board, Sprite filled, Sprite outline, Sprite keycap,
+            TMP_FontAsset regular, TMP_FontAsset bold)
+        {
+            RectTransform page = GuidePage(board, "LivesPage", "Lives and points",
+                "Three lives for the whole run, a clock in every level, and points along the way.", regular, bold);
+
+            TileGrid(page, LivesTiles(), 4, filled, outline, keycap, regular, bold);
+
+            RectTransform sum = Strip(page, "Points", 576f, 52f, filled, GuideCard);
+            UnityEngine.UI.Image sumLine = UiImage(sum, "Outline", outline, BarLine);
+            sumLine.type = UnityEngine.UI.Image.Type.Sliced;
+            Stretch(sumLine.rectTransform);
+
+            TextMeshProUGUI text = UiText(sum, "Text",
+                "<color=#FF4D5E>&</color>  100      <color=#FFD23F>#</color>  50      second left  10      " +
+                "every <color=#FFD23F>1500</color>  a lost life back",
+                regular, 16f, GuideBody, TextAlignmentOptions.Center);
+            Stretch(text.rectTransform);
+            return page;
+        }
+
         // ---------------------------------------------------------------- level editor
 
         // Tags say how each is done: the mouse, a key, or the My levels menu.
@@ -320,7 +369,7 @@ namespace LowercaseUppercase.Levels
             new GuideTile("[ ]", Player, "mouse", "Pick and move",
                 "Click a piece to pick it and drag to move it. Double-click a word to retype it. Del removes."),
             new GuideTile("up", Interactive, "mouse", "Stretch",
-                "Lifts, floats, wind, hooks, Caps Lock, fliers and cursors have a yellow square. Drag it to size them."),
+                "Lifts, floats, wind, ink, hooks, Caps Lock, fliers and cursors have a yellow square. Drag it to size them."),
             new GuideTile("< >", Paper, "mouse", "Settings",
                 "The panel changes the picked piece. settings, top right, sets the name, sentence, time and ceiling."),
             new GuideTile("play", Player, "P H", "Test play",
