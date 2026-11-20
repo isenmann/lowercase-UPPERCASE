@@ -335,7 +335,7 @@ namespace LowercaseUppercase.Levels
             new GuideTile("R", Paper, "key", "Restart",
                 "Starts the level again, and takes back the points it earned and any life it gave back."),
             new GuideTile("top 10", Player, "menu", "High scores",
-                "A run with a top 10 score asks for your name. Random levels don't count."),
+                "Runs from level 1 also go to the world list: ← → at the end. Random levels don't count."),
         };
 
         static RectTransform LivesPage(RectTransform board, Sprite filled, Sprite outline, Sprite keycap,
