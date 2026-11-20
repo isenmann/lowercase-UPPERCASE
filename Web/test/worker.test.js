@@ -1,30 +1,11 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import { DatabaseSync } from "node:sqlite";
 import { beforeEach, test } from "node:test";
 import { MAX_BODY_LENGTH, MAX_LEVELS, PAGE_SIZE } from "../src/limits.js";
 import * as workerModule from "../src/worker.js";
+import { fakeD1 } from "./fake-d1.js";
 import { makeCode, makeLevel } from "./make-code.js";
 
 const worker = workerModule.default;
-
-/** The real schema and SQL on a real SQLite, behind the few D1 calls the Worker makes. */
-function fakeD1() {
-  const database = new DatabaseSync(":memory:");
-  database.exec(readFileSync(new URL("../schema.sql", import.meta.url), "utf8"));
-  return {
-    raw: database,
-    prepare(sql) {
-      const statement = database.prepare(sql);
-      const bound = (...values) => ({
-        all: async () => ({ results: statement.all(...values) }),
-        first: async () => statement.get(...values) ?? null,
-        run: async () => ({ meta: { changes: Number(statement.run(...values).changes) } })
-      });
-      return { ...bound(), bind: bound };
-    }
-  };
-}
 
 const CODE_A = makeCode(makeLevel({ name: "First" }));
 const CODE_A_RENAMED = makeCode(makeLevel({ name: "Copycat" }));

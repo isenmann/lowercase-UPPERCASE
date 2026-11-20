@@ -1,20 +1,43 @@
 import { decodeShareCode, levelKey } from "../public/sharecode.js";
 import { MAX_BODY_LENGTH, MAX_LEVELS, PAGE_SIZE } from "./limits.js";
+import { finishRun, listFastest, listScores, preflight, removeStaleRuns, reportLevel, startRun } from "./scores.js";
+
+const RUN_CALL = /^\/api\/runs\/([0-9a-f]{32})\/(level|finish)$/;
 
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    if (url.pathname !== "/api/levels") {
-      return reply(404, { error: "NotFound" });
+    if (url.pathname === "/api/levels") {
+      if (request.method === "GET") {
+        return list(url, env);
+      }
+      return request.method === "POST" ? upload(request, env) : reply(405, { error: "NotAllowed" });
     }
 
-    if (request.method === "GET") {
-      return list(url, env);
-    }
+    return highScores(request, env, url, Date.now()) ?? reply(404, { error: "NotFound" });
+  },
 
-    return request.method === "POST" ? upload(request, env) : reply(405, { error: "NotAllowed" });
+  async scheduled(controller, env) {
+    await removeStaleRuns(env, controller.scheduledTime);
   }
 };
+
+/** The high score calls (see scores.js), or undefined for any other address. */
+function highScores(request, env, url, now) {
+  const call = url.pathname.match(RUN_CALL);
+  const known = call || ["/api/runs", "/api/scores", "/api/fastest"].includes(url.pathname);
+  if (!known) return undefined;
+  if (request.method === "OPTIONS") return preflight();
+
+  if (url.pathname === "/api/scores" || url.pathname === "/api/fastest") {
+    if (request.method !== "GET") return reply(405, { error: "NotAllowed" });
+    return url.pathname === "/api/scores" ? listScores(url, env) : listFastest(env);
+  }
+
+  if (request.method !== "POST") return reply(405, { error: "NotAllowed" });
+  if (!call) return startRun(request, env, url, now);
+  return call[2] === "level" ? reportLevel(request, env, url, call[1], now) : finishRun(request, env, url, call[1], now);
+}
 
 /** One page, newest first. `next` goes into ?before= for the page after it, and is null on the last one. */
 async function list(url, env) {

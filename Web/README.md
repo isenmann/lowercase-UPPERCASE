@@ -10,7 +10,10 @@ Live at https://lowercase-uppercase-levels.devplayrepeat.workers.dev.
 | Path | What it is |
 | --- | --- |
 | `public/` | The page, served as it is. `sharecode.js` is shared with the Worker. |
-| `src/worker.js` | `GET /api/levels` gives a page of codes (`?before=` takes the `next` of the previous page), `POST /api/levels` adds one (the body is the code). |
+| `src/worker.js` | `GET /api/levels` gives a page of codes (`?before=` takes the `next` of the previous page), `POST /api/levels` adds one (the body is the code). The high score calls go to `src/scores.js`. |
+| `src/scores.js`, `src/names.js` | Online high scores: runs, level reports, the world list, the fastest finish per level, the name filter. |
+| `src/run-limits.json` | What each of the 15 levels can pay, written by the game (see High scores). |
+| `src/run-floors.json` | The fewest seconds each level can be finished in, kept by hand. |
 | `schema.sql` | The database table. |
 | `scripts/fonts.js` | Copies the game's fonts from `Assets/Fonts` into `public/fonts`. |
 | `test/` | Tests for the code reading and the Worker. `vectors.json` holds what the game makes of a set of codes and levels. |
@@ -67,3 +70,51 @@ npx wrangler@4 d1 execute lowercase-uppercase-levels --remote --command "DELETE 
 ```
 
 To empty the page after a flood of uploads, use `DELETE FROM levels`.
+
+## High scores
+
+Runs through the game's 15 levels go to a world list, besides the player's own top 10. The game starts a run as the
+first level starts, reports each level as it is finished and finishes the run with a name. The server checks every
+report and adds the points up itself; see the comments in `src/scores.js`.
+
+| Call | What it does |
+| --- | --- |
+| `POST /api/runs` | `{hash, platform, version}` → `{id}`. A build whose `hash` differs from `run-limits.json` gets `OldVersion`. |
+| `POST /api/runs/{id}/level` | `{level, points, centisLeft}`: one finished level, its points with the time bonus, the clock left in 1/100 s. |
+| `POST /api/runs/{id}/finish` | `{name, partialPoints}` → `{rank, count, total, name, nameRefused}`. |
+| `GET /api/scores` | `?offset=&limit=&run=` → `{count, offset, scores, you}`. `you` is the given run's own row. |
+| `GET /api/fastest` | The fastest finish of each level. |
+
+The run `id` is random and secret: it is all it takes to report for a run, so it is never listed.
+
+The POST calls carry `X-Signature`, an HMAC-SHA256 in hex of `<METHOD> <path>\n<body>` under the key in the secret
+`SCORE_KEY`. Without that secret, runs are refused (`NotReady`). The game is built with the same key. Anyone who takes
+the game apart has it, so it only stops casual tampering:
+
+```sh
+npx wrangler@4 secret put SCORE_KEY
+```
+
+**After changing a level's enemies, # or clock**, run lowercase UPPERCASE > High Scores > Write Run Limits in Unity,
+then `npm test`, and deploy together with the new builds: runs from older builds are turned away from then on.
+
+**Floor times.** A level reported faster than its floor in `src/run-floors.json` is refused. Placeholders until the
+levels are measured; `npm run deploy` refuses to run while `"placeholder"` is `true`.
+
+**Marked runs** reach 95 % of every enemy and # of the levels they played, or finish a level within 10 % of its floor.
+The page shows them so they are easy to look at. Unfinished runs are removed by a daily cron (`triggers` in
+`wrangler.jsonc`).
+
+To find a run, then rename or remove it:
+
+```sh
+npx wrangler@4 d1 execute lowercase-uppercase-levels --remote --command "SELECT id, name, total, levels_done, marked FROM runs WHERE finished_at IS NOT NULL ORDER BY total DESC LIMIT 20"
+npx wrangler@4 d1 execute lowercase-uppercase-levels --remote --command "UPDATE runs SET name = '???' WHERE id = '<id>'; UPDATE fastest SET name = '???' WHERE run_id = '<id>'"
+npx wrangler@4 d1 execute lowercase-uppercase-levels --remote --command "DELETE FROM run_levels WHERE run_id = '<id>'; DELETE FROM runs WHERE id = '<id>'"
+```
+
+After removing runs, recount them and rebuild the fastest finishes (the marks on those are not rebuilt):
+
+```sh
+npx wrangler@4 d1 execute lowercase-uppercase-levels --remote --file=scripts/rebuild-scores.sql
+```

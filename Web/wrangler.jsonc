@@ -2,7 +2,7 @@
   "name": "lowercase-uppercase-levels",
   "main": "src/worker.js",
   "compatibility_date": "2026-10-01",
-  // Files here are served as they are; everything else (/api/levels) reaches the Worker.
+  // Files here are served as they are; everything else (/api/levels, the high score calls) reaches the Worker.
   "assets": { "directory": "public" },
   "d1_databases": [
     {
@@ -14,6 +14,11 @@
   // Uploads per visitor. Periods can only be 10 or 60 seconds. The namespace id is per account, so it differs
   // from Shift Register's to keep the two counters apart.
   "ratelimits": [
-    { "name": "UPLOADS", "namespace_id": "1002", "simple": { "limit": 5, "period": 60 } }
-  ]
+    { "name": "UPLOADS", "namespace_id": "1002", "simple": { "limit": 5, "period": 60 } },
+    // High score calls per visitor: a run makes one a level, so this only stops floods.
+    { "name": "SCORES", "namespace_id": "1003", "simple": { "limit": 30, "period": 60 } }
+  ],
+  // Removes unfinished high score runs once a day. The HMAC key is a secret, not here:
+  // npx wrangler@4 secret put SCORE_KEY
+  "triggers": { "crons": ["17 3 * * *"] }
 }

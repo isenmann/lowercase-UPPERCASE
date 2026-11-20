@@ -7,7 +7,7 @@
     "fonts": "node scripts/fonts.js",
     "predev": "node scripts/fonts.js",
     "dev": "npx wrangler@4 d1 execute lowercase-uppercase-levels --local --file=schema.sql && npx wrangler@4 dev",
-    "predeploy": "node scripts/fonts.js",
+    "predeploy": "node scripts/fonts.js && node scripts/check-floors.js",
     "deploy": "npx wrangler@4 deploy"
   }
 }
