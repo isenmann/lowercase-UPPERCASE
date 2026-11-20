@@ -85,7 +85,11 @@ namespace LowercaseUppercase
             }
             worldPage = null;
             worldResult = null;
-            if (recordsHighScores) FetchWorld();
+            if (recordsHighScores)
+            {
+                MakeRoomForOwnRow();
+                FetchWorld();
+            }
             Sound ending = gameOver ? Sound.GameOver : Sound.GameFinished;
             Sfx.Play(ending);
             // The high score jingle follows the ending instead of playing over it.
@@ -252,6 +256,7 @@ namespace LowercaseUppercase
         void ShowLocal()
         {
             if (listHeading != null) listHeading.text = "your high scores";
+            if (ownRow != null) ownRow.text = "";
             var entries = HighScores.Load();
             for (int i = 0; i < rows.Length; i++)
             {
@@ -282,8 +287,8 @@ namespace LowercaseUppercase
         }
 
         /// <summary>
-        /// The top runs, and this run below them unless it is among them. While the name is typed, or when the run
-        /// didn't count online, the list is shown as it stands.
+        /// The world's top 10, and this run on a line of its own below them unless it is among them. While the name is
+        /// typed, the run waits on that line with a "?" for its place.
         /// </summary>
         void ShowWorld()
         {
@@ -298,6 +303,7 @@ namespace LowercaseUppercase
                 row.text = "";
                 row.color = rowColor;
             }
+            OwnRow.text = "";
 
             string note = WorldNote();
             if (page == null)
@@ -307,9 +313,8 @@ namespace LowercaseUppercase
                 return;
             }
 
-            var shown = new List<OnlineScores.ScoreRow>(page.scores ?? new OnlineScores.ScoreRow[0]);
+            OnlineScores.ScoreRow[] top = page.scores ?? new OnlineScores.ScoreRow[0];
             OnlineScores.ScoreRow own = null;
-            bool ownBelow = false;
             if (onlineRun && note == null || ranked)
             {
                 own = new OnlineScores.ScoreRow
@@ -318,35 +323,70 @@ namespace LowercaseUppercase
                     name = IsEnteringName ? NameWithCursor() : ranked ? worldResult.name : TypedName,
                     total = ranked ? worldResult.total : runScore
                 };
-                ownBelow = !ranked || own.rank > rows.Length || own.rank > shown.Count;
-                if (ownBelow && shown.Count > rows.Length - 1) shown.RemoveRange(rows.Length - 1, shown.Count - rows.Length + 1);
             }
+            bool ownInTop = own != null && own.rank > 0 && own.rank <= Mathf.Min(rows.Length, top.Length);
 
-            int last = Mathf.Max(rows.Length, own != null ? own.rank : 0);
-            int rankWidth = Mathf.Max(2, last.ToString().Length);
+            int rankWidth = Mathf.Max(2, Mathf.Max(rows.Length, own != null ? own.rank : 0).ToString().Length);
             for (int i = 0; i < rows.Length; i++)
             {
-                OnlineScores.ScoreRow entry = i < shown.Count ? shown[i] : null;
-                bool isOwn = false;
-                if (own != null && ownBelow && i == Mathf.Min(shown.Count, rows.Length - 1))
-                {
-                    entry = own;
-                    isOwn = true;
-                }
-                else if (own != null && !ownBelow && entry != null && entry.rank == own.rank) isOwn = true;
-
-                if (entry == null)
+                if (i >= top.Length)
                 {
                     rows[i].text = $"{(i + 1).ToString().PadLeft(rankWidth)}  {new string('.', HighScores.MaxNameLength)}  {"-".PadLeft(ScoreWidth)}";
                     rows[i].color = emptyRowColor;
                     continue;
                 }
-                string rank = entry.rank > 0 ? entry.rank.ToString() : "?";
-                string name = entry.name ?? "";
-                if (name.Length > HighScores.MaxNameLength && !(isOwn && IsEnteringName)) name = name.Substring(0, HighScores.MaxNameLength);
-                rows[i].text = $"{rank.PadLeft(rankWidth)}  {name.PadRight(HighScores.MaxNameLength)}  {entry.total.ToString().PadLeft(ScoreWidth)}";
+                bool isOwn = ownInTop && top[i].rank == own.rank;
+                rows[i].text = WorldLine(top[i], rankWidth, isOwn);
                 rows[i].color = isOwn ? newRowColor : rowColor;
             }
+
+            if (own != null && !ownInTop)
+            {
+                OwnRow.text = WorldLine(own, rankWidth, true);
+                OwnRow.color = newRowColor;
+            }
+        }
+
+        string WorldLine(OnlineScores.ScoreRow entry, int rankWidth, bool isOwn)
+        {
+            string rank = entry.rank > 0 ? entry.rank.ToString() : "?";
+            string name = entry.name ?? "";
+            // The typed name keeps its cursor, which may stand one past the longest name.
+            if (name.Length > HighScores.MaxNameLength && !(isOwn && IsEnteringName)) name = name.Substring(0, HighScores.MaxNameLength);
+            return $"{rank.PadLeft(rankWidth)}  {name.PadRight(HighScores.MaxNameLength)}  {entry.total.ToString().PadLeft(ScoreWidth)}";
+        }
+
+        /// <summary>
+        /// The line under the top 10 for a run that isn't among them. Levels are built with ten rows, so the eleventh is
+        /// a copy of the last one, one row lower, made when first needed.
+        /// </summary>
+        public TMP_Text OwnRow
+        {
+            get
+            {
+                if (ownRow == null)
+                {
+                    TMP_Text last = rows[rows.Length - 1];
+                    Vector3 step = last.transform.localPosition - rows[rows.Length - 2].transform.localPosition;
+                    ownRow = Instantiate(last, last.transform.parent);
+                    ownRow.name = "Own Row";
+                    ownRow.transform.localPosition = last.transform.localPosition + step;
+                    ownRow.text = "";
+                }
+                return ownRow;
+            }
+        }
+
+        TMP_Text ownRow;
+        bool hintMoved;
+
+        /// <summary>The hint goes one row lower, in both views, so the eleventh line has room above it.</summary>
+        void MakeRoomForOwnRow()
+        {
+            if (hintMoved) return;
+            hintMoved = true;
+            Vector3 step = rows[rows.Length - 1].transform.localPosition - rows[rows.Length - 2].transform.localPosition;
+            hint.transform.localPosition += step;
         }
 
         /// <summary>Why this run isn't on the world list, or null when it is (or is on its way).</summary>

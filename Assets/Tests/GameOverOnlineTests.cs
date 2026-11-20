@@ -111,11 +111,15 @@ namespace LowercaseUppercase.Tests
 
             Screen.SendMessage("Update");
             StringAssert.Contains("#37 of 512", Heading);
-            string own = Screen.rows.Last().text;
+            string own = Screen.OwnRow.text;
             StringAssert.Contains("37", own);
             StringAssert.Contains("zoex", own);
-            Assert.AreEqual(Screen.newRowColor, Screen.rows.Last().color);
+            Assert.AreEqual(Screen.newRowColor, Screen.OwnRow.color);
             StringAssert.Contains("top1", Screen.rows[0].text);
+            StringAssert.Contains("top10", Screen.rows.Last().text, "The whole top 10 stays in view.");
+
+            Screen.SwitchView();
+            Assert.AreEqual("", Screen.OwnRow.text, "The player's own table has no extra line.");
         }
 
         [UnityTest]
