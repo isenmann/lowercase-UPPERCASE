@@ -1,0 +1,114 @@
+{
+    "format": 1,
+    "hash": "2f22097089916a3b",
+    "pointsPerEnemy": 100,
+    "pointsPerCollectible": 50,
+    "pointsPerSecondLeft": 10,
+    "levels": [
+        {
+            "scene": "Overworld",
+            "seconds": 60,
+            "enemies": 9,
+            "collectibles": 15,
+            "maxPoints": 2250
+        },
+        {
+            "scene": "Crack",
+            "seconds": 60,
+            "enemies": 7,
+            "collectibles": 20,
+            "maxPoints": 2300
+        },
+        {
+            "scene": "Wall",
+            "seconds": 60,
+            "enemies": 6,
+            "collectibles": 17,
+            "maxPoints": 2050
+        },
+        {
+            "scene": "Plank",
+            "seconds": 60,
+            "enemies": 6,
+            "collectibles": 25,
+            "maxPoints": 2450
+        },
+        {
+            "scene": "Gate",
+            "seconds": 60,
+            "enemies": 3,
+            "collectibles": 24,
+            "maxPoints": 2100
+        },
+        {
+            "scene": "Cellar",
+            "seconds": 60,
+            "enemies": 7,
+            "collectibles": 19,
+            "maxPoints": 2250
+        },
+        {
+            "scene": "Space",
+            "seconds": 60,
+            "enemies": 5,
+            "collectibles": 28,
+            "maxPoints": 2500
+        },
+        {
+            "scene": "Skate",
+            "seconds": 60,
+            "enemies": 6,
+            "collectibles": 25,
+            "maxPoints": 2450
+        },
+        {
+            "scene": "Trail",
+            "seconds": 60,
+            "enemies": 4,
+            "collectibles": 27,
+            "maxPoints": 2350
+        },
+        {
+            "scene": "Chain",
+            "seconds": 60,
+            "enemies": 2,
+            "collectibles": 11,
+            "maxPoints": 1350
+        },
+        {
+            "scene": "Ladder",
+            "seconds": 60,
+            "enemies": 4,
+            "collectibles": 17,
+            "maxPoints": 1850
+        },
+        {
+            "scene": "Skyline",
+            "seconds": 60,
+            "enemies": 4,
+            "collectibles": 21,
+            "maxPoints": 2050
+        },
+        {
+            "scene": "Flames",
+            "seconds": 60,
+            "enemies": 9,
+            "collectibles": 19,
+            "maxPoints": 2450
+        },
+        {
+            "scene": "Tar",
+            "seconds": 60,
+            "enemies": 8,
+            "collectibles": 22,
+            "maxPoints": 2500
+        },
+        {
+            "scene": "Final",
+            "seconds": 60,
+            "enemies": 7,
+            "collectibles": 18,
+            "maxPoints": 2200
+        }
+    ]
+}

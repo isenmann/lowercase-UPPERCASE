@@ -1,0 +1,21 @@
+{
+  "placeholder": true,
+  "note": "Kept by hand. The fewest seconds a level can be finished in; faster reports are refused. Placeholders until the levels are measured, which has to happen before the high scores are deployed.",
+  "floorSeconds": {
+    "Overworld": 5,
+    "Crack": 5,
+    "Wall": 5,
+    "Plank": 5,
+    "Gate": 5,
+    "Cellar": 5,
+    "Space": 5,
+    "Skate": 5,
+    "Trail": 5,
+    "Chain": 5,
+    "Ladder": 5,
+    "Skyline": 5,
+    "Flames": 5,
+    "Tar": 5,
+    "Final": 5
+  }
+}
