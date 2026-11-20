@@ -221,7 +221,7 @@ namespace LowercaseUppercase.Tests
             yield return LoadWithoutIntro("Skyline");
             PrototypeFlow flow = UnityEngine.Object.FindAnyObjectByType<PrototypeFlow>();
             Assert.AreEqual(LevelRun.StartingLives, LevelRun.Lives);
-            Assert.AreEqual(LevelRun.StartingLives, CountLetters(flow.lives.text, "a"));
+            Assert.AreEqual(LevelRun.StartingLives, CountLetters(flow.lives.text, $">{flow.lifeGlyph}</color>"), "The HUD should show one life glyph per life.");
 
             yield return DieAndReload(FindLetter());
             Assert.AreEqual(LevelRun.StartingLives - 1, LevelRun.Lives);
