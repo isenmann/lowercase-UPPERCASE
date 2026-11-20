@@ -48,6 +48,14 @@ namespace LowercaseUppercase
         public string lifeGlyph = "a";
         public Color lifeColor = new Color32(0xFF, 0xD2, 0x3F, 0xFF);
         public Color lostLifeColor = new Color32(0x6B, 0x71, 0x80, 0xFF);
+
+        // A life given back by points hops up and zooms in and out twice, so it is seen in the corner of the eye.
+        const float RefillSeconds = 1.1f;
+        const float RefillHopEm = 0.45f;
+        const float RefillGrow = 0.8f;   // At the top of each pulse the glyph is this much bigger.
+        const int RefillPulses = 2;
+        int refilledLife = -1;
+        float refilledAt = float.NegativeInfinity;
         public Color timerColor = new Color32(0xF2, 0xF0, 0xEA, 0xFF);
         public Color lowTimeColor = new Color32(0xFF, 0x4D, 0x5E, 0xFF);
 
@@ -111,12 +119,22 @@ namespace LowercaseUppercase
         {
             letter.Slotted += OnSlotted;
             letter.Burned += letter.FallOffScreen;
+            LevelRun.LifeRefilled += OnLifeRefilled;
         }
 
         void OnDisable()
         {
             letter.Slotted -= OnSlotted;
             letter.Burned -= letter.FallOffScreen;
+            LevelRun.LifeRefilled -= OnLifeRefilled;
+        }
+
+        void OnLifeRefilled()
+        {
+            Sfx.Play(Sound.LifeBack);
+            refilledLife = LevelRun.Lives - 1;
+            // Unscaled, because the time left is banked as the level ends, while the game stands still.
+            refilledAt = Time.unscaledTime;
         }
 
         void Update()
@@ -290,13 +308,28 @@ namespace LowercaseUppercase
             }
             string on = ColorUtility.ToHtmlStringRGBA(lifeColor);
             string off = ColorUtility.ToHtmlStringRGBA(lostLifeColor);
-            var text = new System.Text.StringBuilder();
+            // Every glyph gets the same width, so a life growing doesn't push the others aside.
+            float advance = lives.fontSize * 0.6f;
+            var text = new System.Text.StringBuilder(System.FormattableString.Invariant($"<mspace={advance:0.##}>"));
+            float age = Time.unscaledTime - refilledAt;
             for (int i = 0; i < LevelRun.StartingLives; i++)
             {
                 if (i > 0) text.Append(' ');
-                text.Append($"<color=#{(i < LevelRun.Lives ? on : off)}>{lifeGlyph}</color>");
+                string glyph = $"<color=#{(i < LevelRun.Lives ? on : off)}>{lifeGlyph}</color>";
+                if (i == refilledLife && age < RefillSeconds) glyph = Refilled(glyph, age / RefillSeconds);
+                text.Append(glyph);
             }
             lives.text = text.ToString();
+        }
+
+        /// <summary>The refilled life part way through its hop and pulses, t from 0 to 1. Both die away towards the end.</summary>
+        static string Refilled(string glyph, float t)
+        {
+            float fade = 1f - t;
+            float pulse = Mathf.Abs(Mathf.Sin(Mathf.PI * RefillPulses * t)) * fade;
+            float hop = Mathf.Sin(Mathf.PI * Mathf.Min(1f, t * 2f)) * fade;
+            int size = Mathf.RoundToInt(100f * (1f + RefillGrow * pulse));
+            return System.FormattableString.Invariant($"<voffset={RefillHopEm * hop:0.###}em><size={size}%>{glyph}</size></voffset>");
         }
 
         void SetSentence(bool filled)

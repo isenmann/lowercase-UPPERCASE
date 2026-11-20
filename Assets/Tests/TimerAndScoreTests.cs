@@ -301,6 +301,66 @@ namespace LowercaseUppercase.Tests
             Assert.That(LevelRun.TimeLeft, Is.GreaterThan(LevelRun.LevelSeconds - 1f));
         }
 
+        /// <summary>Pays the given number of enemies, each at its own place so each one pays.</summary>
+        static void KillEnemies(int count, float row)
+        {
+            for (int i = 0; i < count; i++) LevelRun.EnemyKilled(new Vector2(i, row));
+        }
+
+        static int EnemiesFor(int points) => Mathf.CeilToInt((float)points / LevelRun.PointsPerEnemy);
+
+        [Test]
+        public void EveryFifteenHundredPointsGiveBackALostLife()
+        {
+            LevelRun.NewGame();
+            LevelRun.EnterLevel();
+            LevelRun.LoseLife();
+            LevelRun.LoseLife();
+            Assert.AreEqual(1, LevelRun.Lives);
+
+            KillEnemies(EnemiesFor(LevelRun.PointsPerLifeRefill) - 1, 0f);
+            Assert.AreEqual(1, LevelRun.Lives, "Not yet at 1500.");
+            KillEnemies(1, 1f);
+            Assert.AreEqual(2, LevelRun.Lives);
+
+            KillEnemies(EnemiesFor(LevelRun.PointsPerLifeRefill), 2f);
+            Assert.AreEqual(3, LevelRun.Lives);
+        }
+
+        [Test]
+        public void PointsNeverAddALifeBeyondTheStartingLives()
+        {
+            LevelRun.NewGame();
+            LevelRun.EnterLevel();
+            KillEnemies(EnemiesFor(LevelRun.PointsPerLifeRefill), 0f);
+            Assert.AreEqual(LevelRun.StartingLives, LevelRun.Lives);
+
+            // The 1500 passed with every life left is used up: losing a life afterwards waits for the next 1500.
+            LevelRun.LoseLife();
+            KillEnemies(1, 1f);
+            Assert.AreEqual(LevelRun.StartingLives - 1, LevelRun.Lives);
+            KillEnemies(EnemiesFor(LevelRun.PointsPerLifeRefill), 2f);
+            Assert.AreEqual(LevelRun.StartingLives, LevelRun.Lives);
+        }
+
+        [Test]
+        public void ADeliberateRestartTakesBackALifeTheLevelGaveBack()
+        {
+            LevelRun.NewGame();
+            LevelRun.EnterLevel();
+            LevelRun.LoseLife();
+            KillEnemies(EnemiesFor(LevelRun.PointsPerLifeRefill), 0f);
+            Assert.AreEqual(LevelRun.StartingLives, LevelRun.Lives);
+
+            LevelRun.AbandonLevel();
+            Assert.AreEqual(LevelRun.StartingLives - 1, LevelRun.Lives);
+            Assert.AreEqual(0, LevelRun.Score);
+
+            // Earning as many points again gives the life back again. Other enemies: the ones paid stay paid.
+            KillEnemies(EnemiesFor(LevelRun.PointsPerLifeRefill), 5f);
+            Assert.AreEqual(LevelRun.StartingLives, LevelRun.Lives);
+        }
+
         [Test]
         public void ADeliberateRestartGivesBackWhatTheLevelEarned()
         {

@@ -883,6 +883,21 @@ def _(st):
     return m.add(tone(st, glide(1200, 500, 0.18), 0.25, 0.7, dec=0.06), 0.02).render()
 
 
+
+@event("Collecting and progress", "life_back", "Life back", "Every 1500 points give back a lost life.", "LevelRun.AddPoints", 0.55)
+def _(st):
+    # A bright climb that goes higher than the checkpoint's, then hangs on a top note: something won back.
+    if st == "chip":
+        m = seq(st, [72, 79, 84, 88], 0.06, 0.08)
+        return m.add(tone(st, mf(91), 0.35, dec=0.2), 0.24).add(tone(st, mf(96), 0.3, 0.5, dec=0.18), 0.3).render()
+    if st == "ink":
+        return seq(st, [72, 76, 79, 84, 88], 0.06, 0.6, 0.8).render()
+    if st == "type":  # two quick keys, the margin bell rung twice, and a wooden note rising under it
+        m = Mix().add(key(1.1)).add(key(1.3), 0.07)
+        m.add(tone(st, mf(79), 0.2), 0.05).add(tone(st, mf(84), 0.25), 0.13)
+        return m.add(bell(2600, 0.6), 0.12).add(bell(3100, 0.9), 0.26).render()
+    return seq(st, [84, 88, 91, 96], 0.06, 0.9).render()
+
 STYLES = [
     dict(id="chip", name="Chip", blurb="Square waves and stepped noise, stair-stepped at 60 fps like an 8-bit console."),
     dict(id="ink", name="Ink", blurb="Soft sine and triangle tones, smooth glides, rounded edges. Calm and modern."),
