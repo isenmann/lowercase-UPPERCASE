@@ -428,8 +428,8 @@ namespace LowercaseUppercase
 
         /// <summary>
         /// The name being entered, as rich text padded to a name's width: the letter under the cursor underlined, and
-        /// after the name a blinking "_" (keyboard) or the Enter sign (gamepad), which may stand one past the longest
-        /// name.
+        /// after the name a blinking "_" (keyboard) or a blinking Enter sign (gamepad), which may stand one past the
+        /// longest name.
         /// </summary>
         string NameField()
         {
@@ -446,7 +446,8 @@ namespace LowercaseUppercase
             {
                 if (PadMode)
                 {
-                    field.Append(cursorOn ? EnterSign.Text : "_");
+                    // The sign blinks by dimming: swapped for "_", it looked like a ↵ missing its down stroke.
+                    field.Append(cursorOn ? EnterSign.Text : $"<alpha=#40>{EnterSign.Text}<alpha=#FF>");
                     width++;
                 }
                 else if (cursorOn && typed.Length < HighScores.MaxNameLength)

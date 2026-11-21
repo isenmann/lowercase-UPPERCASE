@@ -14,6 +14,7 @@ namespace LowercaseUppercase
     {
         const string SpriteName = "enter";
         const string Fallback = "←";
+        const string MaterialResource = "EnterSign";
         // Texture height, which TextMeshPro maps onto the font's ascent.
         const int Height = 96;
 
@@ -68,12 +69,19 @@ namespace LowercaseUppercase
             return asset;
         }
 
+        /// <summary>
+        /// A copy of Resources/EnterSign.mat, which uses TextMeshPro's sprite shader. The material is there so builds
+        /// include that shader: nothing else in the game uses it, and Shader.Find only finds it in the editor.
+        /// </summary>
         static Material SpriteMaterial()
         {
-            TMP_SpriteAsset builtIn = TMP_Settings.defaultSpriteAsset;
-            if (builtIn != null && builtIn.material != null) return new Material(builtIn.material) { hideFlags = HideFlags.DontSave };
+            Material template = Resources.Load<Material>(MaterialResource);
+            if (template != null && template.shader != null && template.shader.isSupported)
+                return new Material(template) { hideFlags = HideFlags.DontSave };
             Shader shader = Shader.Find("TextMeshPro/Sprite");
-            return shader != null ? new Material(shader) { hideFlags = HideFlags.DontSave } : null;
+            if (shader != null) return new Material(shader) { hideFlags = HideFlags.DontSave };
+            Debug.LogWarning($"EnterSign: no TextMeshPro sprite shader (Resources/{MaterialResource}), showing {Fallback} instead.");
+            return null;
         }
 
         /// <summary>
@@ -97,12 +105,13 @@ namespace LowercaseUppercase
                 new Vector4(left, line, left + head, line - head),
             };
 
-            var texture = new Texture2D(width, Height, TextureFormat.RGBA32, false)
+            // With mipmaps, so the thin strokes still show when the sign is drawn much smaller than the texture.
+            var texture = new Texture2D(width, Height, TextureFormat.RGBA32, true)
             {
                 name = "Enter Sign",
                 hideFlags = HideFlags.DontSave,
                 wrapMode = TextureWrapMode.Clamp,
-                filterMode = FilterMode.Bilinear,
+                filterMode = FilterMode.Trilinear,
             };
             var pixels = new Color32[width * Height];
             for (int y = 0; y < Height; y++)
@@ -116,7 +125,7 @@ namespace LowercaseUppercase
                 pixels[y * width + x] = new Color32(255, 255, 255, alpha);
             }
             texture.SetPixels32(pixels);
-            texture.Apply(false, true);
+            texture.Apply(true, true);
             return texture;
         }
 
