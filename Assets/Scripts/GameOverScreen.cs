@@ -15,6 +15,9 @@ namespace LowercaseUppercase
     /// A run that went online (<see cref="OnlineScores"/>) always asks for a name, offered as the one typed last, and
     /// sends it to the world list. ← → or Tab switch between the player's own table and the world list, which shows the
     /// top runs and this run's place.
+    /// With a gamepad the name is entered the arcade way: ↑↓ choose the letter under the cursor, ←→ move the cursor,
+    /// and the slot after the name holds an Enter sign (↵); A on it saves, A elsewhere goes one slot right, B deletes,
+    /// Start saves at once, LB/RB switch the view. Keyboard typing works alongside, at the same cursor.
     /// </summary>
     public class GameOverScreen : MonoBehaviour
     {
@@ -25,6 +28,12 @@ namespace LowercaseUppercase
         const int ScoreWidth = 7;
         // The row of the world list that says why the list isn't there.
         const int NoteRow = 4;
+        // What ↑↓ step through on a gamepad, in order; the Enter sign comes before the first and after the last.
+        public const string PadSymbols = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 -_.!?";
+        // Holding a direction on the gamepad repeats it after a pause.
+        const float RepeatDelaySeconds = 0.35f;
+        const float RepeatSeconds = 0.08f;
+        const float StickThreshold = 0.5f;
 
         [Tooltip("The GAME OVER text, hidden when the screen follows the last level.")]
         public GameObject heading;
@@ -46,8 +55,15 @@ namespace LowercaseUppercase
         /// <summary>The run's place in the table, or -1 if it didn't make it.</summary>
         public int Place { get; private set; } = -1;
         public string TypedName => typed.ToString();
+        /// <summary>Where the next letter goes: 0 to the name's length, where the length is the Enter sign's slot.</summary>
+        public int Cursor { get; private set; }
+        /// <summary>Whether the name is shown the gamepad's way, with the Enter sign after it.</summary>
+        public bool PadMode { get; private set; }
 
         readonly StringBuilder typed = new StringBuilder();
+        // The gamepad direction held last, and when it repeats next.
+        int heldVertical, heldHorizontal;
+        float verticalRepeatAt, horizontalRepeatAt;
         Keyboard listeningTo;
         // Some native players send no text input events. Until one arrives, the name is read from the key presses
         // instead.
@@ -79,6 +95,11 @@ namespace LowercaseUppercase
             onlineRun = recordsHighScores && OnlineScores.State == OnlineScores.RunState.Online;
             IsEnteringName = Place >= 0 || onlineRun;
             if (IsEnteringName) typed.Append(HighScores.LastName);
+            Cursor = typed.Length;
+            PadMode = Gamepad.current != null && LetterInput.LastUsedGamepad;
+            // A direction still held from the run waits to be let go before it counts.
+            PadDirections(Gamepad.current, out heldVertical, out heldHorizontal);
+            verticalRepeatAt = horizontalRepeatAt = float.PositiveInfinity;
             // Not good enough for the player's own table, the run is shown where it does count.
             Showing = Place < 0 && onlineRun ? View.World : View.Local;
             if (listHeading == null)
@@ -88,6 +109,8 @@ namespace LowercaseUppercase
             }
             worldPage = null;
             worldResult = null;
+            foreach (TMP_Text row in rows) EnterSign.Use(row);
+            EnterSign.Use(hint);
             if (recordsHighScores)
             {
                 MakeRoomForOwnRow();
@@ -110,6 +133,10 @@ namespace LowercaseUppercase
             if (!IsEnteringName) return;
             IsEnteringName = false;
             Listen(null);
+            // Spaces only count between letters.
+            string name = TypedName.Trim();
+            typed.Clear().Append(name);
+            Cursor = typed.Length;
             if (Place >= 0) HighScores.Rename(Place, TypedName);
             if (typed.Length > 0) HighScores.LastName = TypedName;
             Sfx.Play(Sound.NameSaved);
@@ -169,6 +196,7 @@ namespace LowercaseUppercase
         void OnTextInput(char c)
         {
             textInputSeen = true;
+            PadMode = false;
             Type(c);
         }
 
@@ -180,24 +208,138 @@ namespace LowercaseUppercase
             foreach (KeyControl key in keyboard.allKeys)
             {
                 if (key == null || !key.wasPressedThisFrame) continue;
-                if (key.keyCode == Key.Space) { Type(' '); continue; }
+                if (key.keyCode == Key.Space) { PadMode = false; Type(' '); continue; }
                 string label = key.displayName;
                 if (string.IsNullOrEmpty(label) || label.Length != 1) continue;
                 char c = label[0];
                 if (char.IsLetter(c)) c = shift ? char.ToUpperInvariant(c) : char.ToLowerInvariant(c);
                 else if (shift) continue;
+                PadMode = false;
                 Type(c);
             }
         }
 
-        /// <summary>One typed character for the new row's name; anything not allowed in a name is ignored.</summary>
+        /// <summary>One typed character for the new row's name, put in at the cursor; anything not allowed in a name
+        /// is ignored.</summary>
         public void Type(char c)
         {
             if (!IsEnteringName || typed.Length >= HighScores.MaxNameLength || !HighScores.IsAllowedInName(c)) return;
             // A name doesn't start with a space.
-            if (c == ' ' && typed.Length == 0) return;
-            typed.Append(c);
+            if (c == ' ' && Cursor == 0) return;
+            typed.Insert(Cursor, c);
+            Cursor++;
             Sfx.Play(Sound.TypeLetter);
+        }
+
+        /// <summary>Deletes the character before the cursor, as Backspace does.</summary>
+        public void DeleteBack()
+        {
+            if (!IsEnteringName || Cursor == 0) return;
+            typed.Remove(Cursor - 1, 1);
+            Cursor--;
+            Sfx.Play(Sound.TypeLetter);
+        }
+
+        /// <summary>Moves the cursor one slot, from the first letter up to the Enter sign after the last.</summary>
+        public void MoveCursor(int step)
+        {
+            if (!IsEnteringName) return;
+            int moved = Mathf.Clamp(Cursor + step, 0, typed.Length);
+            if (moved == Cursor) return;
+            Cursor = moved;
+            Sfx.Play(Sound.MenuMove);
+        }
+
+        /// <summary>
+        /// The gamepad's ↑ (+1) or ↓ (-1): the letter under the cursor steps through <see cref="PadSymbols"/>. On the
+        /// Enter sign's slot it starts a new letter (if the name has room); stepping the last letter past either end
+        /// turns it back into the Enter sign. Letters within the name just wrap around.
+        /// </summary>
+        public void StepLetter(int step)
+        {
+            if (!IsEnteringName || step == 0) return;
+            step = step > 0 ? 1 : -1;
+            int count = PadSymbols.Length;
+            bool onEnter = Cursor == typed.Length;
+            if (onEnter && typed.Length >= HighScores.MaxNameLength) return;
+            bool last = Cursor == typed.Length - 1;
+
+            int index = onEnter ? (step > 0 ? -1 : count) : PadSymbols.IndexOf(typed[Cursor]);
+            // A letter that came from the keyboard and isn't in the list starts from its end.
+            if (index < 0 && !onEnter) index = step > 0 ? -1 : count;
+            for (int tries = 0; tries <= count + 1; tries++)
+            {
+                index += step;
+                if (index < 0 || index >= count)
+                {
+                    if (onEnter || last)
+                    {
+                        // Back to the Enter sign: the slot is empty again.
+                        if (last) typed.Length--;
+                        Sfx.Play(Sound.TypeLetter);
+                        return;
+                    }
+                    index = step > 0 ? 0 : count - 1;
+                }
+                // A name doesn't start with a space.
+                if (PadSymbols[index] == ' ' && Cursor == 0) continue;
+                break;
+            }
+            if (onEnter) typed.Append(PadSymbols[index]);
+            else typed[Cursor] = PadSymbols[index];
+            Sfx.Play(Sound.TypeLetter);
+        }
+
+        /// <summary>The gamepad's A: saves on the Enter sign, otherwise takes the letter and goes one slot right.</summary>
+        public void PadAccept()
+        {
+            if (!IsEnteringName) return;
+            if (Cursor >= typed.Length) ConfirmName();
+            else MoveCursor(1);
+        }
+
+        /// <summary>The d-pad or left stick as -1, 0 or 1 up and right.</summary>
+        static void PadDirections(Gamepad gamepad, out int up, out int right)
+        {
+            up = right = 0;
+            if (gamepad == null) return;
+            Vector2 stick = gamepad.leftStick.ReadValue();
+            up = Sign(gamepad.dpad.down.isPressed || stick.y < -StickThreshold, gamepad.dpad.up.isPressed || stick.y > StickThreshold);
+            right = Sign(gamepad.dpad.left.isPressed || stick.x < -StickThreshold, gamepad.dpad.right.isPressed || stick.x > StickThreshold);
+        }
+
+        static int Sign(bool negative, bool positive) => positive == negative ? 0 : positive ? 1 : -1;
+
+        /// <summary>The direction to act on this frame: once on the press, then repeating while held.</summary>
+        static int Repeating(int direction, ref int held, ref float repeatAt)
+        {
+            if (direction == 0) { held = 0; return 0; }
+            if (direction != held)
+            {
+                held = direction;
+                repeatAt = Time.unscaledTime + RepeatDelaySeconds;
+                return direction;
+            }
+            if (Time.unscaledTime < repeatAt) return 0;
+            repeatAt = Time.unscaledTime + RepeatSeconds;
+            return direction;
+        }
+
+        /// <summary>The arcade name entry: ↑↓ the letter, ←→ the cursor, A take/save, B delete.</summary>
+        void ReadPadName(Gamepad gamepad, bool fresh)
+        {
+            if (gamepad == null) { heldVertical = heldHorizontal = 0; return; }
+            PadDirections(gamepad, out int up, out int right);
+            int vertical = Repeating(up, ref heldVertical, ref verticalRepeatAt);
+            int horizontal = Repeating(right, ref heldHorizontal, ref horizontalRepeatAt);
+            if (!fresh) return;
+            bool accept = gamepad.buttonSouth.wasPressedThisFrame;
+            bool delete = gamepad.buttonEast.wasPressedThisFrame;
+            if (vertical != 0 || horizontal != 0 || accept || delete) PadMode = true;
+            if (vertical != 0) StepLetter(vertical);
+            if (horizontal != 0) MoveCursor(horizontal);
+            if (delete) DeleteBack();
+            if (accept) PadAccept();
         }
 
         void Update()
@@ -213,20 +355,25 @@ namespace LowercaseUppercase
             bool escape = fresh && keyboard != null && keyboard.escapeKey.wasPressedThisFrame;
             bool button = fresh && gamepad != null
                 && (gamepad.buttonSouth.wasPressedThisFrame || gamepad.startButton.wasPressedThisFrame);
+            // While a name is entered, the gamepad's ←→ move its cursor; the shoulder buttons switch views any time.
             bool switchView = fresh && ((keyboard != null && (keyboard.leftArrowKey.wasPressedThisFrame
                     || keyboard.rightArrowKey.wasPressedThisFrame || keyboard.tabKey.wasPressedThisFrame))
-                || (gamepad != null && (gamepad.dpad.left.wasPressedThisFrame || gamepad.dpad.right.wasPressedThisFrame)));
+                || (gamepad != null && (gamepad.leftShoulder.wasPressedThisFrame || gamepad.rightShoulder.wasPressedThisFrame))
+                || (gamepad != null && !IsEnteringName
+                    && (gamepad.dpad.left.wasPressedThisFrame || gamepad.dpad.right.wasPressedThisFrame)));
             if (switchView) SwitchView();
 
             if (IsEnteringName)
             {
                 if (fresh && keyboard != null && (KeyPressesOnly || !textInputSeen)) TypeFromKeyPresses(keyboard);
-                if (keyboard != null && keyboard.backspaceKey.wasPressedThisFrame && typed.Length > 0)
+                if (keyboard != null && keyboard.backspaceKey.wasPressedThisFrame)
                 {
-                    typed.Length--;
-                    Sfx.Play(Sound.TypeLetter);
+                    PadMode = false;
+                    DeleteBack();
                 }
-                if (enter || escape || button) ConfirmName();
+                ReadPadName(gamepad, fresh);
+                bool start = fresh && gamepad != null && gamepad.startButton.wasPressedThisFrame;
+                if (IsEnteringName && (enter || escape || start)) ConfirmName();
             }
             else
             {
@@ -272,21 +419,44 @@ namespace LowercaseUppercase
                 }
 
                 string name = entries[i].name;
-                if (i == Place && IsEnteringName)
-                {
-                    bool cursorOn = Mathf.Repeat(Time.unscaledTime, CursorBlinkSeconds * 2f) < CursorBlinkSeconds;
-                    name = TypedName + (cursorOn && typed.Length < HighScores.MaxNameLength ? "_" : "");
-                }
-                if (name.Length > HighScores.MaxNameLength) name = name.Substring(0, HighScores.MaxNameLength);
+                if (i == Place && IsEnteringName) name = NameField();
+                else if (name.Length > HighScores.MaxNameLength) name = name.Substring(0, HighScores.MaxNameLength);
                 rows[i].text = $"{rank}  {name.PadRight(HighScores.MaxNameLength)}  {entries[i].score.ToString().PadLeft(ScoreWidth)}";
                 rows[i].color = i == Place ? newRowColor : rowColor;
             }
         }
 
-        string NameWithCursor()
+        /// <summary>
+        /// The name being entered, as rich text padded to a name's width: the letter under the cursor underlined, and
+        /// after the name a blinking "_" (keyboard) or the Enter sign (gamepad), which may stand one past the longest
+        /// name.
+        /// </summary>
+        string NameField()
         {
             bool cursorOn = Mathf.Repeat(Time.unscaledTime, CursorBlinkSeconds * 2f) < CursorBlinkSeconds;
-            return TypedName + (cursorOn && typed.Length < HighScores.MaxNameLength ? "_" : "");
+            var field = new StringBuilder();
+            for (int i = 0; i < typed.Length; i++)
+            {
+                // Names hold no '<', so their letters can't open a tag.
+                if (i == Cursor) field.Append("<u>").Append(typed[i]).Append("</u>");
+                else field.Append(typed[i]);
+            }
+            int width = typed.Length;
+            if (Cursor >= typed.Length)
+            {
+                if (PadMode)
+                {
+                    field.Append(cursorOn ? EnterSign.Text : "_");
+                    width++;
+                }
+                else if (cursorOn && typed.Length < HighScores.MaxNameLength)
+                {
+                    field.Append('_');
+                    width++;
+                }
+            }
+            if (width < HighScores.MaxNameLength) field.Append(' ', HighScores.MaxNameLength - width);
+            return field.ToString();
         }
 
         /// <summary>
@@ -323,7 +493,7 @@ namespace LowercaseUppercase
                 own = new OnlineScores.ScoreRow
                 {
                     rank = ranked ? worldResult.rank : 0,
-                    name = IsEnteringName ? NameWithCursor() : ranked ? worldResult.name : TypedName,
+                    name = IsEnteringName ? NameField() : ranked ? worldResult.name : TypedName,
                     total = ranked ? worldResult.total : runScore
                 };
             }
@@ -354,8 +524,9 @@ namespace LowercaseUppercase
         {
             string rank = entry.rank > 0 ? entry.rank.ToString() : "?";
             string name = entry.name ?? "";
-            // The typed name keeps its cursor, which may stand one past the longest name.
-            if (name.Length > HighScores.MaxNameLength && !(isOwn && IsEnteringName)) name = name.Substring(0, HighScores.MaxNameLength);
+            // The name being entered comes padded already, with its cursor and tags (see NameField).
+            if (isOwn && IsEnteringName) return $"{rank.PadLeft(rankWidth)}  {name}  {entry.total.ToString().PadLeft(ScoreWidth)}";
+            if (name.Length > HighScores.MaxNameLength) name = name.Substring(0, HighScores.MaxNameLength);
             return $"{rank.PadLeft(rankWidth)}  {name.PadRight(HighScores.MaxNameLength)}  {entry.total.ToString().PadLeft(ScoreWidth)}";
         }
 
@@ -373,6 +544,7 @@ namespace LowercaseUppercase
                     Vector3 step = last.transform.localPosition - rows[rows.Length - 2].transform.localPosition;
                     ownRow = Instantiate(last, last.transform.parent);
                     ownRow.name = "Own Row";
+                    EnterSign.Use(ownRow);
                     ownRow.transform.localPosition = last.transform.localPosition + step;
                     ownRow.text = "";
                 }
@@ -406,6 +578,9 @@ namespace LowercaseUppercase
 
         string Hint()
         {
+            if (IsEnteringName && PadMode)
+                return (Place >= 0 ? "new high score!" : "your name for the world list")
+                    + $"  ·  ↑↓  letter  ·  ←→  move  ·  A on {EnterSign.Text}  " + (Place >= 0 ? "save" : "send");
             if (IsEnteringName)
                 return Place >= 0 ? "new high score!  type your name  ·  Enter  save" : "type your name for the world list  ·  Enter  send";
             string note = Showing == View.World ? WorldNote() : null;

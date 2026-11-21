@@ -14,6 +14,10 @@ namespace LowercaseUppercase
         InputAction shift;
         InputAction shoot;
 
+        /// <summary>Whether the letter was last steered with a gamepad rather than the keyboard, so screens after
+        /// the run can offer the gamepad's way of doing things first.</summary>
+        public static bool LastUsedGamepad { get; private set; }
+
         void Awake()
         {
             letter = GetComponent<LetterController>();
@@ -76,6 +80,11 @@ namespace LowercaseUppercase
 
         void Update()
         {
+            InputControl used = jump.WasPressedThisFrame() ? jump.activeControl
+                : shoot.WasPressedThisFrame() ? shoot.activeControl
+                : Mathf.Abs(move.ReadValue<float>()) > 0.5f ? move.activeControl : null;
+            if (used != null) LastUsedGamepad = used.device is Gamepad;
+
             if (jump.WasPressedThisFrame()) letter.PressJump();
             if (shoot.WasPressedThisFrame() && shooter != null) shooter.Fire();
             letter.SetInput(move.ReadValue<float>(), jump.IsPressed(), shift.IsPressed());

@@ -158,6 +158,59 @@ namespace LowercaseUppercase.Tests
         }
 
         [UnityTest]
+        public IEnumerator AGamepadEntersTheNameArcadeStyle()
+        {
+            for (int i = 1; i <= HighScores.Size; i++) HighScores.Insert(i * 1000);
+            yield return LoadWithoutIntro("Crack");
+            PrototypeFlow flow = UnityEngine.Object.FindAnyObjectByType<PrototypeFlow>();
+            for (int i = 0; i < 25; i++) LevelRun.EnemyKilled(new Vector2(i, 0f));
+            LevelRun.TimeLeft = 0.01f;
+
+            yield return WaitUntil(() => flow.IsGameOver);
+            GameOverScreen screen = flow.gameOver;
+            Assert.IsTrue(screen.IsEnteringName);
+            Assert.AreEqual("", screen.TypedName);
+            Assert.AreEqual(0, screen.Cursor, "The cursor starts on the Enter sign after the (empty) name.");
+
+            screen.StepLetter(1);
+            Assert.AreEqual("A", screen.TypedName, "Up on the Enter sign starts a new letter at A.");
+            screen.StepLetter(-1);
+            Assert.AreEqual("", screen.TypedName, "Down from A on the last letter is the Enter sign again.");
+            screen.StepLetter(-1);
+            Assert.AreEqual("?", screen.TypedName, "Down on the Enter sign starts at the end of the list.");
+            for (int i = 0; i < 5; i++) screen.StepLetter(-1);
+            Assert.AreEqual("9", screen.TypedName, "The space is skipped at the start of a name.");
+
+            screen.PadAccept();
+            Assert.AreEqual(1, screen.Cursor, "A on a letter goes one slot right.");
+            screen.StepLetter(1);
+            screen.StepLetter(1);
+            screen.PadAccept();
+            Assert.AreEqual("9B", screen.TypedName);
+            Assert.IsTrue(screen.IsEnteringName);
+
+            screen.MoveCursor(-5);
+            Assert.AreEqual(0, screen.Cursor);
+            screen.StepLetter(1);
+            Assert.AreEqual("-B", screen.TypedName, "A letter within the name skips the space at the start, too.");
+            screen.MoveCursor(1);
+            screen.StepLetter(-1);
+            screen.StepLetter(-1);
+            Assert.AreEqual("-", screen.TypedName, "Down from A on the last letter takes it away.");
+            screen.Type('o');
+            screen.MoveCursor(-1);
+            screen.Type('x');
+            Assert.AreEqual("-xo", screen.TypedName, "The keyboard types at the cursor.");
+            screen.DeleteBack();
+            screen.MoveCursor(1);
+            Assert.AreEqual(2, screen.Cursor);
+            screen.PadAccept();
+            Assert.IsFalse(screen.IsEnteringName, "A on the Enter sign saves.");
+
+            Assert.AreEqual("-o", HighScores.Load()[8].name);
+        }
+
+        [UnityTest]
         public IEnumerator FinishingTheLastLevelShowsTheTableWithoutGameOver()
         {
             yield return LoadWithoutIntro("Final");
