@@ -1,6 +1,7 @@
 {
   "name": "lowercase-uppercase-web",
   "private": true,
+  "license": "GPL-3.0-or-later",
   "type": "module",
   "scripts": {
     "test": "node --test \"test/*.test.js\"",
